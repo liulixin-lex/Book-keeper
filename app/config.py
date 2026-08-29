@@ -46,7 +46,6 @@ class Settings(BaseSettings):
     ai_default_effort: ReasoningEffort = ReasoningEffort.MEDIUM
     openai_api_key: str | None = None
     embedding_api_key: str | None = None
-    openexchangerates_app_id: str | None = None
 
     @property
     def is_production(self) -> bool:

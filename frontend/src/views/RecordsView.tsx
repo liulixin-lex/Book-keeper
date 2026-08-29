@@ -25,11 +25,16 @@ import type {
   RecordRead,
   RecordType,
 } from "../types/api";
+import {
+  CURRENCIES,
+  formatCurrencyAmount,
+  getCurrencyOptionLabel,
+} from "../utils/currency";
 import { formatMoney } from "../utils/format";
 import {
   addAmounts,
   calculateFeeAmount,
-  getPrimaryAmountCny,
+  getPrimaryAmount,
   subtractAmounts,
   type FeeMode,
 } from "../utils/records";
@@ -50,17 +55,6 @@ interface EntryFormData {
   provider_id: string;
   note: string;
 }
-
-const CURRENCIES = [
-  ["CNY", "人民币"],
-  ["USD", "美元"],
-  ["EUR", "欧元"],
-  ["GBP", "英镑"],
-  ["JPY", "日元"],
-  ["KRW", "韩元"],
-  ["SGD", "新加坡元"],
-  ["PHP", "菲律宾比索"],
-] as const;
 
 const STATUS_LABELS: Record<string, string> = {
   draft: "草稿",
@@ -464,52 +458,61 @@ const RecordsView: React.FC<RecordsViewProps> = ({ recordType }) => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/70">
-                {pageData.items.map((record) => (
-                  <tr
-                    key={record.id}
-                    onClick={() => setSelectedRecord(record)}
-                    className="cursor-pointer hover:bg-surface-strong/50"
-                  >
-                    <td className="whitespace-nowrap px-4 py-3 text-ink">
-                      {record.accounting_date}
-                    </td>
-                    <td className="max-w-36 truncate px-4 py-3 font-medium text-ink">
-                      {record.created_by_username}
-                    </td>
-                    <td className="max-w-40 truncate px-4 py-3 text-muted">
-                      {record.category_name || "未分类"}
-                    </td>
-                    {isExpense && (
-                      <td className="max-w-40 truncate px-4 py-3 text-muted">
-                        {record.counterparty_name || "-"}
-                      </td>
-                    )}
-                    <td className="max-w-64 truncate px-4 py-3 font-medium text-ink">
-                      {record.description}
-                    </td>
-                    <td className="max-w-40 truncate px-4 py-3 font-mono text-muted">
-                      {record.external_id || "-"}
-                    </td>
-                    <td
-                      className={`whitespace-nowrap px-4 py-3 text-right font-mono-amount font-semibold ${isExpense ? "text-danger" : "text-success"}`}
+                {pageData.items.map((record) => {
+                  const primaryAmount = getPrimaryAmount(record);
+                  return (
+                    <tr
+                      key={record.id}
+                      onClick={() => setSelectedRecord(record)}
+                      className="cursor-pointer hover:bg-surface-strong/50"
                     >
-                      ¥{formatMoney(getPrimaryAmountCny(record))}
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <Badge
-                        variant={
-                          record.status === "posted"
-                            ? "success"
-                            : record.status === "reversed"
-                              ? "danger"
-                              : "warning"
-                        }
+                      <td className="whitespace-nowrap px-4 py-3 text-ink">
+                        {record.accounting_date}
+                      </td>
+                      <td className="max-w-36 truncate px-4 py-3 font-medium text-ink">
+                        {record.created_by_username}
+                      </td>
+                      <td className="max-w-40 truncate px-4 py-3 text-muted">
+                        {record.category_name || "未分类"}
+                      </td>
+                      {isExpense && (
+                        <td className="max-w-40 truncate px-4 py-3 text-muted">
+                          {record.counterparty_name || "-"}
+                        </td>
+                      )}
+                      <td className="max-w-64 truncate px-4 py-3 font-medium text-ink">
+                        {record.description}
+                      </td>
+                      <td className="max-w-40 truncate px-4 py-3 font-mono text-muted">
+                        {record.external_id || "-"}
+                      </td>
+                      <td
+                        className={`whitespace-nowrap px-4 py-3 text-right font-mono-amount font-semibold ${isExpense ? "text-danger" : "text-success"}`}
                       >
-                        {STATUS_LABELS[record.status] || record.status}
-                      </Badge>
-                    </td>
-                  </tr>
-                ))}
+                        {primaryAmount
+                          ? formatCurrencyAmount(
+                              primaryAmount.amount,
+                              primaryAmount.currency,
+                              { showCode: true },
+                            )
+                          : "-"}
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <Badge
+                          variant={
+                            record.status === "posted"
+                              ? "success"
+                              : record.status === "reversed"
+                                ? "danger"
+                                : "warning"
+                          }
+                        >
+                          {STATUS_LABELS[record.status] || record.status}
+                        </Badge>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -618,9 +621,9 @@ const RecordsView: React.FC<RecordsViewProps> = ({ recordType }) => {
                 }))
               }
             >
-              {CURRENCIES.map(([code, name]) => (
+              {CURRENCIES.map(({ code }) => (
                 <option key={code} value={code}>
-                  {code} · {name}
+                  {getCurrencyOptionLabel(code)}
                 </option>
               ))}
             </Select>
@@ -787,10 +790,12 @@ const RecordsView: React.FC<RecordsViewProps> = ({ recordType }) => {
                       {amountRoleLabel(amount.role)}
                     </span>
                     <span className="font-mono-amount font-medium text-ink">
-                      {amount.currency} {formatMoney(amount.amount)}
+                      {formatCurrencyAmount(amount.amount, amount.currency, {
+                        showCode: true,
+                      })}
                       {amount.currency !== "CNY" && (
                         <span className="ml-2 text-muted">
-                          ¥{formatMoney(amount.amount_cny)}
+                          {formatCurrencyAmount(amount.amount_cny, "CNY")}
                         </span>
                       )}
                     </span>

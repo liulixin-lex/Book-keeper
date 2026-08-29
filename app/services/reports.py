@@ -5,7 +5,7 @@ from typing import Any, Literal
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.amounts import from_e8
+from app.amounts import RATE_SCALE, convert_cny_e8, from_e8, from_e12, to_e8
 from app.enums import AccountType, JournalStatus, RecordType
 from app.models import (
     Account,
@@ -17,7 +17,14 @@ from app.models import (
     User,
     Workspace,
 )
-from app.schemas import DailyReportRow, ExpenseUserSummary, OverviewRead
+from app.schemas import (
+    DailyReportRow,
+    DashboardRateRead,
+    DashboardReportRead,
+    ExpenseUserSummary,
+    OverviewRead,
+)
+from app.services.fx import DisplayRate
 
 LedgerKey = tuple[date, str | None, str, str | None]
 LedgerValue = tuple[int, int]
@@ -317,4 +324,70 @@ def overview(
         net_cash=from_e8(total["net_cash"]),
         posted_records=count,
         expense_by_user=_expense_breakdown(session, workspace.id, start_date, end_date),
+    )
+
+
+_REPORT_AMOUNT_FIELDS = (
+    "gross_revenue",
+    "channel_fees",
+    "net_revenue",
+    "operating_expenses",
+    "operating_net",
+    "cash_in",
+    "cash_out",
+    "net_cash",
+)
+
+
+def _convert_report_amount(value: str, cny_per_unit_e12: int) -> str:
+    return from_e8(convert_cny_e8(to_e8(value), cny_per_unit_e12))
+
+
+def _convert_overview(report: OverviewRead, cny_per_unit_e12: int) -> OverviewRead:
+    updates: dict[str, object] = {
+        field: _convert_report_amount(getattr(report, field), cny_per_unit_e12)
+        for field in _REPORT_AMOUNT_FIELDS
+    }
+    updates["expense_by_user"] = [
+        item.model_copy(update={"amount": _convert_report_amount(item.amount, cny_per_unit_e12)})
+        for item in report.expense_by_user
+    ]
+    return report.model_copy(update=updates)
+
+
+def _convert_daily_rows(rows: list[DailyReportRow], cny_per_unit_e12: int) -> list[DailyReportRow]:
+    return [
+        row.model_copy(
+            update={
+                field: _convert_report_amount(getattr(row, field), cny_per_unit_e12)
+                for field in _REPORT_AMOUNT_FIELDS
+            }
+        )
+        for row in rows
+    ]
+
+
+def dashboard_report(
+    session: Session,
+    workspace: Workspace,
+    start_date: date,
+    end_date: date,
+    display_rate: DisplayRate,
+) -> DashboardReportRead:
+    overview_result = overview(session, workspace, start_date, end_date)
+    daily_result = daily_report(session, workspace, start_date, end_date)
+    if display_rate.cny_per_unit_e12 != RATE_SCALE:
+        overview_result = _convert_overview(overview_result, display_rate.cny_per_unit_e12)
+        daily_result = _convert_daily_rows(daily_result, display_rate.cny_per_unit_e12)
+    return DashboardReportRead(
+        display_currency=display_rate.currency,
+        rate=DashboardRateRead(
+            cny_per_unit=from_e12(display_rate.cny_per_unit_e12),
+            source=display_rate.source,
+            effective_at=display_rate.effective_at,
+            fetched_at=display_rate.fetched_at,
+            is_stale=display_rate.is_stale,
+        ),
+        overview=overview_result,
+        daily=daily_result,
     )

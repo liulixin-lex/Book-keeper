@@ -4,6 +4,7 @@ import { Badge } from "../components/ui/core";
 import type { RecordRead } from "../types/api";
 import {
   calculateFeeAmount,
+  getPrimaryAmount,
   getPrimaryAmountCny,
   sortRecords,
 } from "../utils/records";
@@ -58,5 +59,22 @@ describe("Record table sorting", () => {
       sortRecords(records, "amount", "desc").map((item) => item.id),
     ).toEqual(["b", "a"]);
     expect(getPrimaryAmountCny(records[0])).toBe("20");
+  });
+
+  it("keeps the original currency amount for row display", () => {
+    const foreignRecord = record("a", "海外收入", "10");
+    foreignRecord.amounts[0] = {
+      role: "cash",
+      currency: "USD",
+      amount: "10",
+      amount_cny: "72",
+      derived: false,
+    };
+
+    expect(getPrimaryAmount(foreignRecord)).toMatchObject({
+      currency: "USD",
+      amount: "10",
+    });
+    expect(getPrimaryAmountCny(foreignRecord)).toBe("72");
   });
 });

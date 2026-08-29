@@ -12,6 +12,7 @@ def test_openapi_contains_public_backend_surface() -> None:
         "/api/v1/ai/settings",
         "/api/v1/approvals/{approval_id}/approve",
         "/api/v1/reports/daily",
+        "/api/v1/reports/dashboard",
         "/api/v1/reports/overview",
         "/api/v1/catalog/providers",
         "/api/v1/audit",

@@ -47,3 +47,13 @@ def convert_e8(amount_e8: int, rate_e12: int, *, decimal_places: int = 2) -> int
     quantizer = Decimal(1).scaleb(-decimal_places)
     converted = (amount * rate).quantize(quantizer, rounding=ROUND_HALF_UP)
     return to_e8(converted)
+
+
+def convert_cny_e8(amount_cny_e8: int, cny_per_unit_e12: int, *, decimal_places: int = 2) -> int:
+    if cny_per_unit_e12 <= 0:
+        raise ValueError("FX rate must be positive")
+    amount_cny = Decimal(amount_cny_e8) / AMOUNT_SCALE
+    cny_per_unit = Decimal(cny_per_unit_e12) / RATE_SCALE
+    quantizer = Decimal(1).scaleb(-decimal_places)
+    converted = (amount_cny / cny_per_unit).quantize(quantizer, rounding=ROUND_HALF_UP)
+    return to_e8(converted)

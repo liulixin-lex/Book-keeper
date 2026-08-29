@@ -1,13 +1,20 @@
-from datetime import date
+from datetime import UTC, date, datetime
 
 import pytest
 from sqlalchemy.orm import Session
 
+from app.amounts import to_e12
 from app.enums import AccountType, JournalStatus, UserRole
 from app.models import Account, JournalEntry, User, Workspace
 from app.schemas import ExpenseCreate, IncomeCreate, MoneyInput
 from app.services.accounting import create_expense, create_income
-from app.services.reports import daily_report, grouped_ledger_report, overview
+from app.services.fx import DisplayRate
+from app.services.reports import (
+    daily_report,
+    dashboard_report,
+    grouped_ledger_report,
+    overview,
+)
 
 
 def test_report_amounts_come_from_posted_journal_lines(
@@ -185,3 +192,62 @@ def test_expense_breakdown_by_creator_matches_total(
         "alice-report": "40.00",
         "bob-report": "60.00",
     }
+
+
+def test_dashboard_converts_every_report_surface_with_one_rate(
+    db_session: Session, workspace: Workspace
+) -> None:
+    target_date = date(2026, 8, 29)
+    create_income(
+        db_session,
+        workspace,
+        IncomeCreate(
+            accounting_date=target_date,
+            description="Converted income",
+            gross=MoneyInput(currency="CNY", amount="100"),
+            fee=MoneyInput(currency="CNY", amount="10"),
+        ),
+    )
+    create_expense(
+        db_session,
+        workspace,
+        ExpenseCreate(
+            accounting_date=target_date,
+            description="Converted expense",
+            category_name="其他支出",
+            cost=MoneyInput(currency="CNY", amount="20"),
+            cash=MoneyInput(currency="CNY", amount="20"),
+        ),
+    )
+    now = datetime.now(UTC)
+
+    report = dashboard_report(
+        db_session,
+        workspace,
+        target_date,
+        target_date,
+        DisplayRate(
+            currency="USD",
+            cny_per_unit_e12=to_e12("2"),
+            source="Frankfurter",
+            effective_at=now,
+            fetched_at=now,
+            is_stale=False,
+        ),
+    )
+
+    assert report.display_currency == "USD"
+    assert report.rate.cny_per_unit == "2"
+    assert report.overview.gross_revenue == "50.00"
+    assert report.overview.channel_fees == "5.00"
+    assert report.overview.net_revenue == "45.00"
+    assert report.overview.operating_expenses == "10.00"
+    assert report.overview.operating_net == "35.00"
+    assert report.overview.cash_in == "45.00"
+    assert report.overview.cash_out == "10.00"
+    assert report.overview.net_cash == "35.00"
+    assert report.overview.posted_records == 2
+    assert report.overview.expense_by_user[0].amount == "10.00"
+    assert len(report.daily) == 1
+    assert report.daily[0].operating_net == "35.00"
+    assert report.daily[0].net_cash == "35.00"

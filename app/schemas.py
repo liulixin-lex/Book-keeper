@@ -325,6 +325,21 @@ class OverviewRead(BaseModel):
     expense_by_user: list[ExpenseUserSummary] = Field(default_factory=list)
 
 
+class DashboardRateRead(BaseModel):
+    cny_per_unit: str
+    source: str
+    effective_at: datetime
+    fetched_at: datetime
+    is_stale: bool
+
+
+class DashboardReportRead(BaseModel):
+    display_currency: str
+    rate: DashboardRateRead
+    overview: OverviewRead
+    daily: list[DailyReportRow]
+
+
 class ApprovalRequestRead(BaseModel):
     id: str
     kind: str

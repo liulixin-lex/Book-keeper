@@ -99,6 +99,21 @@ export interface DailyReportRow {
   net_cash: string;
 }
 
+export interface DashboardRateRead {
+  cny_per_unit: string;
+  source: string;
+  effective_at: string;
+  fetched_at: string;
+  is_stale: boolean;
+}
+
+export interface DashboardReportRead {
+  display_currency: string;
+  rate: DashboardRateRead;
+  overview: OverviewRead;
+  daily: DailyReportRow[];
+}
+
 export interface AIProvider {
   id: string;
   workspace_id: string;

@@ -1,4 +1,4 @@
-import type { RecordRead } from "../types/api";
+import type { MoneyRead, RecordRead } from "../types/api";
 
 export type FeeMode = "amount" | "percent";
 export type RecordSortKey =
@@ -49,13 +49,15 @@ export const addAmounts = (first: string, second: string) =>
 export const subtractAmounts = (first: string, second: string) =>
   combineAmounts(first, second, "subtract");
 
-export const getPrimaryAmountCny = (record: RecordRead) =>
-  record.amounts.find((amount) => amount.role === "cash")?.amount_cny ||
+export const getPrimaryAmount = (record: RecordRead): MoneyRead | undefined =>
+  record.amounts.find((amount) => amount.role === "cash") ||
   record.amounts.find(
     (amount) => amount.role === "gross" || amount.role === "cost",
-  )?.amount_cny ||
-  record.amounts[0]?.amount_cny ||
-  "0";
+  ) ||
+  record.amounts[0];
+
+export const getPrimaryAmountCny = (record: RecordRead) =>
+  getPrimaryAmount(record)?.amount_cny || "0";
 
 const collator = new Intl.Collator("zh-CN", {
   numeric: true,

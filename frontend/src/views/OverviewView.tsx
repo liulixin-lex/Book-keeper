@@ -5,12 +5,14 @@ import {
   CalendarBlank,
   CaretLeft,
   CaretRight,
+  CircleNotch,
   CurrencyCircleDollar,
   HandCoins,
   Receipt,
   Scales,
   TrendDown,
   TrendUp,
+  WarningCircle,
 } from "@phosphor-icons/react";
 import gsap from "gsap";
 import {
@@ -28,8 +30,16 @@ import {
 import { apiRequest } from "../api/client";
 import { Badge, Button } from "../components/ui/core";
 import { ErrorState, TableSkeleton } from "../components/ui/feedback";
-import type { DailyReportRow, OverviewRead } from "../types/api";
-import { formatMoney } from "../utils/format";
+import type { DashboardReportRead } from "../types/api";
+import {
+  CURRENCIES,
+  type CurrencyCode,
+  formatCurrencyAmount,
+  getCurrencyOptionLabel,
+  getCurrencySymbol,
+  isCurrencyCode,
+} from "../utils/currency";
+import { formatCompact, formatMoney } from "../utils/format";
 
 gsap.registerPlugin(useGSAP);
 
@@ -146,6 +156,13 @@ const dateBefore = (days: number) => {
 const sevenDayStart = dateBefore(6);
 const thirtyDayStart = dateBefore(29);
 const halfYearStart = dateBefore(182);
+const overviewCurrencyStorageKey = "ledger_overview_currency";
+
+const initialOverviewCurrency = (): CurrencyCode => {
+  if (typeof window === "undefined") return "CNY";
+  const saved = window.localStorage.getItem(overviewCurrencyStorageKey);
+  return saved && isCurrencyCode(saved) ? saved : "CNY";
+};
 
 const moneyTone = (amount: string, positiveClass = "text-success") =>
   amount.startsWith("-") ? "text-danger" : positiveClass;
@@ -155,10 +172,13 @@ export const OverviewView: React.FC = () => {
   const [datePreset, setDatePreset] = useState<DatePreset>("7d");
   const [startDate, setStartDate] = useState(sevenDayStart);
   const [endDate, setEndDate] = useState(today);
-  const [overview, setOverview] = useState<OverviewRead | null>(null);
-  const [dailyRows, setDailyRows] = useState<DailyReportRow[]>([]);
+  const [selectedCurrency, setSelectedCurrency] = useState<CurrencyCode>(
+    initialOverviewCurrency,
+  );
+  const [dashboard, setDashboard] = useState<DashboardReportRead | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [fatalError, setFatalError] = useState<string | null>(null);
+  const [switchError, setSwitchError] = useState<string | null>(null);
   const [dailyPage, setDailyPage] = useState(1);
   const [dailyPageSize, setDailyPageSize] = useState(7);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(() =>
@@ -167,6 +187,10 @@ export const OverviewView: React.FC = () => {
       : false,
   );
   const containerRef = useRef<HTMLDivElement>(null);
+  const dashboardRef = useRef<DashboardReportRead | null>(null);
+  const requestIdRef = useRef(0);
+  const overview = dashboard?.overview || null;
+  const dailyRows = dashboard?.daily || [];
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -181,32 +205,51 @@ export const OverviewView: React.FC = () => {
     };
   }, []);
 
-  const fetchData = async () => {
+  const fetchData = async (currency: CurrencyCode) => {
+    const requestId = ++requestIdRef.current;
     setIsLoading(true);
-    setError(null);
+    setFatalError(null);
     try {
       const query = new URLSearchParams({
         start_date: startDate,
         end_date: endDate,
+        display_currency: currency,
       });
-      const [overviewResult, dailyResult] = await Promise.all([
-        apiRequest<OverviewRead>(`/reports/overview?${query}`),
-        apiRequest<DailyReportRow[]>(`/reports/daily?${query}&basis=both`),
-      ]);
-      setOverview(overviewResult);
-      setDailyRows(dailyResult);
-    } catch (requestError) {
-      setError(
-        requestError instanceof Error ? requestError.message : "加载总览失败",
+      const result = await apiRequest<DashboardReportRead>(
+        `/reports/dashboard?${query}`,
       );
+      if (requestId !== requestIdRef.current) return;
+      dashboardRef.current = result;
+      setDashboard(result);
+      if (isCurrencyCode(result.display_currency)) {
+        setSelectedCurrency(result.display_currency);
+        window.localStorage.setItem(
+          overviewCurrencyStorageKey,
+          result.display_currency,
+        );
+      }
+    } catch (requestError) {
+      if (requestId !== requestIdRef.current) return;
+      const message =
+        requestError instanceof Error ? requestError.message : "加载总览失败";
+      const previous = dashboardRef.current;
+      if (previous && isCurrencyCode(previous.display_currency)) {
+        setSwitchError(message);
+        setSelectedCurrency(previous.display_currency);
+      } else if (currency !== "CNY") {
+        setSwitchError(message);
+        setSelectedCurrency("CNY");
+      } else {
+        setFatalError(message);
+      }
     } finally {
-      setIsLoading(false);
+      if (requestId === requestIdRef.current) setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    void fetchData();
-  }, [startDate, endDate]);
+    void fetchData(selectedCurrency);
+  }, [startDate, endDate, selectedCurrency]);
 
   const chartGradId = useId();
 
@@ -306,9 +349,30 @@ export const OverviewView: React.FC = () => {
   );
 
   if (isLoading && !overview) return <TableSkeleton rows={8} cols={4} />;
-  if (error)
-    return <ErrorState message={error} onRetry={() => void fetchData()} />;
-  if (!overview) return null;
+  if (fatalError)
+    return (
+      <ErrorState
+        message={fatalError}
+        onRetry={() => void fetchData(selectedCurrency)}
+      />
+    );
+  if (!overview || !dashboard) return null;
+
+  const displayCurrency = isCurrencyCode(dashboard.display_currency)
+    ? dashboard.display_currency
+    : "CNY";
+  const currencySymbol = getCurrencySymbol(displayCurrency);
+  const rateDate = dashboard.rate.effective_at.slice(0, 10);
+  const rateFetchedAt = new Intl.DateTimeFormat("zh-CN", {
+    timeZone: "Asia/Shanghai",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).format(new Date(dashboard.rate.fetched_at));
+  const rateSourceLabel =
+    dashboard.rate.source === "manual" ? "手工汇率" : "Frankfurter";
 
   const operatingPrimary = {
     label: "经营净额",
@@ -322,7 +386,10 @@ export const OverviewView: React.FC = () => {
     {
       label: "毛收入",
       value: overview.gross_revenue,
-      note: `净收入 ¥${formatMoney(overview.net_revenue)}`,
+      note: `净收入 ${formatCurrencyAmount(
+        overview.net_revenue,
+        displayCurrency,
+      )}`,
       icon: TrendUp,
       tone: "text-primary",
     },
@@ -383,25 +450,85 @@ export const OverviewView: React.FC = () => {
     <div ref={containerRef} className="space-y-3">
       {/* 顶部筛选栏：紧凑压缩 */}
       <section className="instrument-panel flex flex-col gap-2.5 p-2.5 sm:p-3 xl:flex-row xl:items-center xl:justify-between">
-        <div
-          className="instrument-inset flex w-full items-center p-0.5 sm:w-auto"
-          aria-label="报表口径"
-        >
-          {(["operating", "cash"] as const).map((basis) => (
-            <button
-              key={basis}
-              type="button"
-              aria-pressed={viewBasis === basis}
-              onClick={() => setViewBasis(basis)}
-              className={`min-h-7 flex-1 whitespace-nowrap rounded-md px-3 text-xs font-medium transition-colors sm:flex-none ${
-                viewBasis === basis
-                  ? "bg-surface text-ink shadow-[var(--shadow-panel)]"
-                  : "text-muted hover:text-ink"
-              }`}
+        <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center">
+          <div
+            className="instrument-inset flex w-full items-center p-0.5 sm:w-auto"
+            aria-label="报表口径"
+          >
+            {(["operating", "cash"] as const).map((basis) => (
+              <button
+                key={basis}
+                type="button"
+                aria-pressed={viewBasis === basis}
+                onClick={() => setViewBasis(basis)}
+                className={`min-h-7 flex-1 whitespace-nowrap rounded-md px-3 text-xs font-medium transition-colors sm:flex-none ${
+                  viewBasis === basis
+                    ? "bg-surface text-ink shadow-[var(--shadow-panel)]"
+                    : "text-muted hover:text-ink"
+                }`}
+              >
+                {basis === "operating" ? "经营视图" : "现金视图"}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex min-w-0 items-center gap-2">
+            <label className="instrument-inset flex h-8 shrink-0 items-center gap-1.5 px-2">
+              <CurrencyCircleDollar size={14} className="text-muted" />
+              <span className="sr-only">总览显示币种</span>
+              <select
+                aria-label="总览显示币种"
+                value={selectedCurrency}
+                disabled={isLoading}
+                onChange={(event) => {
+                  if (!isCurrencyCode(event.target.value)) return;
+                  setSwitchError(null);
+                  setSelectedCurrency(event.target.value);
+                  setDailyPage(1);
+                }}
+                className="h-7 min-w-32 bg-transparent text-xs font-semibold text-ink focus:outline-none disabled:cursor-wait disabled:opacity-60"
+              >
+                {CURRENCIES.map(({ code }) => (
+                  <option key={code} value={code}>
+                    {getCurrencyOptionLabel(code)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <div
+              className="min-w-0 text-[10px] leading-4 text-muted"
+              aria-live="polite"
+              title={dashboard.rate.source}
             >
-              {basis === "operating" ? "经营视图" : "现金视图"}
-            </button>
-          ))}
+              {displayCurrency === "CNY" ? (
+                <span>人民币本位币</span>
+              ) : (
+                <>
+                  <span className="block truncate">
+                    1 {displayCurrency} = ¥
+                    {formatMoney(dashboard.rate.cny_per_unit)}
+                  </span>
+                  <span
+                    className={
+                      dashboard.rate.is_stale ? "text-warning" : undefined
+                    }
+                  >
+                    {dashboard.rate.is_stale
+                      ? `缓存汇率 ${rateDate}`
+                      : `${rateSourceLabel} 更新 ${rateFetchedAt}`}
+                  </span>
+                </>
+              )}
+            </div>
+            {isLoading && (
+              <CircleNotch
+                size={13}
+                weight="bold"
+                className="shrink-0 animate-spin text-primary"
+                aria-label="正在更新总览"
+              />
+            )}
+          </div>
         </div>
 
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
@@ -463,6 +590,16 @@ export const OverviewView: React.FC = () => {
         </div>
       </section>
 
+      {switchError && (
+        <div
+          role="alert"
+          className="instrument-strip flex items-start gap-2 px-3 py-2 text-xs text-warning"
+        >
+          <WarningCircle size={15} weight="fill" className="mt-0.5 shrink-0" />
+          <span>币种切换失败，已保留上一次成功的数据。{switchError}</span>
+        </div>
+      )}
+
       {/* 机械账本读数台：不等宽、连续、扫描轨道 */}
       <section className="instrument-panel relative overflow-hidden p-0">
         {/* 顶部扫描轨道 */}
@@ -492,7 +629,8 @@ export const OverviewView: React.FC = () => {
               <div
                 className={`readout-figure metric-figure whitespace-nowrap leading-tight ${primarySize} ${primaryMetric.tone}`}
               >
-                ¥<AnimatedMoney amountStr={primaryMetric.value} />
+                {currencySymbol}
+                <AnimatedMoney amountStr={primaryMetric.value} />
               </div>
             </div>
             <p className="text-xs leading-relaxed text-muted">
@@ -528,7 +666,8 @@ export const OverviewView: React.FC = () => {
                         isLong ? "text-sm sm:text-base" : "text-base sm:text-lg"
                       } ${tone}`}
                     >
-                      ¥<AnimatedMoney amountStr={value} />
+                      {currencySymbol}
+                      <AnimatedMoney amountStr={value} />
                     </div>
                     <p className="truncate text-[11px] text-muted">{note}</p>
                   </article>
@@ -638,12 +777,17 @@ export const OverviewView: React.FC = () => {
                     stroke="var(--border)"
                   />
                   <YAxis
-                    width={56}
+                    width={68}
                     tick={{ fontSize: 10, fill: "var(--muted)" }}
                     stroke="var(--border)"
+                    tickFormatter={(value) =>
+                      `${currencySymbol}${formatCompact(String(value))}`
+                    }
                   />
                   <Tooltip
-                    formatter={(value) => `¥${formatMoney(String(value))}`}
+                    formatter={(value) =>
+                      formatCurrencyAmount(String(value), displayCurrency)
+                    }
                     contentStyle={{
                       backgroundColor: "var(--surface-raised)",
                       borderColor: "var(--border)",
@@ -747,7 +891,7 @@ export const OverviewView: React.FC = () => {
               <div className="flex items-end justify-between gap-3 border-b border-border/70 pb-2">
                 <dt className="text-muted">净收入</dt>
                 <dd className="metric-figure text-xs font-semibold text-ink">
-                  ¥{formatMoney(overview.net_revenue)}
+                  {formatCurrencyAmount(overview.net_revenue, displayCurrency)}
                 </dd>
               </div>
               <div className="flex items-end justify-between gap-3 border-b border-border/70 pb-2">
@@ -755,7 +899,10 @@ export const OverviewView: React.FC = () => {
                 <dd
                   className={`metric-figure text-xs font-semibold ${moneyTone(overview.operating_net)}`}
                 >
-                  ¥{formatMoney(overview.operating_net)}
+                  {formatCurrencyAmount(
+                    overview.operating_net,
+                    displayCurrency,
+                  )}
                 </dd>
               </div>
               <div className="flex items-end justify-between gap-3">
@@ -763,7 +910,7 @@ export const OverviewView: React.FC = () => {
                 <dd
                   className={`metric-figure text-xs font-semibold ${moneyTone(overview.net_cash, "text-primary")}`}
                 >
-                  ¥{formatMoney(overview.net_cash)}
+                  {formatCurrencyAmount(overview.net_cash, displayCurrency)}
                 </dd>
               </div>
             </dl>
@@ -792,7 +939,7 @@ export const OverviewView: React.FC = () => {
                         {item.username}
                       </span>
                       <span className="metric-figure font-medium text-danger">
-                        ¥{formatMoney(item.amount)}
+                        {formatCurrencyAmount(item.amount, displayCurrency)}
                       </span>
                     </div>
                   ))}
@@ -836,23 +983,26 @@ export const OverviewView: React.FC = () => {
                     {row.date}
                   </td>
                   <td className="px-4 py-3 text-right font-mono-amount text-ink">
-                    ¥{formatMoney(row.gross_revenue)}
+                    {formatCurrencyAmount(row.gross_revenue, displayCurrency)}
                   </td>
                   <td className="px-4 py-3 text-right font-mono-amount text-warning">
-                    ¥{formatMoney(row.channel_fees)}
+                    {formatCurrencyAmount(row.channel_fees, displayCurrency)}
                   </td>
                   <td className="px-4 py-3 text-right font-mono-amount text-danger">
-                    ¥{formatMoney(row.operating_expenses)}
+                    {formatCurrencyAmount(
+                      row.operating_expenses,
+                      displayCurrency,
+                    )}
                   </td>
                   <td
                     className={`px-4 py-3 text-right font-mono-amount ${moneyTone(row.operating_net)}`}
                   >
-                    ¥{formatMoney(row.operating_net)}
+                    {formatCurrencyAmount(row.operating_net, displayCurrency)}
                   </td>
                   <td
                     className={`px-4 py-3 text-right font-mono-amount ${moneyTone(row.net_cash, "text-primary")}`}
                   >
-                    ¥{formatMoney(row.net_cash)}
+                    {formatCurrencyAmount(row.net_cash, displayCurrency)}
                   </td>
                 </tr>
               ))}

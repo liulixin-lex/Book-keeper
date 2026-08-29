@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "transit-ledger-backend"
-version = "0.1.1"
+version = "0.1.2"
 description = "Multi-user accounting backend for transit API operations"
 readme = "README.md"
 requires-python = ">=3.12"
