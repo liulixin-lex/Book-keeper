@@ -6,6 +6,8 @@ import {
   calculateFeeAmount,
   getPrimaryAmount,
   getPrimaryAmountCny,
+  getStripeIncomeFeePreset,
+  isStripeIncomeCategory,
   sortRecords,
 } from "../utils/records";
 
@@ -17,10 +19,25 @@ describe("Badge Component", () => {
 });
 
 describe("Record fee calculation", () => {
-  it("supports fixed values and percentages", () => {
+  it("supports fixed values, percentages, and combined fees", () => {
     expect(calculateFeeAmount("100", "amount", "2.75")).toBe("2.75");
     expect(calculateFeeAmount("100", "percent", "2.5")).toBe("2.5");
     expect(calculateFeeAmount("100", "percent", "0")).toBe("0");
+    expect(calculateFeeAmount("100", "combined", "2.2", "0.35")).toBe("2.55");
+    expect(calculateFeeAmount("100", "combined", "0", "0.35")).toBe("0.35");
+  });
+
+  it("recognizes the Stripe income category for its fee preset", () => {
+    expect(isStripeIncomeCategory("Stripe收入")).toBe(true);
+    expect(isStripeIncomeCategory(" stripe收入 ")).toBe(true);
+    expect(isStripeIncomeCategory("其他业务收入")).toBe(false);
+    expect(getStripeIncomeFeePreset("Stripe收入")).toEqual({
+      currency: "USD",
+      mode: "combined",
+      value: "2.2",
+      fixedValue: "0.35",
+    });
+    expect(getStripeIncomeFeePreset("其他业务收入")).toBeNull();
   });
 });
 

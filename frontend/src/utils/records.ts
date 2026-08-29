@@ -1,6 +1,6 @@
 import type { MoneyRead, RecordRead } from "../types/api";
 
-export type FeeMode = "amount" | "percent";
+export type FeeMode = "amount" | "percent" | "combined";
 export type RecordSortKey =
   | "accounting_date"
   | "record_type"
@@ -21,14 +21,43 @@ export const calculateFeeAmount = (
   amount: string,
   mode: FeeMode,
   value: string,
+  fixedValue = "",
 ) => {
   const base = Number(amount);
   const feeValue = Number(value);
-  if (!Number.isFinite(base) || !Number.isFinite(feeValue) || feeValue <= 0) {
+  if (!Number.isFinite(base)) {
     return "0";
   }
+
+  if (mode === "combined") {
+    const fixedFee = Number(fixedValue);
+    if (
+      !Number.isFinite(feeValue) ||
+      !Number.isFinite(fixedFee) ||
+      feeValue < 0 ||
+      fixedFee < 0
+    ) {
+      return "0";
+    }
+    return cleanDecimal((base * feeValue) / 100 + fixedFee);
+  }
+
+  if (!Number.isFinite(feeValue) || feeValue <= 0) return "0";
   return cleanDecimal(mode === "percent" ? (base * feeValue) / 100 : feeValue);
 };
+
+export const isStripeIncomeCategory = (name?: string) =>
+  name?.trim().toLocaleLowerCase() === "stripe收入";
+
+export const getStripeIncomeFeePreset = (categoryName?: string) =>
+  isStripeIncomeCategory(categoryName)
+    ? {
+        currency: "USD",
+        mode: "combined" as const,
+        value: "2.2",
+        fixedValue: "0.35",
+      }
+    : null;
 
 const combineAmounts = (
   first: string,

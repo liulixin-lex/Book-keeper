@@ -35,6 +35,7 @@ import {
   addAmounts,
   calculateFeeAmount,
   getPrimaryAmount,
+  getStripeIncomeFeePreset,
   subtractAmounts,
   type FeeMode,
 } from "../utils/records";
@@ -51,6 +52,7 @@ interface EntryFormData {
   currency: string;
   fee_mode: FeeMode;
   fee_value: string;
+  fee_fixed_value: string;
   category_id: string;
   provider_id: string;
   note: string;
@@ -84,6 +86,7 @@ const initialFormData = (): EntryFormData => ({
   currency: "CNY",
   fee_mode: "amount",
   fee_value: "",
+  fee_fixed_value: "",
   category_id: "",
   provider_id: "",
   note: "",
@@ -204,6 +207,7 @@ const RecordsView: React.FC<RecordsViewProps> = ({ recordType }) => {
     formData.amount,
     formData.fee_mode,
     formData.fee_value,
+    formData.fee_fixed_value,
   );
   const settledAmount = isExpense
     ? addAmounts(formData.amount || "0", feeAmount)
@@ -215,6 +219,25 @@ const RecordsView: React.FC<RecordsViewProps> = ({ recordType }) => {
       ...current,
       provider_id: providerId,
       category_id: provider?.expense_category_id || "",
+    }));
+  };
+
+  const handleCategoryChange = (categoryId: string) => {
+    const category = activeCategories.find((item) => item.id === categoryId);
+    const feePreset = isExpense
+      ? null
+      : getStripeIncomeFeePreset(category?.name);
+    setFormData((current) => ({
+      ...current,
+      category_id: categoryId,
+      ...(feePreset
+        ? {
+            currency: feePreset.currency,
+            fee_mode: feePreset.mode,
+            fee_value: feePreset.value,
+            fee_fixed_value: feePreset.fixedValue,
+          }
+        : {}),
     }));
   };
 
@@ -646,12 +669,7 @@ const RecordsView: React.FC<RecordsViewProps> = ({ recordType }) => {
               label="类别"
               value={formData.category_id}
               disabled={isExpense && Boolean(formData.provider_id)}
-              onChange={(event) =>
-                setFormData((current) => ({
-                  ...current,
-                  category_id: event.target.value,
-                }))
-              }
+              onChange={(event) => handleCategoryChange(event.target.value)}
             >
               <option value="">使用默认类别</option>
               {activeCategories.map((category) => (
@@ -672,16 +690,18 @@ const RecordsView: React.FC<RecordsViewProps> = ({ recordType }) => {
             >
               <option value="amount">固定金额</option>
               <option value="percent">按比例</option>
+              {!isExpense && <option value="combined">比例 + 固定金额</option>}
             </Select>
             <Input
               label={
-                formData.fee_mode === "percent"
+                formData.fee_mode === "percent" ||
+                formData.fee_mode === "combined"
                   ? "手续费比例 (%)"
                   : "手续费金额"
               }
               type="number"
               min="0"
-              max={formData.fee_mode === "percent" ? "100" : undefined}
+              max={formData.fee_mode !== "amount" ? "100" : undefined}
               step="any"
               value={formData.fee_value}
               onChange={(event) =>
@@ -691,6 +711,21 @@ const RecordsView: React.FC<RecordsViewProps> = ({ recordType }) => {
                 }))
               }
             />
+            {!isExpense && formData.fee_mode === "combined" && (
+              <Input
+                label={`固定手续费金额 (${formData.currency})`}
+                type="number"
+                min="0"
+                step="any"
+                value={formData.fee_fixed_value}
+                onChange={(event) =>
+                  setFormData((current) => ({
+                    ...current,
+                    fee_fixed_value: event.target.value,
+                  }))
+                }
+              />
+            )}
             <Input
               label="外部单号"
               value={formData.external_id}
