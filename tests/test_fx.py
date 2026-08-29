@@ -1,4 +1,5 @@
 from datetime import UTC, date, datetime, timedelta
+from zoneinfo import ZoneInfo
 
 import httpx
 import pytest
@@ -61,7 +62,7 @@ def test_latest_rate_creates_new_timestamped_snapshots(db_session: Session) -> N
 
     client = httpx.Client(transport=httpx.MockTransport(handler))
     settings = Settings(_env_file=None)
-    today = date.today()
+    today = datetime.now(ZoneInfo(settings.timezone)).date()
     first = fetch_and_store_rate(db_session, "USD", today, settings=settings, client=client)
     second = fetch_and_store_rate(db_session, "USD", today, settings=settings, client=client)
     client.close()
@@ -92,11 +93,13 @@ def test_same_day_manual_override_is_used_for_bookkeeping(db_session: Session) -
         return httpx.Response(200, content=b'{"rate":7.1}')
 
     client = httpx.Client(transport=httpx.MockTransport(handler))
+    settings = Settings(_env_file=None)
+    today = datetime.now(ZoneInfo(settings.timezone)).date()
     selected = fetch_and_store_rate(
         db_session,
         "USD",
-        date.today(),
-        settings=Settings(_env_file=None),
+        today,
+        settings=settings,
         client=client,
     )
     client.close()
