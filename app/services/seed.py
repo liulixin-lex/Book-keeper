@@ -1,4 +1,4 @@
-from pathlib import Path
+from importlib.resources import files
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -85,11 +85,14 @@ def seed_defaults(session: Session) -> Workspace:
 
     ai_settings = session.get(AIWorkspaceSettings, workspace.id)
     if ai_settings is None:
-        default_agents_path = Path(__file__).resolve().parents[1] / "defaults" / "AGENTS.md"
         session.add(
             AIWorkspaceSettings(
                 workspace_id=workspace.id,
-                agents_md=default_agents_path.read_text(encoding="utf-8"),
+                agents_md=(
+                    files("app")
+                    .joinpath("defaults", "AGENTS.md")
+                    .read_text(encoding="utf-8")
+                ),
                 web_access_enabled=False,
             )
         )

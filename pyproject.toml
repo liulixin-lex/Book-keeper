@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "transit-ledger-backend"
-version = "0.1.3"
+version = "0.1.4"
 description = "Multi-user accounting backend for transit API operations"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -49,6 +49,9 @@ Issues = "https://github.com/liulixin-lex/Book-keeper/issues"
 
 [tool.setuptools.packages.find]
 include = ["app*"]
+
+[tool.setuptools.package-data]
+app = ["defaults/AGENTS.md"]
 
 [tool.pytest.ini_options]
 addopts = "-q"

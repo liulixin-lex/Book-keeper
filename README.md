@@ -96,7 +96,7 @@ npm run build
 发布镜像位于 `ghcr.io/liulixin-lex/book-keeper`：
 
 ```powershell
-docker pull ghcr.io/liulixin-lex/book-keeper:0.1.3
+docker pull ghcr.io/liulixin-lex/book-keeper:0.1.4
 ```
 
 ```powershell

@@ -2,7 +2,7 @@ name: book-keeper
 
 services:
   api:
-    image: ghcr.io/liulixin-lex/book-keeper:${BOOK_KEEPER_VERSION:-0.1.3}
+    image: ghcr.io/liulixin-lex/book-keeper:${BOOK_KEEPER_VERSION:-0.1.4}
     build: .
     restart: unless-stopped
     command:
@@ -34,7 +34,7 @@ services:
       start_period: 20s
 
   worker:
-    image: ghcr.io/liulixin-lex/book-keeper:${BOOK_KEEPER_VERSION:-0.1.3}
+    image: ghcr.io/liulixin-lex/book-keeper:${BOOK_KEEPER_VERSION:-0.1.4}
     build: .
     restart: unless-stopped
     command: ["python", "-m", "app.worker"]
