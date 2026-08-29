@@ -1,0 +1,69 @@
+[build-system]
+requires = ["setuptools>=75", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "transit-ledger-backend"
+version = "0.1.1"
+description = "Multi-user accounting backend for transit API operations"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+  "alembic>=1.16,<2",
+  "argon2-cffi>=23.1,<26",
+  "cryptography>=45,<47",
+  "email-validator>=2.2,<3",
+  "fastapi>=0.116,<1",
+  "httpx>=0.28,<1",
+  "onnxruntime>=1.29,<2",
+  "openpyxl>=3.1,<4",
+  "orjson>=3.10,<4",
+  "pydantic-settings>=2.10,<3",
+  "pypdf>=6,<7",
+  "pypdfium2>=5.9,<6",
+  "python-dateutil>=2.9,<3",
+  "python-multipart>=0.0.20,<1",
+  "rapidocr>=3.9,<4",
+  "sqlalchemy>=2.0.43,<3",
+  "sqlite-vec==0.1.9",
+  "tzdata>=2026.1",
+  "uvicorn[standard]>=0.35,<1",
+  "xlrd>=2.0,<3",
+]
+
+[project.optional-dependencies]
+dev = [
+  "mypy>=1.17,<2",
+  "pytest>=8.4,<9",
+  "pytest-asyncio>=1.1,<2",
+  "pytest-cov>=6.2,<8",
+  "ruff>=0.12,<1",
+]
+
+[project.scripts]
+ledger-admin = "app.cli:main"
+
+[project.urls]
+Repository = "https://github.com/liulixin-lex/Book-keeper"
+Issues = "https://github.com/liulixin-lex/Book-keeper/issues"
+
+[tool.setuptools.packages.find]
+include = ["app*"]
+
+[tool.pytest.ini_options]
+addopts = "-q"
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.mypy]
+python_version = "3.12"
+plugins = ["pydantic.mypy"]
+warn_unused_ignores = true
+disallow_untyped_defs = true

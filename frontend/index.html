@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
+    <title>Book keeper</title>
+    <script>
+      (function () {
+        try {
+          var stored = localStorage.getItem("ledger-theme");
+          var preference =
+            stored === "light" || stored === "dark" || stored === "system"
+              ? stored
+              : "system";
+          var systemDark = window.matchMedia(
+            "(prefers-color-scheme: dark)",
+          ).matches;
+          var resolvedDark =
+            preference === "dark" || (preference === "system" && systemDark);
+          var root = document.documentElement;
+          root.dataset.theme = preference;
+          root.classList.toggle("dark", resolvedDark);
+          root.style.colorScheme = resolvedDark ? "dark" : "light";
+        } catch (_error) {
+          document.documentElement.dataset.theme = "system";
+        }
+      })();
+    </script>
+  </head>
+  <body
+    class="bg-bg text-ink antialiased selection:bg-primary/35 selection:text-primary-ink"
+  >
+    <!--
+THESIS: Turn bookkeeping into a layered aurora glass cockpit; refuse flat dashboards and whole-screen transition churn.
+OWN-WORLD: Ice-crystal glass in light mode, deep-ocean glass in dark mode, teal and electric blue as the product spectrum, warm orange for financial counter-signals, 8px precision surfaces, translucent depth, edge light and tabular figures.
+STORY: Users read operating and cash health through independently animated data modules, then move into records, approvals, master data and AI workflows without losing shell context.
+FIRST VIEWPORT: A persistent navigation shell, compact glass instrument header, asymmetric stopwatch readout deck, continuous gradient trend stage, period summary and real daily ledger rows. Each module changes on its own cadence.
+FORM: User-refined Aurora Ledger Glass direction, evolved from grounded seed fb68370e.
+FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
+    -->
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

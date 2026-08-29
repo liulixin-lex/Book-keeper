@@ -1,0 +1,661 @@
+@import "@fontsource-variable/syne";
+@import "tailwindcss";
+
+:root {
+  /* Aurora Ledger Glass: Light Mode (Ice Crystal Glass) */
+  --bg: oklch(0.95 0.015 205);
+  --bg-shift: oklch(0.93 0.035 225);
+  --bg-warm: oklch(0.94 0.03 65);
+
+  --shell: oklch(0.975 0.01 210 / 0.72);
+  --surface: oklch(0.99 0.005 210 / 0.65);
+  --surface-raised: oklch(1 0.003 210 / 0.85);
+  --surface-strong: oklch(0.935 0.015 215 / 0.7);
+  --surface-inset: oklch(0.915 0.02 215 / 0.55);
+
+  --ink: oklch(0.18 0.03 235);
+  --muted: oklch(0.46 0.035 230);
+
+  --border: oklch(0.82 0.025 215 / 0.7);
+  --border-strong: oklch(0.68 0.05 215 / 0.85);
+
+  /* Primary Teal & Electric Blue */
+  --primary: oklch(0.72 0.16 168);
+  --primary-hover: oklch(0.68 0.17 172);
+  --primary-ink: oklch(0.12 0.04 175);
+  --primary-text: oklch(0.38 0.13 170);
+
+  --secondary: oklch(0.68 0.16 230);
+
+  /* Status & Accents */
+  --success: oklch(0.48 0.14 160);
+  --warning: oklch(0.48 0.15 55); /* Deep warm orange for expense/risk */
+  --danger: oklch(0.48 0.19 28); /* Deep orange-red */
+
+  /* Chart Tokens */
+  --chart-a: oklch(0.72 0.16 168);
+  --chart-b: oklch(0.68 0.16 230);
+  --chart-warm: oklch(0.72 0.17 65); /* Bright warm orange for charts */
+  --chart-glow: oklch(0.75 0.15 195 / 0.25);
+
+  /* Layered Shadows */
+  --shadow-shell:
+    0 20px 48px -18px rgb(12 36 48 / 0.16),
+    0 0 0 1px rgb(255 255 255 / 0.85) inset;
+  --shadow-panel:
+    0 10px 24px -12px rgb(14 38 52 / 0.12), 0 2px 6px -2px rgb(14 38 52 / 0.06),
+    inset 0 1px 0 rgb(255 255 255 / 0.9);
+  --shadow-inset:
+    inset 0 2px 6px rgb(12 30 42 / 0.09), inset 0 -1px 0 rgb(255 255 255 / 0.6);
+}
+
+.dark {
+  /* Aurora Ledger Glass: Dark Mode (Deep Abyss Glass) */
+  --bg: oklch(0.12 0.025 240);
+  --bg-shift: oklch(0.15 0.045 220);
+  --bg-warm: oklch(0.14 0.035 45);
+
+  --shell: oklch(0.16 0.025 235 / 0.68);
+  --surface: oklch(0.19 0.03 230 / 0.6);
+  --surface-raised: oklch(0.24 0.035 225 / 0.75);
+  --surface-strong: oklch(0.27 0.035 225 / 0.65);
+  --surface-inset: oklch(0.09 0.02 245 / 0.6);
+
+  --ink: oklch(0.95 0.015 210);
+  --muted: oklch(0.66 0.025 220);
+
+  --border: oklch(0.32 0.035 225 / 0.65);
+  --border-strong: oklch(0.48 0.06 215 / 0.75);
+
+  /* Primary Teal & Electric Blue in Dark */
+  --primary: oklch(0.78 0.16 168);
+  --primary-hover: oklch(0.82 0.15 168);
+  --primary-ink: oklch(0.1 0.04 175);
+  --primary-text: oklch(0.8 0.16 168);
+
+  --secondary: oklch(0.74 0.16 230);
+
+  /* Status & Accents */
+  --success: oklch(0.75 0.16 160);
+  --warning: oklch(0.76 0.17 65); /* Warm Orange */
+  --danger: oklch(0.7 0.2 35);
+
+  /* Chart Tokens */
+  --chart-a: oklch(0.78 0.16 168);
+  --chart-b: oklch(0.74 0.16 230);
+  --chart-warm: oklch(0.76 0.17 65); /* Bright warm orange for charts */
+  --chart-glow: oklch(0.78 0.16 195 / 0.3);
+
+  /* Layered Shadows */
+  --shadow-shell:
+    0 24px 56px -20px rgb(0 6 12 / 0.85),
+    0 0 0 1px rgb(255 255 255 / 0.12) inset;
+  --shadow-panel:
+    0 12px 28px -14px rgb(0 6 12 / 0.75), 0 2px 8px -2px rgb(0 6 12 / 0.45),
+    inset 0 1px 0 rgb(255 255 255 / 0.14);
+  --shadow-inset:
+    inset 0 2px 7px rgb(0 4 8 / 0.85), inset 0 -1px 0 rgb(255 255 255 / 0.05);
+}
+
+@theme {
+  --color-bg: var(--bg);
+  --color-bg-shift: var(--bg-shift);
+  --color-bg-warm: var(--bg-warm);
+  --color-shell: var(--shell);
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-surface-strong: var(--surface-strong);
+  --color-surface-inset: var(--surface-inset);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-ink: var(--primary-ink);
+  --color-secondary: var(--secondary);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+  --color-chart-a: var(--chart-a);
+  --color-chart-b: var(--chart-b);
+  --color-chart-warm: var(--chart-warm);
+  --color-chart-glow: var(--chart-glow);
+
+  --font-sans:
+    ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "PingFang SC", "Microsoft YaHei", sans-serif;
+  --font-mono:
+    ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+  --font-brand: "Syne Variable", "Syne", sans-serif;
+}
+
+html {
+  color-scheme: light dark;
+  letter-spacing: 0;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--bg);
+  background-image:
+    linear-gradient(
+      135deg,
+      color-mix(in oklch, var(--bg) 80%, var(--bg-shift)) 0%,
+      var(--bg) 45%,
+      color-mix(in oklch, var(--bg) 88%, var(--bg-warm)) 100%
+    ),
+    linear-gradient(
+      225deg,
+      transparent 60%,
+      color-mix(in oklch, var(--primary) 12%, transparent) 100%
+    );
+  background-attachment: fixed;
+  color: var(--ink);
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  letter-spacing: 0;
+  min-height: 100vh;
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  letter-spacing: 0;
+}
+
+input,
+select,
+textarea {
+  color-scheme: inherit;
+}
+
+.font-mono-amount {
+  font-family: var(--font-mono);
+  font-feature-settings: "tnum" 1;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+}
+
+.text-primary {
+  color: var(--primary-text) !important;
+}
+
+.shadow-control-inset {
+  box-shadow: var(--shadow-inset);
+}
+
+table {
+  font-variant-numeric: tabular-nums;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--muted);
+  opacity: 0.9;
+}
+
+/* Brand Styles */
+.font-brand {
+  font-family: var(--font-brand);
+  letter-spacing: 0;
+}
+
+.brand-mark {
+  border: 1px solid color-mix(in oklch, var(--primary) 45%, var(--border));
+  background: linear-gradient(
+    135deg,
+    color-mix(in oklch, var(--primary) 85%, white) 0%,
+    color-mix(in oklch, var(--secondary) 85%, var(--primary)) 100%
+  );
+  box-shadow:
+    inset 0 1px 1px 0 rgb(255 255 255 / 0.8),
+    inset 0 -1px 2px 0 rgb(0 0 0 / 0.15),
+    0 4px 14px -3px color-mix(in oklch, var(--primary) 50%, transparent);
+  transition:
+    transform 140ms ease,
+    box-shadow 140ms ease;
+}
+
+.dark .brand-mark {
+  border: 1px solid
+    color-mix(in oklch, var(--primary) 60%, var(--border-strong));
+  background: linear-gradient(
+    135deg,
+    color-mix(in oklch, var(--primary) 90%, var(--surface-raised)) 0%,
+    color-mix(in oklch, var(--secondary) 85%, #0b1928) 100%
+  );
+  box-shadow:
+    inset 0 1px 1px 0 rgb(255 255 255 / 0.5),
+    inset 0 -1px 2px 0 rgb(0 0 0 / 0.4),
+    0 4px 16px -2px color-mix(in oklch, var(--primary) 40%, transparent);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .brand-mark:hover {
+    transform: translateY(-1px);
+    box-shadow:
+      inset 0 1px 1px 0 rgb(255 255 255 / 0.9),
+      inset 0 -1px 2px 0 rgb(0 0 0 / 0.15),
+      0 6px 18px -2px color-mix(in oklch, var(--primary) 65%, transparent);
+  }
+}
+
+.brand-wordmark {
+  font-family: var(--font-brand);
+  letter-spacing: 0 !important;
+}
+
+.brand-wordmark-book {
+  font-weight: 800;
+}
+
+.brand-wordmark-keeper {
+  font-weight: 560;
+  font-style: italic;
+  font-variation-settings: "wght" 560;
+}
+
+/* Glass Shell & Surfaces */
+.app-shell {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--shell);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  box-shadow: var(--shadow-shell);
+}
+
+.instrument-panel,
+.instrument-panel-raised,
+.instrument-strip,
+.instrument-inset,
+.data-table-shell {
+  border-radius: 8px;
+}
+
+.instrument-panel {
+  position: relative;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  box-shadow: var(--shadow-panel);
+}
+
+.instrument-panel-raised {
+  border: 1px solid var(--border-strong);
+  background: linear-gradient(180deg, var(--surface-raised), var(--surface));
+  backdrop-filter: blur(20px) saturate(150%);
+  -webkit-backdrop-filter: blur(20px) saturate(150%);
+  box-shadow: var(--shadow-panel);
+}
+
+.instrument-strip {
+  border: 1px solid var(--border);
+  background: var(--surface-strong);
+  backdrop-filter: blur(12px) saturate(130%);
+  -webkit-backdrop-filter: blur(12px) saturate(130%);
+}
+
+.instrument-inset {
+  border: 1px solid var(--border);
+  background: var(--surface-inset);
+  box-shadow: var(--shadow-inset);
+}
+
+.instrument-control {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: var(--shadow-panel);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition:
+    transform 120ms ease,
+    border-color 140ms ease,
+    background-color 140ms ease,
+    box-shadow 140ms ease;
+}
+
+.instrument-control:hover {
+  border-color: var(--border-strong);
+  background: var(--surface-raised);
+}
+
+.instrument-control:active {
+  transform: scale(0.97);
+}
+
+.nav-item-icon {
+  transition:
+    transform 140ms ease,
+    opacity 140ms ease,
+    filter 140ms ease;
+}
+
+button:hover > .nav-item-icon,
+a:hover > .nav-item-icon,
+.instrument-control:hover > .nav-item-icon {
+  transform: translateY(-1px);
+  filter: drop-shadow(
+    0 2px 4px color-mix(in oklch, var(--primary) 30%, transparent)
+  );
+}
+
+button:active > .nav-item-icon,
+a:active > .nav-item-icon,
+.instrument-control:active > .nav-item-icon {
+  transform: translateY(0) scale(0.95);
+  filter: none;
+}
+
+.data-table-shell {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  backdrop-filter: blur(16px) saturate(130%);
+  -webkit-backdrop-filter: blur(16px) saturate(130%);
+  box-shadow: var(--shadow-panel);
+}
+
+.metric-figure {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+@keyframes module-glass-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+main
+  :is(
+    .instrument-panel,
+    .instrument-panel-raised,
+    .instrument-strip,
+    .data-table-shell,
+    .chart-basis-stage
+  ) {
+  animation: module-glass-fade-in 180ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+main
+  :is(
+    .instrument-panel,
+    .instrument-panel-raised,
+    .instrument-strip,
+    .data-table-shell,
+    .chart-basis-stage
+  ):nth-child(1) {
+  animation-delay: 0ms;
+}
+
+main
+  :is(
+    .instrument-panel,
+    .instrument-panel-raised,
+    .instrument-strip,
+    .data-table-shell,
+    .chart-basis-stage
+  ):nth-child(2) {
+  animation-delay: 30ms;
+}
+
+main
+  :is(
+    .instrument-panel,
+    .instrument-panel-raised,
+    .instrument-strip,
+    .data-table-shell,
+    .chart-basis-stage
+  ):nth-child(3) {
+  animation-delay: 60ms;
+}
+
+main
+  :is(
+    .instrument-panel,
+    .instrument-panel-raised,
+    .instrument-strip,
+    .data-table-shell,
+    .chart-basis-stage
+  ):nth-child(n + 4) {
+  animation-delay: 90ms;
+}
+
+.module-glass-in {
+  animation: module-glass-fade-in 180ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.module-glass-in:nth-child(1) {
+  animation-delay: 0ms;
+}
+.module-glass-in:nth-child(2) {
+  animation-delay: 30ms;
+}
+.module-glass-in:nth-child(3) {
+  animation-delay: 60ms;
+}
+.module-glass-in:nth-child(n + 4) {
+  animation-delay: 90ms;
+}
+
+@keyframes loading-track {
+  0%,
+  100% {
+    transform: translateX(-120%);
+  }
+  50% {
+    transform: translateX(270%);
+  }
+}
+
+@keyframes skeleton-shift {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+.skeleton-sheen {
+  border-radius: 8px;
+  background: linear-gradient(
+    90deg,
+    var(--surface-strong),
+    var(--surface-raised),
+    var(--surface-strong)
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shift 1.6s ease-in-out infinite;
+}
+
+::selection {
+  background: color-mix(in oklch, var(--primary) 40%, transparent);
+  color: var(--primary-ink);
+}
+
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+* {
+  scrollbar-color: var(--border-strong) var(--surface-inset);
+  scrollbar-width: thin;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--surface-inset);
+}
+
+::-webkit-scrollbar-thumb {
+  border: 2px solid var(--surface-inset);
+  border-radius: 4px;
+  background: var(--border-strong);
+}
+
+/* Glass Data Stand for Chart */
+.chart-basis-stage {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  box-shadow: var(--shadow-panel);
+}
+
+.chart-basis-stage::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse 75% 45% at 50% 100%,
+    var(--chart-glow) 0%,
+    transparent 70%
+  );
+  animation: chart-breathing-glow 6s ease-in-out infinite alternate;
+  z-index: 0;
+}
+
+.chart-basis-stage::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -150%;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in oklch, var(--primary) 8%, transparent) 50%,
+    transparent 100%
+  );
+  transform: skewX(-20deg);
+  animation: chart-light-sweep 8s ease-in-out infinite;
+  z-index: 0;
+}
+
+.chart-basis-stage > * {
+  position: relative;
+  z-index: 1;
+}
+
+.chart-basis-stage .recharts-area-curve {
+  filter: drop-shadow(0 0 6px var(--chart-glow));
+}
+
+.chart-basis-stage .recharts-line-curve {
+  filter: drop-shadow(
+    0 0 4px color-mix(in oklch, var(--chart-warm) 38%, transparent)
+  );
+}
+
+@keyframes chart-breathing-glow {
+  0% {
+    opacity: 0.3;
+    transform: scale(0.98);
+  }
+  100% {
+    opacity: 0.8;
+    transform: scale(1.02);
+  }
+}
+
+@keyframes chart-light-sweep {
+  0% {
+    left: -150%;
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  50% {
+    left: 200%;
+    opacity: 0;
+  }
+  100% {
+    left: 200%;
+    opacity: 0;
+  }
+}
+
+/* Icon Module in Readout */
+.icon-module {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface-raised);
+  box-shadow: var(--shadow-panel);
+  transition:
+    transform 180ms cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 180ms ease,
+    border-color 180ms ease,
+    background-color 180ms ease;
+}
+
+.icon-module:hover {
+  transform: translateY(-1.5px) rotate(4deg);
+  border-color: var(--border-strong);
+  box-shadow:
+    0 4px 12px -2px color-mix(in oklch, var(--primary) 25%, transparent),
+    inset 0 1px 0 rgb(255 255 255 / 0.8);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    transform: none !important;
+  }
+  .module-glass-in,
+  main
+    :is(
+      .instrument-panel,
+      .instrument-panel-raised,
+      .instrument-strip,
+      .data-table-shell,
+      .chart-basis-stage
+    ),
+  .chart-basis-stage::before,
+  .chart-basis-stage::after,
+  .icon-module,
+  .icon-module:hover {
+    animation: none !important;
+    transform: none !important;
+  }
+}
