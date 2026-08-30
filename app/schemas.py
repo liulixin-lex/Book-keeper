@@ -8,6 +8,7 @@ from pydantic import (
     ConfigDict,
     EmailStr,
     Field,
+    SecretStr,
     ValidationInfo,
     field_validator,
     model_validator,
@@ -362,3 +363,89 @@ class HealthRead(BaseModel):
     status: str
     sqlite_version: str
     database: str
+
+
+class BackupStorageWrite(BaseModel):
+    storage_type: Literal["s3", "r2"] = "s3"
+    endpoint_url: str | None = Field(default=None, max_length=1024)
+    region: str = Field(default="us-east-1", min_length=1, max_length=120)
+    bucket: str = Field(min_length=1, max_length=255)
+    access_key_id: str = Field(min_length=1, max_length=512)
+    secret_access_key: SecretStr | None = Field(default=None, max_length=1024)
+    prefix: str = Field(default="backups", max_length=512)
+    force_path_style: bool = False
+
+    @field_validator(
+        "endpoint_url", "region", "bucket", "access_key_id", "prefix", mode="before"
+    )
+    @classmethod
+    def normalize_backup_storage_value(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        return value.strip()
+
+    @model_validator(mode="after")
+    def validate_r2_endpoint(self) -> BackupStorageWrite:
+        if self.storage_type == "r2" and not self.endpoint_url:
+            raise ValueError("Cloudflare R2 必须填写 Endpoint")
+        return self
+
+
+class BackupStorageRead(BaseModel):
+    storage_type: Literal["s3", "r2"]
+    endpoint_url: str | None
+    region: str
+    bucket: str
+    access_key_id: str
+    prefix: str
+    force_path_style: bool
+    secret_configured: bool
+    version: int
+
+
+class BackupScheduleWrite(BaseModel):
+    enabled: bool = False
+    cron_expression: str = Field(default="0 2 * * *", min_length=1, max_length=120)
+    retain_days: int = Field(default=14, ge=0, le=3650)
+    retain_count: int = Field(default=10, ge=0, le=1000)
+
+    @field_validator("cron_expression")
+    @classmethod
+    def normalize_cron_expression(cls, value: str) -> str:
+        return " ".join(value.split())
+
+
+class BackupScheduleRead(BackupScheduleWrite):
+    timezone: str
+    next_run_at: datetime | None
+    version: int
+
+
+class BackupRunRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: str
+    status: Literal["running", "completed", "failed"]
+    trigger: Literal["manual", "scheduled"]
+    file_name: str
+    object_key: str | None
+    size_bytes: int | None
+    checksum_sha256: str | None
+    error_message: str | None
+    started_at: datetime
+    finished_at: datetime | None
+    expires_at: datetime | None
+
+
+class BackupListRead(BaseModel):
+    items: list[BackupRunRead]
+
+
+class BackupConnectionTestRead(BaseModel):
+    ok: bool
+    message: str
+
+
+class BackupDownloadRead(BaseModel):
+    url: str
+    expires_in_seconds: int

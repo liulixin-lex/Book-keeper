@@ -10,6 +10,8 @@ annotated-doc==0.0.5
     # via fastapi
 annotated-types==0.8.0
     # via pydantic
+antlr4-python3-runtime==4.9.3
+    # via omegaconf
 anyio==4.14.2
     # via
     #   httpx
@@ -19,20 +21,36 @@ argon2-cffi==25.1.0
     # via transit-ledger-backend (pyproject.toml)
 argon2-cffi-bindings==26.1.0
     # via argon2-cffi
+boto3==1.43.83
+    # via transit-ledger-backend (pyproject.toml)
+botocore==1.43.83
+    # via
+    #   boto3
+    #   s3transfer
 certifi==2026.7.22
     # via
     #   httpcore
     #   httpx
+    #   requests
 cffi==2.1.1
     # via
     #   argon2-cffi-bindings
     #   cryptography
+charset-normalizer==3.5.1
+    # via requests
 click==8.5.0
     # via uvicorn
 colorama==0.4.6
-    # via pytest
+    # via
+    #   colorlog
+    #   pytest
+    #   tqdm
+colorlog==6.12.0
+    # via rapidocr
 coverage==7.15.4
     # via pytest-cov
+croniter==6.2.4
+    # via transit-ledger-backend (pyproject.toml)
 cryptography==46.0.7
     # via transit-ledger-backend (pyproject.toml)
 dnspython==2.8.0
@@ -43,6 +61,8 @@ et-xmlfile==2.0.0
     # via openpyxl
 fastapi==0.141.1
     # via transit-ledger-backend (pyproject.toml)
+flatbuffers==25.12.19
+    # via onnxruntime
 greenlet==3.5.5
     # via sqlalchemy
 h11==0.16.0
@@ -60,8 +80,13 @@ idna==3.19
     #   anyio
     #   email-validator
     #   httpx
+    #   requests
 iniconfig==2.3.0
     # via pytest
+jmespath==1.1.0
+    # via
+    #   boto3
+    #   botocore
 librt==0.15.0
     # via mypy
 mako==1.4.1
@@ -72,18 +97,38 @@ mypy==1.20.2
     # via transit-ledger-backend (pyproject.toml)
 mypy-extensions==1.1.0
     # via mypy
+numpy==2.5.2
+    # via
+    #   onnxruntime
+    #   opencv-python
+    #   rapidocr
+    #   shapely
+omegaconf==2.3.1
+    # via rapidocr
+onnxruntime==1.29.0
+    # via transit-ledger-backend (pyproject.toml)
+opencv-python==5.0.0.93
+    # via rapidocr
 openpyxl==3.1.5
     # via transit-ledger-backend (pyproject.toml)
 orjson==3.12.0
     # via transit-ledger-backend (pyproject.toml)
 packaging==26.3
-    # via pytest
+    # via
+    #   onnxruntime
+    #   pytest
 pathspec==1.1.1
     # via mypy
+pillow==12.3.0
+    # via rapidocr
 pluggy==1.6.0
     # via
     #   pytest
     #   pytest-cov
+protobuf==7.36.0
+    # via onnxruntime
+pyclipper==1.4.0
+    # via rapidocr
 pycparser==3.0
     # via cffi
 pydantic==2.13.4
@@ -96,6 +141,10 @@ pydantic-settings==2.15.0
     # via transit-ledger-backend (pyproject.toml)
 pygments==2.21.0
     # via pytest
+pypdf==6.16.2
+    # via transit-ledger-backend (pyproject.toml)
+pypdfium2==5.13.0
+    # via transit-ledger-backend (pyproject.toml)
 pytest==8.4.2
     # via
     #   pytest-asyncio
@@ -106,34 +155,53 @@ pytest-asyncio==1.4.0
 pytest-cov==7.1.0
     # via transit-ledger-backend (pyproject.toml)
 python-dateutil==2.9.0.post0
-    # via transit-ledger-backend (pyproject.toml)
+    # via
+    #   botocore
+    #   croniter
+    #   transit-ledger-backend (pyproject.toml)
 python-dotenv==1.2.3
     # via
     #   pydantic-settings
     #   uvicorn
+python-multipart==0.0.32
+    # via transit-ledger-backend (pyproject.toml)
 pyyaml==6.0.3
-    # via uvicorn
+    # via
+    #   omegaconf
+    #   rapidocr
+    #   uvicorn
+rapidocr==3.9.2
+    # via transit-ledger-backend (pyproject.toml)
+requests==2.34.2
+    # via rapidocr
 ruff==0.16.5
     # via transit-ledger-backend (pyproject.toml)
+s3transfer==0.19.2
+    # via boto3
+shapely==2.1.2
+    # via rapidocr
 six==1.17.0
-    # via python-dateutil
+    # via
+    #   python-dateutil
+    #   rapidocr
 sqlalchemy==2.0.52
     # via
     #   alembic
     #   transit-ledger-backend (pyproject.toml)
+sqlite-vec==0.1.9
+    # via transit-ledger-backend (pyproject.toml)
 starlette==1.6.0
     # via fastapi
+tqdm==4.70.0
+    # via rapidocr
 typing-extensions==4.16.0
     # via
     #   alembic
-    #   anyio
     #   fastapi
     #   mypy
     #   pydantic
     #   pydantic-core
-    #   pytest-asyncio
     #   sqlalchemy
-    #   starlette
     #   typing-inspection
 typing-inspection==0.4.4
     # via
@@ -142,6 +210,10 @@ typing-inspection==0.4.4
     #   pydantic-settings
 tzdata==2026.3
     # via transit-ledger-backend (pyproject.toml)
+urllib3==2.7.0
+    # via
+    #   botocore
+    #   requests
 uvicorn==0.52.4
     # via transit-ledger-backend (pyproject.toml)
 watchfiles==1.2.0
@@ -150,46 +222,3 @@ websockets==17.1
     # via uvicorn
 xlrd==2.0.2
     # via transit-ledger-backend (pyproject.toml)
-antlr4-python3-runtime==4.9.3
-    # via omegaconf
-charset-normalizer==3.5.1
-    # via requests
-colorlog==6.12.0
-    # via rapidocr
-flatbuffers==25.12.19
-    # via onnxruntime
-numpy==2.5.2
-    # via
-    #   onnxruntime
-    #   opencv-python
-    #   rapidocr
-omegaconf==2.3.1
-    # via rapidocr
-onnxruntime==1.29.0
-    # via transit-ledger-backend (pyproject.toml)
-opencv-python==5.0.0.93
-    # via rapidocr
-pillow==12.3.0
-    # via rapidocr
-protobuf==7.36.0
-    # via onnxruntime
-pyclipper==1.4.0
-    # via rapidocr
-pypdf==6.16.2
-    # via transit-ledger-backend (pyproject.toml)
-pypdfium2==5.13.0
-    # via transit-ledger-backend (pyproject.toml)
-python-multipart==0.0.32
-    # via transit-ledger-backend (pyproject.toml)
-rapidocr==3.9.2
-    # via transit-ledger-backend (pyproject.toml)
-requests==2.34.2
-    # via rapidocr
-shapely==2.1.2
-    # via rapidocr
-sqlite-vec==0.1.9
-    # via transit-ledger-backend (pyproject.toml)
-tqdm==4.70.0
-    # via rapidocr
-urllib3==2.7.0
-    # via requests

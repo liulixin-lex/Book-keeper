@@ -96,7 +96,7 @@ npm run build
 发布镜像位于 `ghcr.io/liulixin-lex/book-keeper`：
 
 ```powershell
-docker pull ghcr.io/liulixin-lex/book-keeper:0.1.4
+docker pull ghcr.io/liulixin-lex/book-keeper:0.1.5
 ```
 
 ```powershell
@@ -108,6 +108,17 @@ docker compose ps
 镜像固定构建 SQLite 3.53.4。维护进程使用 SQLite Online Backup API 定期备份，不运行第二个 API 写实例。公网部署时应由 Caddy、Nginx 或云负载均衡器终止 TLS，并保持 `SESSION_COOKIE_SECURE=true`。SQLite 官方说明 `3.51.3` 起修复 WAL-reset 问题，因此启动时会拒绝更旧的运行时。
 
 ## 备份与恢复
+
+管理员可以在“数据备份”页面配置 AWS S3 或 Cloudflare R2。R2 使用
+`https://<account-id>.r2.cloudflarestorage.com` 作为 Endpoint、`auto` 作为 Region；
+AWS S3 可以留空 Endpoint 并填写实际 Region。Secret Access Key 使用
+`APP_SECRET_KEY` 派生密钥加密保存，接口不会回传明文。
+
+页面支持连接测试、立即备份、备份记录、预签名下载和远程删除。定时备份使用
+5 段 Cron 表达式，按 `TIMEZONE`（默认 `Asia/Shanghai`）计算，配置修改后 worker
+会自动重新加载，无需重启。保留天数或保留份数设为 `0` 表示不按该条件清理。
+
+本地运维命令继续可用：
 
 ```powershell
 .\.venv\Scripts\ledger-admin.exe backup

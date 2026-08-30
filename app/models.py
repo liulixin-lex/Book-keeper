@@ -61,6 +61,63 @@ class Workspace(Base, TimestampMixin):
     base_currency: Mapped[str] = mapped_column(String(12), nullable=False, default="CNY")
 
 
+class BackupSettings(Base, TimestampMixin):
+    __tablename__ = "backup_settings"
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True, default="default")
+    storage_type: Mapped[str] = mapped_column(String(16), nullable=False, default="s3")
+    endpoint_url: Mapped[str | None] = mapped_column(String(1024))
+    region: Mapped[str] = mapped_column(String(120), nullable=False, default="us-east-1")
+    bucket: Mapped[str] = mapped_column(String(255), nullable=False, default="")
+    access_key_id: Mapped[str] = mapped_column(String(512), nullable=False, default="")
+    encrypted_secret_access_key: Mapped[str | None] = mapped_column(Text)
+    prefix: Mapped[str] = mapped_column(String(512), nullable=False, default="backups")
+    force_path_style: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    schedule_enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    cron_expression: Mapped[str] = mapped_column(
+        String(120), nullable=False, default="0 2 * * *"
+    )
+    retain_days: Mapped[int] = mapped_column(Integer, nullable=False, default=14)
+    retain_count: Mapped[int] = mapped_column(Integer, nullable=False, default=10)
+    version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    updated_by_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"))
+
+    __table_args__ = (
+        CheckConstraint("storage_type IN ('s3', 'r2')", name="ck_backup_storage_type"),
+        CheckConstraint("retain_days >= 0", name="ck_backup_retain_days"),
+        CheckConstraint("retain_count >= 0", name="ck_backup_retain_count"),
+    )
+
+
+class BackupRun(Base):
+    __tablename__ = "backup_runs"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    status: Mapped[str] = mapped_column(String(24), nullable=False, default="running")
+    trigger: Mapped[str] = mapped_column(String(24), nullable=False)
+    active_slot: Mapped[str | None] = mapped_column(String(40), unique=True)
+    file_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    object_key: Mapped[str | None] = mapped_column(String(1024))
+    size_bytes: Mapped[int | None] = mapped_column(Integer)
+    checksum_sha256: Mapped[str | None] = mapped_column(String(64))
+    error_message: Mapped[str | None] = mapped_column(String(1000))
+    started_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+    __table_args__ = (
+        CheckConstraint(
+            "status IN ('running', 'completed', 'failed')", name="ck_backup_run_status"
+        ),
+        CheckConstraint(
+            "trigger IN ('manual', 'scheduled')", name="ck_backup_run_trigger"
+        ),
+        Index("ix_backup_runs_started_at", "started_at"),
+    )
+
+
 class User(Base, TimestampMixin):
     __tablename__ = "users"
 

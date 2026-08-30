@@ -395,3 +395,40 @@ export interface KnowledgeStatus {
   embedding_provider?: AIEmbeddingProvider | null;
   fallback_available: boolean;
 }
+export type BackupStorageType = "s3" | "r2";
+
+export interface BackupStorageConfig {
+  storage_type: BackupStorageType;
+  endpoint_url: string | null;
+  region: string;
+  bucket: string;
+  access_key_id: string;
+  prefix: string;
+  force_path_style: boolean;
+  secret_configured: boolean;
+  version: number;
+}
+
+export interface BackupScheduleConfig {
+  enabled: boolean;
+  cron_expression: string;
+  retain_days: number;
+  retain_count: number;
+  timezone: string;
+  next_run_at: string | null;
+  version: number;
+}
+
+export interface BackupRun {
+  id: string;
+  status: "running" | "completed" | "failed";
+  trigger: "manual" | "scheduled";
+  file_name: string;
+  object_key: string | null;
+  size_bytes: number | null;
+  checksum_sha256: string | null;
+  error_message: string | null;
+  started_at: string;
+  finished_at: string | null;
+  expires_at: string | null;
+}

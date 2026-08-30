@@ -41,6 +41,8 @@ def test_static_migration_installs_immutable_balanced_ledger_guards(
         assert "reconciliation_items" not in table_names
         assert "business_records" in table_names
         assert "source_documents" in table_names
+        assert "backup_settings" in table_names
+        assert "backup_runs" in table_names
 
         trigger_names = {
             row[0]

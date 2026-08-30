@@ -17,14 +17,22 @@ def _fernet(secret: str) -> Fernet:
     return Fernet(base64.urlsafe_b64encode(digest))
 
 
-def encrypt_api_key(api_key: str, application_secret: str) -> str:
-    if not api_key:
-        raise ValueError("api_key must not be empty")
-    return _fernet(application_secret).encrypt(api_key.encode("utf-8")).decode("ascii")
+def encrypt_secret(value: str, application_secret: str) -> str:
+    if not value:
+        raise ValueError("secret must not be empty")
+    return _fernet(application_secret).encrypt(value.encode("utf-8")).decode("ascii")
 
 
-def decrypt_api_key(ciphertext: str, application_secret: str) -> str:
+def decrypt_secret(ciphertext: str, application_secret: str) -> str:
     try:
         return _fernet(application_secret).decrypt(ciphertext.encode("ascii")).decode("utf-8")
     except (InvalidToken, UnicodeDecodeError, ValueError) as exc:
-        raise SecretDecryptionError("configured API key cannot be decrypted") from exc
+        raise SecretDecryptionError("configured secret cannot be decrypted") from exc
+
+
+def encrypt_api_key(api_key: str, application_secret: str) -> str:
+    return encrypt_secret(api_key, application_secret)
+
+
+def decrypt_api_key(ciphertext: str, application_secret: str) -> str:
+    return decrypt_secret(ciphertext, application_secret)

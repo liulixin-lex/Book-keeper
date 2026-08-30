@@ -16,6 +16,7 @@ def test_openapi_contains_public_backend_surface() -> None:
         "/api/v1/reports/overview",
         "/api/v1/catalog/providers",
         "/api/v1/audit",
+        "/api/v1/backups/storage",
     }
     assert expected <= set(paths)
     assert not any(path.startswith("/api/v1/imports") for path in paths)

@@ -6,6 +6,7 @@ import {
   ChartLineUp,
   Check,
   CheckSquareOffset,
+  CloudArrowUp,
   Folder,
   GearSix,
   List,
@@ -35,7 +36,8 @@ export type NavItemKey =
   | "catalog"
   | "users"
   | "profile"
-  | "audit";
+  | "audit"
+  | "backups";
 
 interface LayoutProps {
   currentTab: NavItemKey;
@@ -72,6 +74,7 @@ const pageTitles: Record<NavItemKey, string> = {
   users: "用户与邀请",
   profile: "个人资料",
   audit: "审计日志",
+  backups: "数据备份",
 };
 
 const themeOptions: Array<{
@@ -216,6 +219,12 @@ export const Layout: React.FC<LayoutProps> = ({
         { key: "catalog", label: "主数据管理", icon: Folder },
         { key: "profile", label: "个人资料", icon: UserCircle },
         { key: "users", label: "成员权限", icon: Users, adminOnly: true },
+        {
+          key: "backups",
+          label: "数据备份",
+          icon: CloudArrowUp,
+          adminOnly: true,
+        },
         { key: "audit", label: "审计日志", icon: Scroll, adminOnly: true },
       ],
     },

@@ -60,6 +60,11 @@ const ProfileView = lazy(() =>
 const AuditView = lazy(() =>
   import("./views/AuditView").then((module) => ({ default: module.AuditView })),
 );
+const BackupSettingsView = lazy(() =>
+  import("./views/BackupSettingsView").then((module) => ({
+    default: module.BackupSettingsView,
+  })),
+);
 
 const views: Record<
   NavItemKey,
@@ -77,6 +82,7 @@ const views: Record<
   users: UsersView,
   profile: ProfileView,
   audit: AuditView,
+  backups: BackupSettingsView,
 };
 
 export const App: React.FC = () => {
