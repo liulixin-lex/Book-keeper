@@ -6,7 +6,15 @@ from sqlalchemy.orm import Session
 
 from app.amounts import to_e8
 from app.enums import AmountRole, RecordStatus
-from app.models import Account, FxRate, JournalEntry, MoneyComponent, Workspace
+from app.models import (
+    Account,
+    Category,
+    Counterparty,
+    FxRate,
+    JournalEntry,
+    MoneyComponent,
+    Workspace,
+)
 from app.schemas import ExpenseCreate, IncomeCreate, MoneyInput, TopupCreate
 from app.services.accounting import (
     AccountingError,
@@ -30,6 +38,7 @@ def test_income_posts_balanced_gross_fee_and_net(db_session: Session, workspace:
             external_id="payment-1",
             gross=MoneyInput(currency="CNY", amount="100"),
             fee=MoneyInput(currency="GBP", amount="0.74", amount_cny="6.79"),
+            category_id="test-category-income-main",
         ),
     )
     assert record.status == RecordStatus.POSTED
@@ -151,6 +160,23 @@ def test_expense_fee_is_posted_separately_and_included_in_cash_out(
 
 
 def test_topup_is_cost_and_internal_credit(db_session: Session, workspace: Workspace) -> None:
+    category = db_session.scalar(
+        select(Category).where(
+            Category.workspace_id == workspace.id,
+            Category.name == "上游采购",
+        )
+    )
+    assert category is not None
+    provider = Counterparty(
+        workspace_id=workspace.id,
+        name="example-upstream",
+        roles_json=["supplier"],
+        expense_category_id=category.id,
+        metadata_json={},
+    )
+    db_session.add(provider)
+    db_session.commit()
+
     record = create_topup(
         db_session,
         workspace,
@@ -173,6 +199,24 @@ def test_topup_is_cost_and_internal_credit(db_session: Session, workspace: Works
     report = overview(db_session, workspace, date(2026, 8, 27), date(2026, 8, 27))
     assert report.operating_expenses == "47.00"
     assert report.cash_out == "47.00"
+
+
+def test_topup_does_not_create_missing_provider(
+    db_session: Session, workspace: Workspace
+) -> None:
+    with pytest.raises(AccountingError, match="请先在主数据管理中添加"):
+        create_topup(
+            db_session,
+            workspace,
+            TopupCreate(
+                accounting_date=date(2026, 8, 27),
+                upstream_name="not-created-by-user",
+                amount_cny="47",
+            ),
+        )
+    assert db_session.scalar(
+        select(Counterparty).where(Counterparty.name == "not-created-by-user")
+    ) is None
 
 
 def test_reversal_offsets_original_record(db_session: Session, workspace: Workspace) -> None:
@@ -202,6 +246,7 @@ def test_duplicate_external_id_is_rejected(db_session: Session, workspace: Works
         channel="Stripe",
         external_id="same-id",
         gross=MoneyInput(currency="CNY", amount="10"),
+        category_id="test-category-income-main",
     )
     create_income(db_session, workspace, payload)
     with pytest.raises(ValueError):

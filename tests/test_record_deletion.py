@@ -37,6 +37,7 @@ def test_deleting_income_removes_linked_refund_and_ledger_data(
             description="Income to delete",
             gross=MoneyInput(currency="CNY", amount="100"),
             fee=MoneyInput(currency="CNY", amount="5"),
+            category_id="test-category-income-main",
             counterparty_id=counterparty.id,
         ),
     )

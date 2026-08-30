@@ -90,6 +90,7 @@ def create_income_call(call_id: str = "income-call-1") -> AiToolCall:
             "currency": "CNY",
             "gross": "100.00",
             "fee": "5.00",
+            "category_id": "test-category-income-main",
             "post": True,
         },
     )
@@ -105,6 +106,7 @@ def create_expense_call(call_id: str = "expense-call-1") -> AiToolCall:
             "currency": "CNY",
             "cost": "20.00",
             "cash": "20.00",
+            "category_id": "test-category-cloud",
             "post": True,
         },
     )

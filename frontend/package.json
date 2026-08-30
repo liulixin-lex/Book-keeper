@@ -1,6 +1,6 @@
 {
   "name": "book-keeper-frontend",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "Book keeper web interface",
   "private": true,
   "main": "index.js",

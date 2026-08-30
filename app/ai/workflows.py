@@ -825,19 +825,7 @@ def _resolve_category(
             )
         )
     else:
-        default_name = "主营业务收入" if record_type == "income" else None
-        category = (
-            session.scalar(
-                select(Category).where(
-                    Category.workspace_id == workspace_id,
-                    Category.name == default_name,
-                    Category.is_active.is_(True),
-                )
-            )
-            if default_name
-            else None
-        )
-        derived = category is not None
+        category = None
     if category is None:
         return None, "缺少有效类别", derived
     allowed = (

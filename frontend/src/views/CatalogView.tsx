@@ -169,6 +169,10 @@ export const CatalogView: React.FC = () => {
   }, [activeTab, canEdit]);
 
   const openCreate = () => {
+    if (activeTab === "providers" && expenseCategories.length === 0) {
+      toastError("请先新增并启用一个支出类别");
+      return;
+    }
     const next = emptyForm();
     if (activeTab === "categories") {
       next.accountId =
@@ -409,7 +413,11 @@ export const CatalogView: React.FC = () => {
             description={
               activeTab === "fx-rates"
                 ? "刷新公开汇率或添加一条手工汇率"
-                : "使用上方新增按钮创建第一条数据"
+                : activeTab === "categories"
+                  ? "点击上方新增按钮创建第一条收支类别"
+                  : activeTab === "providers" && expenseCategories.length === 0
+                    ? "请先新增并启用一个支出类别"
+                    : "点击上方新增按钮创建第一条数据"
             }
           />
         ) : (
@@ -716,6 +724,7 @@ export const CatalogView: React.FC = () => {
                 }
                 required
               >
+                <option value="">请选择支出类别</option>
                 {expenseCategories.map((category) => (
                   <option key={category.id} value={category.id}>
                     {category.name}

@@ -140,6 +140,7 @@ def test_knowledge_outbox_builds_live_sql_evidence_without_embedding_service(
             fee=MoneyInput(currency="CNY", amount="1.00"),
             channel="knowledge-test",
             external_id="knowledge-income-1",
+            category_id="test-category-income-main",
             post=True,
         ),
         actor_id=user.id,

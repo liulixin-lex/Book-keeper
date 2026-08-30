@@ -241,6 +241,18 @@ const RecordsView: React.FC<RecordsViewProps> = ({ recordType }) => {
     }));
   };
 
+  const openCreate = () => {
+    if (activeCategories.length === 0) {
+      toastError(`请先在主数据管理中添加${isExpense ? "支出" : "收入"}类别`);
+      return;
+    }
+    if (isExpense && activeProviders.length === 0) {
+      toastError("请先在主数据管理中添加提供商");
+      return;
+    }
+    setIsCreateOpen(true);
+  };
+
   const createRecord = async (event: React.FormEvent) => {
     event.preventDefault();
     const amount = Number(formData.amount);
@@ -255,6 +267,10 @@ const RecordsView: React.FC<RecordsViewProps> = ({ recordType }) => {
     }
     if (isExpense && !formData.provider_id) {
       toastError("请选择提供商");
+      return;
+    }
+    if (!formData.category_id) {
+      toastError("请选择类别");
       return;
     }
     if (!Number.isFinite(fee) || fee < 0 || (!isExpense && fee > amount)) {
@@ -359,7 +375,7 @@ const RecordsView: React.FC<RecordsViewProps> = ({ recordType }) => {
             </p>
           </div>
           {user?.role !== "viewer" && (
-            <Button size="sm" onClick={() => setIsCreateOpen(true)}>
+            <Button size="sm" onClick={openCreate}>
               <Plus size={15} weight="bold" />
               录入{isExpense ? "支出" : "收入"}
             </Button>
@@ -666,12 +682,13 @@ const RecordsView: React.FC<RecordsViewProps> = ({ recordType }) => {
               </Select>
             )}
             <Select
-              label="类别"
+              label="类别 *"
               value={formData.category_id}
               disabled={isExpense && Boolean(formData.provider_id)}
               onChange={(event) => handleCategoryChange(event.target.value)}
+              required
             >
-              <option value="">使用默认类别</option>
+              <option value="">请选择类别</option>
               {activeCategories.map((category) => (
                 <option key={category.id} value={category.id}>
                   {category.name}

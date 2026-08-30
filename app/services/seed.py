@@ -4,12 +4,11 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.config import get_settings
-from app.enums import AccountType, CategoryKind
+from app.enums import AccountType
 from app.models import (
     Account,
     AIProvider,
     AIWorkspaceSettings,
-    Category,
     Workspace,
 )
 
@@ -22,17 +21,6 @@ ACCOUNT_SEEDS = [
     ("5401", "主营业务成本", AccountType.EXPENSE, "operating_cost"),
     ("5602", "管理费用", AccountType.EXPENSE, "administrative_expense"),
     ("5603", "财务费用", AccountType.EXPENSE, "processing_fee"),
-]
-
-CATEGORY_SEEDS = [
-    ("主营业务收入", CategoryKind.INCOME, "5001"),
-    ("其他业务收入", CategoryKind.INCOME, "5051"),
-    ("上游采购", CategoryKind.EXPENSE, "5401"),
-    ("账号采购", CategoryKind.EXPENSE, "5401"),
-    ("云服务", CategoryKind.EXPENSE, "5602"),
-    ("软件订阅", CategoryKind.EXPENSE, "5602"),
-    ("交易手续费", CategoryKind.EXPENSE, "5603"),
-    ("其他支出", CategoryKind.EXPENSE, "5602"),
 ]
 
 
@@ -49,7 +37,6 @@ def get_or_create_workspace(session: Session) -> Workspace:
 
 def seed_defaults(session: Session) -> Workspace:
     workspace = get_or_create_workspace(session)
-    accounts_by_code: dict[str, Account] = {}
     for code, name, account_type, subtype in ACCOUNT_SEEDS:
         account = session.scalar(
             select(Account).where(Account.workspace_id == workspace.id, Account.code == code)
@@ -67,21 +54,6 @@ def seed_defaults(session: Session) -> Workspace:
             )
             session.add(account)
             session.flush()
-        accounts_by_code[code] = account
-
-    for name, kind, code in CATEGORY_SEEDS:
-        exists = session.scalar(
-            select(Category).where(Category.workspace_id == workspace.id, Category.name == name)
-        )
-        if exists is None:
-            session.add(
-                Category(
-                    workspace_id=workspace.id,
-                    account_id=accounts_by_code[code].id,
-                    name=name,
-                    kind=kind,
-                )
-            )
 
     ai_settings = session.get(AIWorkspaceSettings, workspace.id)
     if ai_settings is None:

@@ -377,6 +377,7 @@ async def test_reversal_confirmation_creates_approval_without_reversing_record(
             accounting_date="2026-08-29",
             description="Income waiting for reversal approval",
             gross=MoneyInput(currency="CNY", amount="50.00"),
+            category_id="test-category-income-main",
             post=True,
         ),
         actor_id=user.id,

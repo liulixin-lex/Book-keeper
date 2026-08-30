@@ -43,6 +43,7 @@ def _income_payload(*, description: str = "Stripe sale") -> IncomeCreate:
         channel="stripe",
         gross=MoneyInput(currency="CNY", amount="100"),
         fee=MoneyInput(currency="CNY", amount="5"),
+        category_id="test-category-income-main",
     )
 
 

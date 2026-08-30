@@ -22,6 +22,7 @@ def _income(db: Session, workspace: Workspace):
             external_id="pi_refund_test",
             gross=MoneyInput(currency="CNY", amount="100"),
             fee=MoneyInput(currency="CNY", amount="5"),
+            category_id="test-category-income-main",
         ),
     )
 

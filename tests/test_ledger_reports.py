@@ -30,6 +30,7 @@ def test_report_amounts_come_from_posted_journal_lines(
             gross=MoneyInput(currency="CNY", amount="100"),
             fee=MoneyInput(currency="CNY", amount="5"),
             cash_received=True,
+            category_id="test-category-income-main",
         ),
     )
 
@@ -81,6 +82,7 @@ def test_report_ignores_non_posted_journal_entries(
             description="Draft ledger entry check",
             channel="stripe",
             gross=MoneyInput(currency="CNY", amount="100"),
+            category_id="test-category-income-main",
         ),
     )
     entry = db_session.get(JournalEntry, income.posted_entry_id)
@@ -106,6 +108,7 @@ def test_cash_in_includes_historical_income_posted_to_clearing(
             description="Historical clearing income",
             gross=MoneyInput(currency="CNY", amount="100"),
             fee=MoneyInput(currency="CNY", amount="5"),
+            category_id="test-category-income-main",
         ),
     )
     clearing = Account(
@@ -206,6 +209,7 @@ def test_dashboard_converts_every_report_surface_with_one_rate(
             description="Converted income",
             gross=MoneyInput(currency="CNY", amount="100"),
             fee=MoneyInput(currency="CNY", amount="10"),
+            category_id="test-category-income-main",
         ),
     )
     create_expense(

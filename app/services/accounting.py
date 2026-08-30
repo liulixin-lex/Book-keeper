@@ -319,18 +319,14 @@ def create_income(
         if payload.counterparty_id
         else None
     )
-    category = (
-        resolve_category(
-            session,
-            workspace.id,
-            payload.category_id,
-            {CategoryKind.INCOME, CategoryKind.BOTH},
-        )
-        if payload.category_id
-        else None
+    if not payload.category_id:
+        raise AccountingError("请选择收入类别")
+    category = resolve_category(
+        session,
+        workspace.id,
+        payload.category_id,
+        {CategoryKind.INCOME, CategoryKind.BOTH},
     )
-    if category is None:
-        category = category_by_name(session, workspace.id, "主营业务收入")
     record = BusinessRecord(
         workspace_id=workspace.id,
         record_type=RecordType.INCOME,
@@ -447,8 +443,10 @@ def create_expense(
             provider.expense_category_id,
             {CategoryKind.EXPENSE},
         )
+    if category is None and payload.category_name:
+        category = category_by_name(session, workspace.id, payload.category_name)
     if category is None:
-        category = category_by_name(session, workspace.id, payload.category_name or "其他支出")
+        raise AccountingError("请选择支出类别或已关联类别的提供商")
     if category.kind not in {CategoryKind.EXPENSE, CategoryKind.BOTH}:
         raise AccountingError("Expense requires an expense category")
     if provider and provider.expense_category_id and category.id != provider.expense_category_id:
@@ -491,25 +489,20 @@ def create_expense(
     return record
 
 
-def _get_or_create_counterparty(session: Session, workspace_id: str, name: str) -> Counterparty:
+def _resolve_topup_counterparty(
+    session: Session, workspace_id: str, name: str
+) -> Counterparty:
     counterparty = session.scalar(
         select(Counterparty).where(
             Counterparty.workspace_id == workspace_id, Counterparty.name == name
         )
     )
-    if counterparty is not None and not counterparty.is_active:
-        raise AccountingError("上游提供商已停用")
     if counterparty is None:
-        category = category_by_name(session, workspace_id, "上游采购")
-        counterparty = Counterparty(
-            workspace_id=workspace_id,
-            name=name,
-            roles_json=["supplier"],
-            expense_category_id=category.id,
-            metadata_json={},
-        )
-        session.add(counterparty)
-        session.flush()
+        raise AccountingError("上游提供商不存在，请先在主数据管理中添加")
+    if not counterparty.is_active:
+        raise AccountingError("上游提供商已停用")
+    if not counterparty.expense_category_id:
+        raise AccountingError("上游提供商尚未关联支出类别")
     return counterparty
 
 
@@ -522,7 +515,7 @@ def create_topup(
     actor_type: ActorType = ActorType.USER,
     commit: bool = True,
 ) -> BusinessRecord:
-    counterparty = _get_or_create_counterparty(session, workspace.id, payload.upstream_name)
+    counterparty = _resolve_topup_counterparty(session, workspace.id, payload.upstream_name)
     expense = ExpenseCreate(
         accounting_date=payload.accounting_date,
         occurred_at=payload.occurred_at,
@@ -530,7 +523,7 @@ def create_topup(
         description=f"上游充值 - {payload.upstream_name}",
         cost=MoneyInput(currency="CNY", amount=payload.amount_cny),
         cash=MoneyInput(currency="CNY", amount=payload.amount_cny),
-        category_name="上游采购",
+        category_id=counterparty.expense_category_id,
         counterparty_id=counterparty.id,
         source_channel=payload.upstream_name,
         external_id=payload.external_id,
