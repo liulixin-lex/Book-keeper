@@ -40,7 +40,7 @@ from app.ai.tools import canonical_tool_signature
 from app.api.approvals import request_approval
 from app.config import Settings, get_settings
 from app.db import get_db
-from app.dependencies import AuthContext, require_admin, require_csrf, require_viewer
+from app.dependencies import AuthContext, require_bookkeeper, require_csrf, require_viewer
 from app.enums import ActorType, AIMode, AIStatus
 from app.models import (
     AIProvider,
@@ -490,7 +490,7 @@ def _claim_interrupted_run(db: Session, run_id: str) -> bool:
 
 @router.get("/providers", response_model=list[AIProviderView])
 def list_providers(
-    admin: Annotated[User, Depends(require_admin)],
+    admin: Annotated[User, Depends(require_bookkeeper)],
     db: Annotated[Session, Depends(get_db)],
 ) -> list[AIProviderView]:
     providers = db.scalars(
@@ -504,7 +504,7 @@ def list_providers(
 @router.get("/providers/{provider_id}", response_model=AIProviderView)
 def get_provider(
     provider_id: str,
-    admin: Annotated[User, Depends(require_admin)],
+    admin: Annotated[User, Depends(require_bookkeeper)],
     db: Annotated[Session, Depends(get_db)],
 ) -> AIProviderView:
     return _provider_view(_provider_or_404(db, provider_id, admin.workspace_id))
@@ -517,7 +517,7 @@ def get_provider(
 )
 async def create_provider(
     payload: AIProviderCreate,
-    admin: Annotated[User, Depends(require_admin)],
+    admin: Annotated[User, Depends(require_bookkeeper)],
     _csrf: Annotated[AuthContext, Depends(require_csrf)],
     db: Annotated[Session, Depends(get_db)],
     settings: Annotated[Settings, Depends(get_settings)],
@@ -579,7 +579,7 @@ async def create_provider(
 async def update_provider(
     provider_id: str,
     payload: AIProviderUpdate,
-    admin: Annotated[User, Depends(require_admin)],
+    admin: Annotated[User, Depends(require_bookkeeper)],
     _csrf: Annotated[AuthContext, Depends(require_csrf)],
     db: Annotated[Session, Depends(get_db)],
     settings: Annotated[Settings, Depends(get_settings)],
@@ -638,7 +638,7 @@ async def update_provider(
 )
 def delete_provider(
     provider_id: str,
-    admin: Annotated[User, Depends(require_admin)],
+    admin: Annotated[User, Depends(require_bookkeeper)],
     _csrf: Annotated[AuthContext, Depends(require_csrf)],
     db: Annotated[Session, Depends(get_db)],
 ) -> ApprovalRequestRead:
@@ -657,7 +657,7 @@ def delete_provider(
 @router.post("/providers/{provider_id}/test", response_model=AIProviderTestResult)
 async def test_provider(
     provider_id: str,
-    admin: Annotated[User, Depends(require_admin)],
+    admin: Annotated[User, Depends(require_bookkeeper)],
     _csrf: Annotated[AuthContext, Depends(require_csrf)],
     db: Annotated[Session, Depends(get_db)],
     settings: Annotated[Settings, Depends(get_settings)],
@@ -724,7 +724,7 @@ def get_ai_settings(
 )
 def update_ai_settings(
     payload: AIWorkspaceSettingsPatch,
-    admin: Annotated[User, Depends(require_admin)],
+    admin: Annotated[User, Depends(require_bookkeeper)],
     _csrf: Annotated[AuthContext, Depends(require_csrf)],
     db: Annotated[Session, Depends(get_db)],
 ) -> ApprovalRequestRead:

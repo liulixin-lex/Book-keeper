@@ -312,7 +312,7 @@ export const Layout: React.FC<LayoutProps> = ({
           <nav className="flex-1 space-y-5 overflow-y-auto px-2 py-4 xl:px-3">
             {navGroups.map((group) => {
               const filteredItems = group.items.filter(
-                (item) => !item.adminOnly || user?.role === "admin",
+                (item) => !item.adminOnly || user?.role !== "viewer",
               );
               if (!filteredItems.length) return null;
 

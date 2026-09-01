@@ -2,7 +2,9 @@ import React, { useDeferredValue, useEffect, useMemo, useState } from "react";
 import {
   CaretLeft,
   CaretRight,
+  CheckSquare,
   MagnifyingGlass,
+  PencilSimple,
   Plus,
   Trash,
 } from "@phosphor-icons/react";
@@ -35,7 +37,7 @@ import {
   addAmounts,
   calculateFeeAmount,
   getPrimaryAmount,
-  getStripeIncomeFeePreset,
+  getIncomeFeePreset,
   subtractAmounts,
   type FeeMode,
 } from "../utils/records";
@@ -55,6 +57,7 @@ interface EntryFormData {
   fee_fixed_value: string;
   category_id: string;
   provider_id: string;
+  source_channel: string;
   note: string;
 }
 
@@ -89,6 +92,7 @@ const initialFormData = (): EntryFormData => ({
   fee_fixed_value: "",
   category_id: "",
   provider_id: "",
+  source_channel: "",
   note: "",
 });
 
@@ -110,6 +114,31 @@ const amountRoleLabel = (role: string) =>
     refund: "退款金额",
   })[role] || role;
 
+const amountByRole = (record: RecordRead, role: string) =>
+  record.amounts.find((amount) => amount.role === role);
+
+const formFromRecord = (
+  record: RecordRead,
+  isExpense: boolean,
+): EntryFormData => {
+  const amount = amountByRole(record, isExpense ? "cost" : "gross");
+  const fee = amountByRole(record, "fee");
+  return {
+    accounting_date: record.accounting_date,
+    description: record.description,
+    external_id: record.external_id || "",
+    amount: amount?.amount || "",
+    currency: amount?.currency || "CNY",
+    fee_mode: "amount",
+    fee_value: fee?.amount === "0.00" ? "" : fee?.amount || "",
+    fee_fixed_value: "",
+    category_id: record.category_id || "",
+    provider_id: record.counterparty_id || "",
+    source_channel: record.source_channel || "",
+    note: record.note || "",
+  };
+};
+
 const RecordsView: React.FC<RecordsViewProps> = ({ recordType }) => {
   const isExpense = recordType === "expense";
   const { user } = useAuth();
@@ -129,9 +158,17 @@ const RecordsView: React.FC<RecordsViewProps> = ({ recordType }) => {
   const [providers, setProviders] = useState<Provider[]>([]);
   const [members, setMembers] = useState<MemberOption[]>([]);
   const [selectedRecord, setSelectedRecord] = useState<RecordRead | null>(null);
+  const [editingRecord, setEditingRecord] = useState<RecordRead | null>(null);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [isBatchOpen, setIsBatchOpen] = useState(false);
+  const [batchForms, setBatchForms] = useState<EntryFormData[]>([
+    initialFormData(),
+  ]);
   const [formData, setFormData] = useState<EntryFormData>(initialFormData);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isBatchSubmitting, setIsBatchSubmitting] = useState(false);
+  const [isBatchDeleting, setIsBatchDeleting] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const activeCategories = useMemo(
     () =>
@@ -162,6 +199,7 @@ const RecordsView: React.FC<RecordsViewProps> = ({ recordType }) => {
       if (isExpense && userFilter) query.set("created_by_user_id", userFilter);
       if (deferredSearch.trim()) query.set("q", deferredSearch.trim());
       setPageData(await apiRequest<RecordPageRead>(`/records/page?${query}`));
+      setSelectedIds(new Set());
     } catch (requestError) {
       setError(
         requestError instanceof Error ? requestError.message : "加载明细失败",
@@ -224,15 +262,13 @@ const RecordsView: React.FC<RecordsViewProps> = ({ recordType }) => {
 
   const handleCategoryChange = (categoryId: string) => {
     const category = activeCategories.find((item) => item.id === categoryId);
-    const feePreset = isExpense
-      ? null
-      : getStripeIncomeFeePreset(category?.name);
+    const feePreset = isExpense ? null : getIncomeFeePreset(category?.name);
     setFormData((current) => ({
       ...current,
       category_id: categoryId,
       ...(feePreset
         ? {
-            currency: feePreset.currency,
+            ...(feePreset.currency ? { currency: feePreset.currency } : {}),
             fee_mode: feePreset.mode,
             fee_value: feePreset.value,
             fee_fixed_value: feePreset.fixedValue,
@@ -250,80 +286,133 @@ const RecordsView: React.FC<RecordsViewProps> = ({ recordType }) => {
       toastError("请先在主数据管理中添加提供商");
       return;
     }
+    setEditingRecord(null);
+    setFormData(initialFormData());
     setIsCreateOpen(true);
   };
 
-  const createRecord = async (event: React.FormEvent) => {
-    event.preventDefault();
-    const amount = Number(formData.amount);
-    const fee = Number(feeAmount);
-    if (
-      !formData.description.trim() ||
-      !Number.isFinite(amount) ||
-      amount <= 0
-    ) {
-      toastError("请填写摘要和有效金额");
+  const openBatchCreate = () => {
+    if (activeCategories.length === 0) {
+      toastError(`请先在主数据管理中添加${isExpense ? "支出" : "收入"}类别`);
       return;
     }
-    if (isExpense && !formData.provider_id) {
-      toastError("请选择提供商");
+    if (isExpense && activeProviders.length === 0) {
+      toastError("请先在主数据管理中添加提供商");
       return;
     }
-    if (!formData.category_id) {
-      toastError("请选择类别");
-      return;
+    setBatchForms([initialFormData()]);
+    setIsBatchOpen(true);
+  };
+
+  const openEdit = (record: RecordRead) => {
+    setEditingRecord(record);
+    setFormData(formFromRecord(record, isExpense));
+    setSelectedRecord(null);
+    setIsCreateOpen(true);
+  };
+
+  const validateForm = (data: EntryFormData, rowLabel = "") => {
+    const amount = Number(data.amount);
+    const fee = Number(
+      calculateFeeAmount(
+        data.amount,
+        data.fee_mode,
+        data.fee_value,
+        data.fee_fixed_value,
+      ),
+    );
+    const prefix = rowLabel ? `${rowLabel}：` : "";
+    if (!data.description.trim() || !Number.isFinite(amount) || amount <= 0) {
+      throw new Error(`${prefix}请填写摘要和有效金额`);
+    }
+    if (isExpense && !data.provider_id) {
+      throw new Error(`${prefix}请选择提供商`);
+    }
+    if (!data.category_id) {
+      throw new Error(`${prefix}请选择类别`);
     }
     if (!Number.isFinite(fee) || fee < 0 || (!isExpense && fee > amount)) {
-      toastError("请检查手续费金额");
-      return;
+      throw new Error(`${prefix}请检查手续费金额`);
     }
+  };
+
+  const buildPayload = async (
+    data: EntryFormData,
+    expectedVersion?: number,
+    rowLabel = "",
+  ) => {
+    validateForm(data, rowLabel);
+    const calculatedFee = calculateFeeAmount(
+      data.amount,
+      data.fee_mode,
+      data.fee_value,
+      data.fee_fixed_value,
+    );
+    const fee = Number(calculatedFee);
+    const settled = isExpense
+      ? addAmounts(data.amount || "0", calculatedFee)
+      : subtractAmounts(data.amount || "0", calculatedFee);
+    const fxRate =
+      data.currency === "CNY"
+        ? null
+        : await apiRequest<FxRate>(
+            `/catalog/fx-rates/fetch?currency=${encodeURIComponent(data.currency)}&effective_date=${data.accounting_date}`,
+            { method: "POST" },
+          );
+    const money = (amountValue: string) => ({
+      currency: data.currency,
+      amount: amountValue,
+      ...(fxRate ? { fx_rate_id: fxRate.id } : {}),
+    });
+    const common = {
+      accounting_date: data.accounting_date,
+      description: data.description.trim(),
+      external_id: data.external_id || undefined,
+      category_id: data.category_id,
+      note: data.note || undefined,
+      ...(expectedVersion ? { expected_version: expectedVersion } : {}),
+      post: true,
+    };
+    return isExpense
+      ? {
+          ...common,
+          cost: money(data.amount),
+          fee: fee > 0 ? money(calculatedFee) : undefined,
+          cash: money(settled),
+          counterparty_id: data.provider_id,
+          source_channel: data.source_channel || undefined,
+        }
+      : {
+          ...common,
+          gross: money(data.amount),
+          fee: fee > 0 ? money(calculatedFee) : undefined,
+          channel: data.source_channel || undefined,
+          cash_received: true,
+        };
+  };
+
+  const submitRecord = async (event: React.FormEvent) => {
+    event.preventDefault();
 
     setIsSubmitting(true);
     try {
-      const fxRate =
-        formData.currency === "CNY"
-          ? null
-          : await apiRequest<FxRate>(
-              `/catalog/fx-rates/fetch?currency=${encodeURIComponent(formData.currency)}&effective_date=${formData.accounting_date}`,
-              { method: "POST" },
-            );
-      const money = (amountValue: string) => ({
-        currency: formData.currency,
-        amount: amountValue,
-        ...(fxRate ? { fx_rate_id: fxRate.id } : {}),
+      const payload = await buildPayload(formData, editingRecord?.version);
+      const path = editingRecord
+        ? `/records/${editingRecord.id}/${isExpense ? "expense" : "income"}`
+        : isExpense
+          ? "/records/expenses"
+          : "/records/income";
+      await apiRequest(path, {
+        method: editingRecord ? "PUT" : "POST",
+        body: JSON.stringify(payload),
       });
-      const common = {
-        accounting_date: formData.accounting_date,
-        description: formData.description.trim(),
-        external_id: formData.external_id || undefined,
-        category_id: formData.category_id || undefined,
-        note: formData.note || undefined,
-        post: true,
-      };
-      if (isExpense) {
-        await apiRequest("/records/expenses", {
-          method: "POST",
-          body: JSON.stringify({
-            ...common,
-            cost: money(formData.amount),
-            fee: fee > 0 ? money(feeAmount) : undefined,
-            cash: money(settledAmount),
-            counterparty_id: formData.provider_id,
-          }),
-        });
-      } else {
-        await apiRequest("/records/income", {
-          method: "POST",
-          body: JSON.stringify({
-            ...common,
-            gross: money(formData.amount),
-            fee: fee > 0 ? money(feeAmount) : undefined,
-            cash_received: true,
-          }),
-        });
-      }
-      success(isExpense ? "支出录入成功" : "收入录入成功");
+      success(
+        editingRecord
+          ? `${isExpense ? "支出" : "收入"}记录已更新`
+          : `${isExpense ? "支出" : "收入"}录入成功`,
+      );
       setFormData(initialFormData());
+      setEditingRecord(null);
       setIsCreateOpen(false);
       if (page !== 1) setPage(1);
       else await fetchRecords();
@@ -333,6 +422,115 @@ const RecordsView: React.FC<RecordsViewProps> = ({ recordType }) => {
       );
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const updateBatchForm = (index: number, changes: Partial<EntryFormData>) => {
+    setBatchForms((current) =>
+      current.map((item, itemIndex) =>
+        itemIndex === index ? { ...item, ...changes } : item,
+      ),
+    );
+  };
+
+  const handleBatchCategoryChange = (index: number, categoryId: string) => {
+    const category = activeCategories.find((item) => item.id === categoryId);
+    const feePreset = isExpense ? null : getIncomeFeePreset(category?.name);
+    updateBatchForm(index, {
+      category_id: categoryId,
+      ...(feePreset
+        ? {
+            ...(feePreset.currency ? { currency: feePreset.currency } : {}),
+            fee_mode: feePreset.mode,
+            fee_value: feePreset.value,
+            fee_fixed_value: feePreset.fixedValue,
+          }
+        : {}),
+    });
+  };
+
+  const handleBatchProviderChange = (index: number, providerId: string) => {
+    const provider = activeProviders.find((item) => item.id === providerId);
+    updateBatchForm(index, {
+      provider_id: providerId,
+      category_id: provider?.expense_category_id || "",
+    });
+  };
+
+  const addBatchRow = () => {
+    setBatchForms((current) => {
+      const previous = current[current.length - 1] || initialFormData();
+      return [
+        ...current,
+        {
+          ...initialFormData(),
+          accounting_date: previous.accounting_date,
+          currency: previous.currency,
+          category_id: previous.category_id,
+          provider_id: previous.provider_id,
+        },
+      ];
+    });
+  };
+
+  const submitBatch = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setIsBatchSubmitting(true);
+    try {
+      const items = await Promise.all(
+        batchForms.map((item, index) =>
+          buildPayload(item, undefined, `第 ${index + 1} 条`),
+        ),
+      );
+      await apiRequest(
+        isExpense ? "/records/expenses/batch" : "/records/income/batch",
+        {
+          method: "POST",
+          body: JSON.stringify({ items }),
+        },
+      );
+      success(`已批量录入 ${items.length} 条${isExpense ? "支出" : "收入"}`);
+      setIsBatchOpen(false);
+      setBatchForms([initialFormData()]);
+      if (page !== 1) setPage(1);
+      else await fetchRecords();
+    } catch (requestError) {
+      toastError(
+        requestError instanceof Error ? requestError.message : "批量录入失败",
+      );
+    } finally {
+      setIsBatchSubmitting(false);
+    }
+  };
+
+  const deleteSelectedRecords = async () => {
+    if (selectedIds.size === 0) return;
+    if (
+      !confirm(`确定删除选中的 ${selectedIds.size} 条记录吗？此操作无法恢复。`)
+    )
+      return;
+    setIsBatchDeleting(true);
+    try {
+      const result = await apiRequest<{ deleted_count: number }>(
+        "/records/batch-delete",
+        {
+          method: "POST",
+          body: JSON.stringify({ record_ids: Array.from(selectedIds) }),
+        },
+      );
+      success(`已删除 ${result.deleted_count} 条记录`);
+      setSelectedIds(new Set());
+      if (selectedIds.size >= pageData.items.length && page > 1) {
+        setPage(page - 1);
+      } else {
+        await fetchRecords();
+      }
+    } catch (requestError) {
+      toastError(
+        requestError instanceof Error ? requestError.message : "批量删除失败",
+      );
+    } finally {
+      setIsBatchDeleting(false);
     }
   };
 
@@ -360,6 +558,31 @@ const RecordsView: React.FC<RecordsViewProps> = ({ recordType }) => {
     setPage(1);
   };
 
+  const allPageSelected =
+    pageData.items.length > 0 &&
+    pageData.items.every((record) => selectedIds.has(record.id));
+
+  const toggleRecordSelection = (recordId: string) => {
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      if (next.has(recordId)) next.delete(recordId);
+      else next.add(recordId);
+      return next;
+    });
+  };
+
+  const togglePageSelection = () => {
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      if (allPageSelected) {
+        pageData.items.forEach((record) => next.delete(record.id));
+      } else {
+        pageData.items.forEach((record) => next.add(record.id));
+      }
+      return next;
+    });
+  };
+
   return (
     <div className="space-y-4">
       <section className="instrument-panel">
@@ -375,10 +598,16 @@ const RecordsView: React.FC<RecordsViewProps> = ({ recordType }) => {
             </p>
           </div>
           {user?.role !== "viewer" && (
-            <Button size="sm" onClick={openCreate}>
-              <Plus size={15} weight="bold" />
-              录入{isExpense ? "支出" : "收入"}
-            </Button>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button size="sm" variant="secondary" onClick={openBatchCreate}>
+                <CheckSquare size={15} />
+                批量录入
+              </Button>
+              <Button size="sm" onClick={openCreate}>
+                <Plus size={15} weight="bold" />
+                录入{isExpense ? "支出" : "收入"}
+              </Button>
+            </div>
           )}
         </div>
 
@@ -468,6 +697,23 @@ const RecordsView: React.FC<RecordsViewProps> = ({ recordType }) => {
       </section>
 
       <section className="data-table-shell">
+        {user?.role !== "viewer" && selectedIds.size > 0 && (
+          <div className="flex flex-col gap-2 border-b border-border bg-surface-strong/40 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+            <span className="text-xs font-medium text-ink">
+              已选择 {selectedIds.size} 条记录
+            </span>
+            <Button
+              type="button"
+              variant="danger"
+              size="sm"
+              isLoading={isBatchDeleting}
+              onClick={() => void deleteSelectedRecords()}
+            >
+              <Trash size={15} />
+              批量删除
+            </Button>
+          </div>
+        )}
         {isLoading ? (
           <TableSkeleton rows={pageSize > 20 ? 12 : pageSize} cols={8} />
         ) : error ? (
@@ -482,6 +728,17 @@ const RecordsView: React.FC<RecordsViewProps> = ({ recordType }) => {
             <table className="w-full min-w-[920px] text-left text-xs">
               <thead className="border-b border-border bg-surface-inset text-muted">
                 <tr>
+                  {user?.role !== "viewer" && (
+                    <th className="w-12 px-4 py-3 text-center font-medium">
+                      <input
+                        type="checkbox"
+                        aria-label="选择当前页全部记录"
+                        checked={allPageSelected}
+                        onChange={togglePageSelection}
+                        className="size-4 rounded border-border accent-primary"
+                      />
+                    </th>
+                  )}
                   <th className="px-4 py-3 font-medium">记账日期</th>
                   <th className="px-4 py-3 font-medium">用户</th>
                   <th className="px-4 py-3 font-medium">类别</th>
@@ -494,6 +751,11 @@ const RecordsView: React.FC<RecordsViewProps> = ({ recordType }) => {
                     {isExpense ? "实际支出" : "实际到账"}
                   </th>
                   <th className="px-4 py-3 text-center font-medium">状态</th>
+                  {user?.role !== "viewer" && (
+                    <th className="w-14 px-4 py-3 text-center font-medium">
+                      操作
+                    </th>
+                  )}
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/70">
@@ -505,6 +767,20 @@ const RecordsView: React.FC<RecordsViewProps> = ({ recordType }) => {
                       onClick={() => setSelectedRecord(record)}
                       className="cursor-pointer hover:bg-surface-strong/50"
                     >
+                      {user?.role !== "viewer" && (
+                        <td
+                          className="px-4 py-3 text-center"
+                          onClick={(event) => event.stopPropagation()}
+                        >
+                          <input
+                            type="checkbox"
+                            aria-label={`选择记录 ${record.description}`}
+                            checked={selectedIds.has(record.id)}
+                            onChange={() => toggleRecordSelection(record.id)}
+                            className="size-4 rounded border-border accent-primary"
+                          />
+                        </td>
+                      )}
                       <td className="whitespace-nowrap px-4 py-3 text-ink">
                         {record.accounting_date}
                       </td>
@@ -549,6 +825,22 @@ const RecordsView: React.FC<RecordsViewProps> = ({ recordType }) => {
                           {STATUS_LABELS[record.status] || record.status}
                         </Badge>
                       </td>
+                      {user?.role !== "viewer" && (
+                        <td
+                          className="px-4 py-3 text-center"
+                          onClick={(event) => event.stopPropagation()}
+                        >
+                          <button
+                            type="button"
+                            aria-label={`编辑记录 ${record.description}`}
+                            title="编辑记录"
+                            onClick={() => openEdit(record)}
+                            className="inline-flex size-8 items-center justify-center rounded-lg text-muted transition-colors hover:bg-surface-strong hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                          >
+                            <PencilSimple size={16} />
+                          </button>
+                        </td>
+                      )}
                     </tr>
                   );
                 })}
@@ -607,11 +899,15 @@ const RecordsView: React.FC<RecordsViewProps> = ({ recordType }) => {
 
       <Modal
         isOpen={isCreateOpen}
-        onClose={() => !isSubmitting && setIsCreateOpen(false)}
-        title={`录入${isExpense ? "支出" : "收入"}`}
+        onClose={() => {
+          if (isSubmitting) return;
+          setIsCreateOpen(false);
+          setEditingRecord(null);
+        }}
+        title={`${editingRecord ? "编辑" : "录入"}${isExpense ? "支出" : "收入"}`}
         maxWidth="2xl"
       >
-        <form onSubmit={createRecord} className="space-y-5">
+        <form onSubmit={submitRecord} className="space-y-5">
           <div className="grid gap-4 sm:grid-cols-2">
             <Input
               label="记账日期 *"
@@ -753,6 +1049,16 @@ const RecordsView: React.FC<RecordsViewProps> = ({ recordType }) => {
                 }))
               }
             />
+            <Input
+              label="来源渠道"
+              value={formData.source_channel}
+              onChange={(event) =>
+                setFormData((current) => ({
+                  ...current,
+                  source_channel: event.target.value,
+                }))
+              }
+            />
           </div>
           <div className="instrument-inset p-3 text-xs text-muted">
             {isExpense ? "实际支出" : "实际到账"}：
@@ -779,14 +1085,269 @@ const RecordsView: React.FC<RecordsViewProps> = ({ recordType }) => {
               type="button"
               variant="secondary"
               size="sm"
-              onClick={() => setIsCreateOpen(false)}
+              onClick={() => {
+                setIsCreateOpen(false);
+                setEditingRecord(null);
+              }}
               disabled={isSubmitting}
             >
               取消
             </Button>
             <Button type="submit" size="sm" isLoading={isSubmitting}>
-              确认录入
+              {editingRecord ? "保存修改" : "确认录入"}
             </Button>
+          </div>
+        </form>
+      </Modal>
+
+      <Modal
+        isOpen={isBatchOpen}
+        onClose={() => !isBatchSubmitting && setIsBatchOpen(false)}
+        title={`批量录入${isExpense ? "支出" : "收入"}`}
+        maxWidth="4xl"
+      >
+        <form onSubmit={submitBatch} className="space-y-4">
+          <div className="divide-y divide-border rounded-lg border border-border">
+            {batchForms.map((item, index) => {
+              const rowFee = calculateFeeAmount(
+                item.amount,
+                item.fee_mode,
+                item.fee_value,
+                item.fee_fixed_value,
+              );
+              const rowSettled = isExpense
+                ? addAmounts(item.amount || "0", rowFee)
+                : subtractAmounts(item.amount || "0", rowFee);
+              return (
+                <section key={index} className="space-y-3 p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <h4 className="text-xs font-semibold text-ink">
+                      第 {index + 1} 条
+                    </h4>
+                    {batchForms.length > 1 && (
+                      <button
+                        type="button"
+                        aria-label={`删除第 ${index + 1} 条`}
+                        title="删除此行"
+                        onClick={() =>
+                          setBatchForms((current) =>
+                            current.filter(
+                              (_, itemIndex) => itemIndex !== index,
+                            ),
+                          )
+                        }
+                        className="inline-flex size-8 items-center justify-center rounded-lg text-muted transition-colors hover:bg-danger/10 hover:text-danger focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-danger"
+                      >
+                        <Trash size={15} />
+                      </button>
+                    )}
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                    <Input
+                      id={`batch-date-${index}`}
+                      label="记账日期 *"
+                      type="date"
+                      value={item.accounting_date}
+                      onChange={(event) =>
+                        updateBatchForm(index, {
+                          accounting_date: event.target.value,
+                        })
+                      }
+                      required
+                    />
+                    <Input
+                      id={`batch-description-${index}`}
+                      label="摘要 *"
+                      value={item.description}
+                      maxLength={500}
+                      onChange={(event) =>
+                        updateBatchForm(index, {
+                          description: event.target.value,
+                        })
+                      }
+                      required
+                    />
+                    <Input
+                      id={`batch-amount-${index}`}
+                      label={`${isExpense ? "费用" : "毛收入"}金额 *`}
+                      type="number"
+                      min="0.00000001"
+                      step="any"
+                      value={item.amount}
+                      onChange={(event) =>
+                        updateBatchForm(index, { amount: event.target.value })
+                      }
+                      required
+                    />
+                    <Select
+                      id={`batch-currency-${index}`}
+                      label="币种 *"
+                      value={item.currency}
+                      onChange={(event) =>
+                        updateBatchForm(index, { currency: event.target.value })
+                      }
+                    >
+                      {CURRENCIES.map(({ code }) => (
+                        <option key={code} value={code}>
+                          {getCurrencyOptionLabel(code)}
+                        </option>
+                      ))}
+                    </Select>
+                    {isExpense && (
+                      <Select
+                        id={`batch-provider-${index}`}
+                        label="提供商 *"
+                        value={item.provider_id}
+                        onChange={(event) =>
+                          handleBatchProviderChange(index, event.target.value)
+                        }
+                        required
+                      >
+                        <option value="">请选择提供商</option>
+                        {activeProviders.map((provider) => (
+                          <option key={provider.id} value={provider.id}>
+                            {provider.name}
+                          </option>
+                        ))}
+                      </Select>
+                    )}
+                    <Select
+                      id={`batch-category-${index}`}
+                      label="类别 *"
+                      value={item.category_id}
+                      disabled={isExpense && Boolean(item.provider_id)}
+                      onChange={(event) =>
+                        handleBatchCategoryChange(index, event.target.value)
+                      }
+                      required
+                    >
+                      <option value="">请选择类别</option>
+                      {activeCategories.map((category) => (
+                        <option key={category.id} value={category.id}>
+                          {category.name}
+                        </option>
+                      ))}
+                    </Select>
+                    <Select
+                      id={`batch-fee-mode-${index}`}
+                      label="手续费方式"
+                      value={item.fee_mode}
+                      onChange={(event) =>
+                        updateBatchForm(index, {
+                          fee_mode: event.target.value as FeeMode,
+                        })
+                      }
+                    >
+                      <option value="amount">固定金额</option>
+                      <option value="percent">按比例</option>
+                      {!isExpense && (
+                        <option value="combined">比例 + 固定金额</option>
+                      )}
+                    </Select>
+                    <Input
+                      id={`batch-fee-${index}`}
+                      label={
+                        item.fee_mode === "amount"
+                          ? "手续费金额"
+                          : "手续费比例 (%)"
+                      }
+                      type="number"
+                      min="0"
+                      max={item.fee_mode === "amount" ? undefined : "100"}
+                      step="any"
+                      value={item.fee_value}
+                      onChange={(event) =>
+                        updateBatchForm(index, {
+                          fee_value: event.target.value,
+                        })
+                      }
+                    />
+                    {!isExpense && item.fee_mode === "combined" && (
+                      <Input
+                        id={`batch-fixed-fee-${index}`}
+                        label={`固定手续费 (${item.currency})`}
+                        type="number"
+                        min="0"
+                        step="any"
+                        value={item.fee_fixed_value}
+                        onChange={(event) =>
+                          updateBatchForm(index, {
+                            fee_fixed_value: event.target.value,
+                          })
+                        }
+                      />
+                    )}
+                    <Input
+                      id={`batch-channel-${index}`}
+                      label="来源渠道"
+                      value={item.source_channel}
+                      maxLength={80}
+                      onChange={(event) =>
+                        updateBatchForm(index, {
+                          source_channel: event.target.value,
+                        })
+                      }
+                    />
+                    <Input
+                      id={`batch-external-${index}`}
+                      label="外部单号"
+                      value={item.external_id}
+                      maxLength={240}
+                      onChange={(event) =>
+                        updateBatchForm(index, {
+                          external_id: event.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+                    <label className="min-w-0 flex-1 space-y-1.5 text-xs font-medium text-muted">
+                      备注
+                      <textarea
+                        rows={2}
+                        value={item.note}
+                        onChange={(event) =>
+                          updateBatchForm(index, { note: event.target.value })
+                        }
+                        className="w-full resize-none rounded-lg border border-border bg-surface-inset px-3 py-2 text-sm text-ink shadow-control-inset focus:border-primary focus:outline-none"
+                      />
+                    </label>
+                    <div className="instrument-inset min-w-48 px-3 py-2.5 text-xs text-muted">
+                      {isExpense ? "实际支出" : "实际到账"}
+                      <strong className="ml-2 font-mono-amount text-ink">
+                        {item.currency} {formatMoney(rowSettled)}
+                      </strong>
+                    </div>
+                  </div>
+                </section>
+              );
+            })}
+          </div>
+          <div className="flex flex-col gap-3 border-t border-border pt-4 sm:flex-row sm:items-center sm:justify-between">
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={addBatchRow}
+              disabled={batchForms.length >= 100 || isBatchSubmitting}
+            >
+              <Plus size={15} />
+              添加一行
+            </Button>
+            <div className="flex justify-end gap-2">
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={() => setIsBatchOpen(false)}
+                disabled={isBatchSubmitting}
+              >
+                取消
+              </Button>
+              <Button type="submit" size="sm" isLoading={isBatchSubmitting}>
+                确认录入 {batchForms.length} 条
+              </Button>
+            </div>
           </div>
         </form>
       </Modal>
@@ -864,7 +1425,16 @@ const RecordsView: React.FC<RecordsViewProps> = ({ recordType }) => {
               </div>
             )}
             {user?.role !== "viewer" && (
-              <div className="flex justify-end border-t border-border pt-4">
+              <div className="flex justify-end gap-2 border-t border-border pt-4">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => openEdit(selectedRecord)}
+                >
+                  <PencilSimple size={15} />
+                  编辑记录
+                </Button>
                 <Button
                   type="button"
                   variant="danger"

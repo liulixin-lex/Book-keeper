@@ -33,7 +33,15 @@ from app.models import (
     RecordTag,
     Workspace,
 )
-from app.schemas import ExpenseCreate, IncomeCreate, MoneyInput, RefundCreate, TopupCreate
+from app.schemas import (
+    ExpenseCreate,
+    ExpenseUpdate,
+    IncomeCreate,
+    IncomeUpdate,
+    MoneyInput,
+    RefundCreate,
+    TopupCreate,
+)
 
 
 class AccountingError(ValueError):
@@ -237,7 +245,12 @@ def add_component(
 
 
 def _check_duplicate(
-    session: Session, workspace_id: str, source_channel: str | None, external_id: str | None
+    session: Session,
+    workspace_id: str,
+    source_channel: str | None,
+    external_id: str | None,
+    *,
+    exclude_record_id: str | None = None,
 ) -> None:
     if not external_id:
         return
@@ -250,6 +263,8 @@ def _check_duplicate(
         if source_channel
         else BusinessRecord.source_channel.is_(None)
     )
+    if exclude_record_id:
+        statement = statement.where(BusinessRecord.id != exclude_record_id)
     duplicate = session.scalar(statement)
     if duplicate:
         raise DuplicateRecordError(f"Duplicate external record: {source_channel}/{external_id}")
@@ -487,6 +502,302 @@ def create_expense(
         session.flush()
     session.refresh(record)
     return record
+
+
+def _record_update_snapshot(record: BusinessRecord) -> dict[str, object]:
+    return {
+        "type": str(record.record_type),
+        "status": str(record.status),
+        "accounting_date": record.accounting_date.isoformat(),
+        "description": record.description,
+        "source_channel": record.source_channel,
+        "external_id": record.external_id,
+        "category_id": record.category_id,
+        "counterparty_id": record.counterparty_id,
+        "note": record.note,
+        "version": record.version,
+        "amounts": [
+            {
+                "role": str(item.role),
+                "currency": item.currency,
+                "amount_e8": item.amount_e8,
+                "amount_cny_e8": item.amount_cny_e8,
+            }
+            for item in record.amounts
+        ],
+    }
+
+
+def _prepare_record_update(
+    session: Session,
+    record: BusinessRecord,
+    *,
+    expected_version: int,
+) -> dict[str, object]:
+    if record.record_type not in {RecordType.INCOME, RecordType.EXPENSE}:
+        raise AccountingError("只能编辑收入或支出记录")
+    if record.status not in {RecordStatus.DRAFT, RecordStatus.POSTED}:
+        raise AccountingError("当前记录状态不允许编辑")
+    if record.version != expected_version:
+        raise AccountingError("记录已被其他用户修改，请刷新后重试")
+    linked_record = session.scalar(
+        select(RecordLink.id).where(
+            or_(
+                RecordLink.source_record_id == record.id,
+                RecordLink.target_record_id == record.id,
+            )
+        )
+    )
+    reversal_entry = (
+        session.scalar(
+            select(JournalEntry.id).where(JournalEntry.reversal_of_id == record.posted_entry_id)
+        )
+        if record.posted_entry_id
+        else None
+    )
+    if linked_record or record.reversed_by_record_id or reversal_entry:
+        raise AccountingError("存在退款或冲正关联的记录不能直接编辑")
+    for approval in session.scalars(
+        select(ApprovalRequest).where(
+            ApprovalRequest.workspace_id == record.workspace_id,
+            ApprovalRequest.status == "pending",
+        )
+    ):
+        if approval.payload_json.get("record_id") == record.id:
+            raise AccountingError("记录存在待处理审批，暂时不能编辑")
+
+    before = _record_update_snapshot(record)
+    if record.posted_entry_id:
+        entry = session.get(JournalEntry, record.posted_entry_id)
+        record.posted_entry_id = None
+        session.flush()
+        if entry is not None:
+            session.delete(entry)
+            session.flush()
+    record.amounts.clear()
+    session.flush()
+    record.status = RecordStatus.DRAFT
+    return before
+
+
+def _finish_record_update(
+    session: Session,
+    record: BusinessRecord,
+    before: dict[str, object],
+    *,
+    actor_id: str | None,
+    actor_type: ActorType,
+    commit: bool,
+) -> BusinessRecord:
+    post_record(session, record, actor_id=actor_id, actor_type=actor_type)
+    session.add(
+        AuditEvent(
+            workspace_id=record.workspace_id,
+            actor_type=actor_type,
+            actor_id=actor_id,
+            action="record.update",
+            entity_type="business_record",
+            entity_id=record.id,
+            before_json=before,
+            after_json=_record_update_snapshot(record),
+        )
+    )
+    session.add(
+        KnowledgeIndexJob(
+            workspace_id=record.workspace_id,
+            entity_type="business_record",
+            entity_id=record.id,
+            action="upsert",
+            status="pending",
+            available_at=datetime.now(UTC),
+        )
+    )
+    if commit:
+        session.commit()
+    else:
+        session.flush()
+    session.refresh(record)
+    return record
+
+
+def update_income(
+    session: Session,
+    workspace: Workspace,
+    record: BusinessRecord,
+    payload: IncomeUpdate,
+    *,
+    actor_id: str | None = None,
+    actor_type: ActorType = ActorType.USER,
+    commit: bool = True,
+) -> BusinessRecord:
+    if record.record_type != RecordType.INCOME:
+        raise AccountingError("记录类型不是收入")
+    _check_duplicate(
+        session,
+        workspace.id,
+        payload.channel,
+        payload.external_id,
+        exclude_record_id=record.id,
+    )
+    gross = resolve_money(session, payload.gross, effective_date=payload.accounting_date)
+    fee = (
+        resolve_money(session, payload.fee, effective_date=payload.accounting_date)
+        if payload.fee
+        else ResolvedMoney("CNY", 0, 0, None, "0")
+    )
+    if gross.amount_e8 <= 0 or gross.amount_cny_e8 <= 0:
+        raise AccountingError("Gross income must be positive")
+    if fee.amount_e8 < 0 or fee.amount_cny_e8 < 0:
+        raise AccountingError("Income fee cannot be negative")
+    if fee.amount_cny_e8 > gross.amount_cny_e8:
+        raise AccountingError("Income fee cannot exceed gross income")
+    if not payload.category_id:
+        raise AccountingError("请选择收入类别")
+    category = resolve_category(
+        session,
+        workspace.id,
+        payload.category_id,
+        {CategoryKind.INCOME, CategoryKind.BOTH},
+    )
+    provider = (
+        resolve_counterparty(session, workspace.id, payload.counterparty_id)
+        if payload.counterparty_id
+        else None
+    )
+    before = _prepare_record_update(
+        session, record, expected_version=payload.expected_version
+    )
+    net_cny = gross.amount_cny_e8 - fee.amount_cny_e8
+    record.accounting_date = payload.accounting_date
+    record.occurred_at = payload.occurred_at
+    record.date_precision = payload.date_precision
+    record.category_id = category.id
+    record.counterparty_id = provider.id if provider else None
+    record.source_channel = payload.channel
+    record.external_id = payload.external_id
+    record.recognition_method = payload.recognition_method
+    record.description = payload.description
+    record.note = payload.note
+    record.source_locator_json = payload.source_locator
+    record.metadata_json = payload.metadata
+    add_component(record, AmountRole.GROSS, gross)
+    add_component(record, AmountRole.FEE, fee)
+    add_component(
+        record,
+        AmountRole.NET,
+        ResolvedMoney("CNY", net_cny, net_cny, None, str(net_cny)),
+        derived=True,
+    )
+    add_component(
+        record,
+        AmountRole.CASH,
+        ResolvedMoney("CNY", net_cny, net_cny, None, str(net_cny)),
+        derived=True,
+    )
+    return _finish_record_update(
+        session,
+        record,
+        before,
+        actor_id=actor_id,
+        actor_type=actor_type,
+        commit=commit,
+    )
+
+
+def update_expense(
+    session: Session,
+    workspace: Workspace,
+    record: BusinessRecord,
+    payload: ExpenseUpdate,
+    *,
+    actor_id: str | None = None,
+    actor_type: ActorType = ActorType.USER,
+    commit: bool = True,
+) -> BusinessRecord:
+    if record.record_type != RecordType.EXPENSE:
+        raise AccountingError("记录类型不是支出")
+    _check_duplicate(
+        session,
+        workspace.id,
+        payload.source_channel,
+        payload.external_id,
+        exclude_record_id=record.id,
+    )
+    cost = resolve_money(session, payload.cost, effective_date=payload.accounting_date)
+    fee = (
+        resolve_money(session, payload.fee, effective_date=payload.accounting_date)
+        if payload.fee
+        else ResolvedMoney("CNY", 0, 0, None, "0")
+    )
+    supplied_cash = (
+        resolve_money(session, payload.cash, effective_date=payload.accounting_date)
+        if payload.cash
+        else None
+    )
+    if cost.amount_e8 <= 0 or cost.amount_cny_e8 <= 0:
+        raise AccountingError("Expense cost must be positive")
+    if fee.amount_e8 < 0 or fee.amount_cny_e8 < 0:
+        raise AccountingError("Expense fee cannot be negative")
+    expected_cash_cny = cost.amount_cny_e8 + fee.amount_cny_e8
+    if supplied_cash and supplied_cash.amount_cny_e8 != expected_cash_cny:
+        raise AccountingError("Expense cash must equal cost plus fee")
+    cash = supplied_cash or ResolvedMoney(
+        "CNY", expected_cash_cny, expected_cash_cny, None, str(expected_cash_cny)
+    )
+    provider = (
+        resolve_counterparty(session, workspace.id, payload.counterparty_id)
+        if payload.counterparty_id
+        else None
+    )
+    category = (
+        resolve_category(
+            session,
+            workspace.id,
+            payload.category_id,
+            {CategoryKind.EXPENSE, CategoryKind.BOTH},
+        )
+        if payload.category_id
+        else None
+    )
+    if category is None and provider and provider.expense_category_id:
+        category = resolve_category(
+            session,
+            workspace.id,
+            provider.expense_category_id,
+            {CategoryKind.EXPENSE},
+        )
+    if category is None:
+        raise AccountingError("请选择支出类别或已关联类别的提供商")
+    if provider and provider.expense_category_id and category.id != provider.expense_category_id:
+        raise AccountingError("支出类别必须与提供商设置的类别一致")
+    before = _prepare_record_update(
+        session, record, expected_version=payload.expected_version
+    )
+    record.accounting_date = payload.accounting_date
+    record.occurred_at = payload.occurred_at
+    record.date_precision = payload.date_precision
+    record.service_period_start = payload.service_period_start
+    record.service_period_end = payload.service_period_end
+    record.category_id = category.id
+    record.counterparty_id = provider.id if provider else None
+    record.source_channel = payload.source_channel
+    record.external_id = payload.external_id
+    record.description = payload.description
+    record.note = payload.note
+    record.source_locator_json = payload.source_locator
+    record.metadata_json = payload.metadata
+    add_component(record, AmountRole.COST, cost)
+    if fee.amount_e8 or fee.amount_cny_e8:
+        add_component(record, AmountRole.FEE, fee)
+    add_component(record, AmountRole.CASH, cash, derived=supplied_cash is None)
+    return _finish_record_update(
+        session,
+        record,
+        before,
+        actor_id=actor_id,
+        actor_type=actor_type,
+        commit=commit,
+    )
 
 
 def _resolve_topup_counterparty(

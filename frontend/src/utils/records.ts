@@ -49,15 +49,37 @@ export const calculateFeeAmount = (
 export const isStripeIncomeCategory = (name?: string) =>
   name?.trim().toLocaleLowerCase() === "stripe收入";
 
-export const getStripeIncomeFeePreset = (categoryName?: string) =>
-  isStripeIncomeCategory(categoryName)
-    ? {
-        currency: "USD",
-        mode: "combined" as const,
-        value: "2.2",
-        fixedValue: "0.35",
-      }
-    : null;
+export const getIncomeFeePreset = (categoryName?: string) => {
+  const normalized = categoryName?.trim().toLocaleLowerCase();
+  if (normalized === "stripe收入") {
+    return {
+      currency: "USD",
+      mode: "combined" as const,
+      value: "2.2",
+      fixedValue: "0.35",
+    };
+  }
+  if (normalized === "链动收入") {
+    return {
+      mode: "percent" as const,
+      value: "3",
+      fixedValue: "",
+    };
+  }
+  if (normalized === "xorpay收入") {
+    return {
+      mode: "percent" as const,
+      value: "1.6",
+      fixedValue: "",
+    };
+  }
+  return null;
+};
+
+export const getStripeIncomeFeePreset = (categoryName?: string) => {
+  const preset = getIncomeFeePreset(categoryName);
+  return isStripeIncomeCategory(categoryName) ? preset : null;
+};
 
 const combineAmounts = (
   first: string,

@@ -7,8 +7,10 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
+from app.api.ai import router as ai_router
 from app.api.audit import router as audit_router
 from app.api.auth import router as auth_router
+from app.api.backups import router as backups_router
 from app.api.users import router as users_router
 from app.config import Settings, get_settings
 from app.db import Base, get_db
@@ -50,6 +52,8 @@ def client() -> Generator[TestClient, None, None]:
     app.include_router(auth_router, prefix="/api/v1")
     app.include_router(users_router, prefix="/api/v1")
     app.include_router(audit_router, prefix="/api/v1")
+    app.include_router(ai_router, prefix="/api/v1")
+    app.include_router(backups_router, prefix="/api/v1")
     app.dependency_overrides[get_db] = override_db
     app.dependency_overrides[get_settings] = lambda: settings
     with TestClient(app) as test_client:
@@ -210,7 +214,9 @@ def test_profile_username_email_and_password_updates(client: TestClient) -> None
     assert login.json()["user"]["email"] == "new-admin@example.com"
 
 
-def test_admin_invites_bookkeeper_and_permissions_are_enforced(client: TestClient) -> None:
+def test_admin_invites_bookkeeper_and_management_permissions_are_granted(
+    client: TestClient,
+) -> None:
     bootstrap(client)
     missing_csrf = client.post(
         "/api/v1/users/invitations",
@@ -237,8 +243,20 @@ def test_admin_invites_bookkeeper_and_permissions_are_enforced(client: TestClien
     )
     assert accepted.status_code == 201, accepted.text
     assert accepted.json()["user"]["role"] == "bookkeeper"
-    assert client.get("/api/v1/users").status_code == 403
-    assert client.get("/api/v1/users/invitations").status_code == 403
+    assert client.get("/api/v1/users").status_code == 200
+    assert client.get("/api/v1/users/invitations").status_code == 200
+    assert client.get("/api/v1/audit").status_code == 200
+    assert client.get("/api/v1/backups/storage").status_code == 200
+    assert client.get("/api/v1/ai/providers").status_code == 200
+
+    settings = client.get("/api/v1/ai/settings").json()
+    requested = client.patch(
+        "/api/v1/ai/settings",
+        headers=csrf_headers(client),
+        json={"agents_md": "Bookkeeper rules", "version": settings["version"]},
+    )
+    assert requested.status_code == 202
+    assert requested.json()["kind"] == "config.ai_settings.update"
 
 
 def test_admin_role_cannot_be_granted_directly_by_invitation(client: TestClient) -> None:

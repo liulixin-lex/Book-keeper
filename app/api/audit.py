@@ -7,7 +7,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.db import get_db
-from app.dependencies import require_admin
+from app.dependencies import require_bookkeeper
 from app.models import AuditEvent, User
 
 router = APIRouter(prefix="/audit", tags=["audit"])
@@ -38,7 +38,7 @@ class AuditPageRead(BaseModel):
 
 @router.get("", response_model=AuditPageRead)
 def list_audit_events(
-    user: Annotated[User, Depends(require_admin)],
+    user: Annotated[User, Depends(require_bookkeeper)],
     db: Annotated[Session, Depends(get_db)],
     entity_type: str | None = None,
     entity_id: str | None = None,

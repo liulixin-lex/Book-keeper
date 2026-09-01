@@ -30,9 +30,15 @@ from app.models import (
 from app.schemas import (
     ApprovalRequestRead,
     DraftRecordUpdate,
+    ExpenseBatchCreate,
     ExpenseCreate,
+    ExpenseUpdate,
+    IncomeBatchCreate,
     IncomeCreate,
+    IncomeUpdate,
     MoneyRead,
+    RecordBatchDelete,
+    RecordBatchDeleteRead,
     RecordPageRead,
     RecordRead,
 )
@@ -44,6 +50,8 @@ from app.services.accounting import (
     post_record,
     resolve_category,
     resolve_counterparty,
+    update_expense,
+    update_income,
     validate_record_reversal,
 )
 from app.services.idempotency import commit_result, replay_if_exists, request_digest
@@ -319,6 +327,167 @@ def add_expense(
     except (AccountingError, IntegrityError, OperationalError) as exc:
         return _record_conflict(db, user, "records.expense", idempotency_key, digest, exc)
     return RecordRead.model_validate(replay) if replay is not None else view
+
+
+@router.post(
+    "/income/batch",
+    response_model=list[RecordRead],
+    status_code=status.HTTP_201_CREATED,
+)
+def add_income_batch(
+    payload: IncomeBatchCreate,
+    user: Annotated[User, Depends(require_bookkeeper)],
+    _csrf: Annotated[AuthContext, Depends(require_csrf)],
+    db: Annotated[Session, Depends(get_db)],
+) -> list[RecordRead]:
+    workspace = _workspace(db, user)
+    records: list[BusinessRecord] = []
+    try:
+        for index, item in enumerate(payload.items, start=1):
+            if not item.cash_received or not item.post:
+                raise AccountingError(f"第 {index} 条收入必须立即到账并过账")
+            records.append(
+                create_income(db, workspace, item, actor_id=user.id, commit=False)
+            )
+        views = [record_view(record) for record in records]
+        db.commit()
+    except (AccountingError, IntegrityError, OperationalError) as exc:
+        db.rollback()
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    return views
+
+
+@router.post(
+    "/expenses/batch",
+    response_model=list[RecordRead],
+    status_code=status.HTTP_201_CREATED,
+)
+def add_expense_batch(
+    payload: ExpenseBatchCreate,
+    user: Annotated[User, Depends(require_bookkeeper)],
+    _csrf: Annotated[AuthContext, Depends(require_csrf)],
+    db: Annotated[Session, Depends(get_db)],
+) -> list[RecordRead]:
+    workspace = _workspace(db, user)
+    records: list[BusinessRecord] = []
+    try:
+        for index, item in enumerate(payload.items, start=1):
+            if item.cash is None or not item.post:
+                raise AccountingError(f"第 {index} 条支出必须立即支付并过账")
+            records.append(
+                create_expense(db, workspace, item, actor_id=user.id, commit=False)
+            )
+        views = [record_view(record) for record in records]
+        db.commit()
+    except (AccountingError, IntegrityError, OperationalError) as exc:
+        db.rollback()
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    return views
+
+
+def _record_for_write(db: Session, user: User, record_id: str) -> BusinessRecord:
+    record = db.scalar(
+        select(BusinessRecord)
+        .options(
+            selectinload(BusinessRecord.amounts),
+            selectinload(BusinessRecord.category),
+            selectinload(BusinessRecord.counterparty),
+            selectinload(BusinessRecord.created_by_user),
+        )
+        .where(BusinessRecord.id == record_id, BusinessRecord.workspace_id == user.workspace_id)
+    )
+    if record is None:
+        raise HTTPException(status_code=404, detail="记录不存在")
+    return record
+
+
+@router.put("/{record_id}/income", response_model=RecordRead)
+def edit_income(
+    record_id: str,
+    payload: IncomeUpdate,
+    user: Annotated[User, Depends(require_bookkeeper)],
+    _csrf: Annotated[AuthContext, Depends(require_csrf)],
+    db: Annotated[Session, Depends(get_db)],
+) -> RecordRead:
+    if not payload.cash_received or not payload.post:
+        raise HTTPException(status_code=422, detail="收入编辑后必须立即到账并过账")
+    record = _record_for_write(db, user, record_id)
+    try:
+        updated = update_income(
+            db,
+            _workspace(db, user),
+            record,
+            payload,
+            actor_id=user.id,
+        )
+    except (AccountingError, IntegrityError, OperationalError) as exc:
+        db.rollback()
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    return record_view(updated)
+
+
+@router.put("/{record_id}/expense", response_model=RecordRead)
+def edit_expense(
+    record_id: str,
+    payload: ExpenseUpdate,
+    user: Annotated[User, Depends(require_bookkeeper)],
+    _csrf: Annotated[AuthContext, Depends(require_csrf)],
+    db: Annotated[Session, Depends(get_db)],
+) -> RecordRead:
+    if payload.cash is None or not payload.post:
+        raise HTTPException(status_code=422, detail="支出编辑后必须立即支付并过账")
+    record = _record_for_write(db, user, record_id)
+    try:
+        updated = update_expense(
+            db,
+            _workspace(db, user),
+            record,
+            payload,
+            actor_id=user.id,
+        )
+    except (AccountingError, IntegrityError, OperationalError) as exc:
+        db.rollback()
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    return record_view(updated)
+
+
+@router.post("/batch-delete", response_model=RecordBatchDeleteRead)
+def delete_records_batch(
+    payload: RecordBatchDelete,
+    user: Annotated[User, Depends(require_bookkeeper)],
+    _csrf: Annotated[AuthContext, Depends(require_csrf)],
+    db: Annotated[Session, Depends(get_db)],
+) -> RecordBatchDeleteRead:
+    existing_ids = set(
+        db.scalars(
+            select(BusinessRecord.id).where(
+                BusinessRecord.workspace_id == user.workspace_id,
+                BusinessRecord.id.in_(payload.record_ids),
+                BusinessRecord.record_type.in_([RecordType.INCOME, RecordType.EXPENSE]),
+            )
+        )
+    )
+    missing_ids = set(payload.record_ids) - existing_ids
+    if missing_ids:
+        raise HTTPException(status_code=404, detail="部分记录不存在或不可删除，请刷新后重试")
+    deleted_count = 0
+    try:
+        for record_id in payload.record_ids:
+            record = db.scalar(
+                select(BusinessRecord).where(
+                    BusinessRecord.id == record_id,
+                    BusinessRecord.workspace_id == user.workspace_id,
+                )
+            )
+            if record is not None:
+                deleted_count += delete_record_graph(
+                    db, record, actor_id=user.id, commit=False
+                )
+        db.commit()
+    except (AccountingError, IntegrityError, OperationalError) as exc:
+        db.rollback()
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    return RecordBatchDeleteRead(deleted_count=deleted_count)
 
 
 @router.patch("/{record_id}/draft", response_model=RecordRead)

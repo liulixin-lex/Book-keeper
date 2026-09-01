@@ -10,7 +10,7 @@ from sqlalchemy.pool import StaticPool
 from app.api.backups import router
 from app.config import Settings, get_settings
 from app.db import Base, get_db
-from app.dependencies import require_admin, require_csrf
+from app.dependencies import require_bookkeeper, require_csrf
 from app.enums import UserRole
 from app.models import BackupSettings, User, Workspace
 
@@ -62,7 +62,7 @@ def backup_api() -> Generator[tuple[TestClient, sessionmaker[Session]], None, No
     app.include_router(router, prefix="/api/v1")
     app.dependency_overrides[get_db] = override_db
     app.dependency_overrides[get_settings] = lambda: settings
-    app.dependency_overrides[require_admin] = override_admin
+    app.dependency_overrides[require_bookkeeper] = override_admin
     app.dependency_overrides[require_csrf] = lambda: None
     with TestClient(app) as client:
         yield client, factory

@@ -175,7 +175,7 @@ export const UsersView: React.FC = () => {
           </p>
         </div>
 
-        {currentUser?.role === "admin" && (
+        {currentUser?.role !== "viewer" && (
           <Button size="sm" className="shrink-0" onClick={openInvitationModal}>
             <UserPlus size={16} />
             <span>邀请新成员</span>
@@ -247,7 +247,7 @@ export const UsersView: React.FC = () => {
                       </Badge>
                     </td>
                     <td className="py-3 px-4 text-center whitespace-nowrap">
-                      {currentUser?.role === "admin" &&
+                      {currentUser?.role !== "viewer" &&
                         (u.role === "bookkeeper" || u.role === "viewer") && (
                           <div className="flex items-center justify-center gap-1">
                             <button
@@ -259,21 +259,23 @@ export const UsersView: React.FC = () => {
                             >
                               <PencilSimple size={16} />
                             </button>
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setDeleteTarget({
-                                  type: "user",
-                                  id: u.id,
-                                  label: u.username,
-                                })
-                              }
-                              aria-label={`删除账户 ${u.username}`}
-                              title="删除账户"
-                              className="flex size-8 items-center justify-center rounded-lg text-muted transition-colors hover:bg-danger/10 hover:text-danger focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-danger"
-                            >
-                              <Trash size={16} />
-                            </button>
+                            {u.id !== currentUser?.id && (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setDeleteTarget({
+                                    type: "user",
+                                    id: u.id,
+                                    label: u.username,
+                                  })
+                                }
+                                aria-label={`删除账户 ${u.username}`}
+                                title="删除账户"
+                                className="flex size-8 items-center justify-center rounded-lg text-muted transition-colors hover:bg-danger/10 hover:text-danger focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-danger"
+                              >
+                                <Trash size={16} />
+                              </button>
+                            )}
                           </div>
                         )}
                     </td>

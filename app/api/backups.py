@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from app.ai.crypto import SecretDecryptionError, decrypt_secret, encrypt_secret
 from app.config import Settings, get_settings
 from app.db import get_db
-from app.dependencies import AuthContext, require_admin, require_csrf
+from app.dependencies import AuthContext, require_bookkeeper, require_csrf
 from app.models import BackupRun, BackupSettings, User
 from app.schemas import (
     BackupConnectionTestRead,
@@ -113,7 +113,7 @@ def _run_or_404(db: Session, run_id: str) -> BackupRun:
 
 @router.get("/storage", response_model=BackupStorageRead)
 def get_storage_configuration(
-    _admin: Annotated[User, Depends(require_admin)],
+    _admin: Annotated[User, Depends(require_bookkeeper)],
     db: Annotated[Session, Depends(get_db)],
 ) -> BackupStorageRead:
     configuration = get_or_create_backup_settings(db)
@@ -124,7 +124,7 @@ def get_storage_configuration(
 @router.put("/storage", response_model=BackupStorageRead)
 def update_storage_configuration(
     payload: BackupStorageWrite,
-    admin: Annotated[User, Depends(require_admin)],
+    admin: Annotated[User, Depends(require_bookkeeper)],
     _csrf: Annotated[AuthContext, Depends(require_csrf)],
     db: Annotated[Session, Depends(get_db)],
     settings: Annotated[Settings, Depends(get_settings)],
@@ -154,7 +154,7 @@ def update_storage_configuration(
 @router.post("/storage/test", response_model=BackupConnectionTestRead)
 def test_storage_connection(
     payload: BackupStorageWrite,
-    _admin: Annotated[User, Depends(require_admin)],
+    _admin: Annotated[User, Depends(require_bookkeeper)],
     _csrf: Annotated[AuthContext, Depends(require_csrf)],
     db: Annotated[Session, Depends(get_db)],
     settings: Annotated[Settings, Depends(get_settings)],
@@ -170,7 +170,7 @@ def test_storage_connection(
 
 @router.get("/schedule", response_model=BackupScheduleRead)
 def get_backup_schedule(
-    _admin: Annotated[User, Depends(require_admin)],
+    _admin: Annotated[User, Depends(require_bookkeeper)],
     db: Annotated[Session, Depends(get_db)],
     settings: Annotated[Settings, Depends(get_settings)],
 ) -> BackupScheduleRead:
@@ -182,7 +182,7 @@ def get_backup_schedule(
 @router.put("/schedule", response_model=BackupScheduleRead)
 def update_backup_schedule(
     payload: BackupScheduleWrite,
-    admin: Annotated[User, Depends(require_admin)],
+    admin: Annotated[User, Depends(require_bookkeeper)],
     _csrf: Annotated[AuthContext, Depends(require_csrf)],
     db: Annotated[Session, Depends(get_db)],
     settings: Annotated[Settings, Depends(get_settings)],
@@ -207,7 +207,7 @@ def update_backup_schedule(
 
 @router.post("/run", response_model=BackupRunRead, status_code=status.HTTP_201_CREATED)
 def create_remote_backup(
-    _admin: Annotated[User, Depends(require_admin)],
+    _admin: Annotated[User, Depends(require_bookkeeper)],
     _csrf: Annotated[AuthContext, Depends(require_csrf)],
     db: Annotated[Session, Depends(get_db)],
     settings: Annotated[Settings, Depends(get_settings)],
@@ -225,7 +225,7 @@ def create_remote_backup(
 
 @router.get("", response_model=BackupListRead)
 def list_backups(
-    _admin: Annotated[User, Depends(require_admin)],
+    _admin: Annotated[User, Depends(require_bookkeeper)],
     db: Annotated[Session, Depends(get_db)],
     limit: Annotated[int, Query(ge=1, le=100)] = 50,
 ) -> BackupListRead:
@@ -238,7 +238,7 @@ def list_backups(
 @router.get("/{run_id}/download", response_model=BackupDownloadRead)
 def get_backup_download(
     run_id: str,
-    _admin: Annotated[User, Depends(require_admin)],
+    _admin: Annotated[User, Depends(require_bookkeeper)],
     db: Annotated[Session, Depends(get_db)],
     settings: Annotated[Settings, Depends(get_settings)],
 ) -> BackupDownloadRead:
@@ -256,7 +256,7 @@ def get_backup_download(
 @router.delete("/{run_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_backup(
     run_id: str,
-    _admin: Annotated[User, Depends(require_admin)],
+    _admin: Annotated[User, Depends(require_bookkeeper)],
     _csrf: Annotated[AuthContext, Depends(require_csrf)],
     db: Annotated[Session, Depends(get_db)],
     settings: Annotated[Settings, Depends(get_settings)],

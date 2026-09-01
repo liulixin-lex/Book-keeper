@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 from app.api.approvals import request_approval
 from app.config import Settings, get_settings
 from app.db import get_db
-from app.dependencies import AuthContext, require_admin, require_csrf, require_viewer
+from app.dependencies import AuthContext, require_bookkeeper, require_csrf, require_viewer
 from app.enums import ActorType, UserRole
 from app.models import AuditEvent, Invitation, User
 from app.schemas import ApprovalRequestRead
@@ -119,7 +119,7 @@ def _audit(
 
 @router.get("", response_model=list[UserView])
 def list_users(
-    admin: Annotated[User, Depends(require_admin)],
+    admin: Annotated[User, Depends(require_bookkeeper)],
     db: Annotated[Session, Depends(get_db)],
 ) -> list[User]:
     return list(
@@ -134,7 +134,7 @@ def list_users(
 @router.post("/invitations", response_model=InvitationCreated, status_code=status.HTTP_201_CREATED)
 def create_invitation(
     payload: InvitationCreate,
-    admin: Annotated[User, Depends(require_admin)],
+    admin: Annotated[User, Depends(require_bookkeeper)],
     _csrf: Annotated[AuthContext, Depends(require_csrf)],
     db: Annotated[Session, Depends(get_db)],
     settings: Annotated[Settings, Depends(get_settings)],
@@ -201,7 +201,7 @@ def create_invitation(
 
 @router.get("/invitations", response_model=list[InvitationView])
 def list_invitations(
-    admin: Annotated[User, Depends(require_admin)],
+    admin: Annotated[User, Depends(require_bookkeeper)],
     db: Annotated[Session, Depends(get_db)],
 ) -> list[InvitationView]:
     invitations = db.scalars(
@@ -216,7 +216,7 @@ def list_invitations(
 @router.delete("/invitations/{invitation_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_invitation(
     invitation_id: str,
-    admin: Annotated[User, Depends(require_admin)],
+    admin: Annotated[User, Depends(require_bookkeeper)],
     _csrf: Annotated[AuthContext, Depends(require_csrf)],
     db: Annotated[Session, Depends(get_db)],
 ) -> Response:
@@ -279,7 +279,7 @@ def update_user(
     user_id: str,
     payload: UserUpdate,
     response: Response,
-    admin: Annotated[User, Depends(require_admin)],
+    admin: Annotated[User, Depends(require_bookkeeper)],
     _csrf: Annotated[AuthContext, Depends(require_csrf)],
     db: Annotated[Session, Depends(get_db)],
 ) -> User | ApprovalRequestRead:
@@ -394,7 +394,7 @@ def update_user(
 @router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_user(
     user_id: str,
-    admin: Annotated[User, Depends(require_admin)],
+    admin: Annotated[User, Depends(require_bookkeeper)],
     _csrf: Annotated[AuthContext, Depends(require_csrf)],
     db: Annotated[Session, Depends(get_db)],
 ) -> Response:
@@ -407,6 +407,8 @@ def delete_user(
     )
     if target is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="用户不存在")
+    if target.id == admin.id:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="不能删除当前账号")
     if UserRole(target.role) not in (UserRole.BOOKKEEPER, UserRole.VIEWER):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,

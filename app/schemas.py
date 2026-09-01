@@ -91,6 +91,38 @@ class ExpenseCreate(BaseModel):
     post: bool = True
 
 
+class IncomeUpdate(IncomeCreate):
+    expected_version: int = Field(ge=1)
+
+
+class ExpenseUpdate(ExpenseCreate):
+    expected_version: int = Field(ge=1)
+
+
+class IncomeBatchCreate(BaseModel):
+    items: list[IncomeCreate] = Field(min_length=1, max_length=100)
+
+
+class ExpenseBatchCreate(BaseModel):
+    items: list[ExpenseCreate] = Field(min_length=1, max_length=100)
+
+
+class RecordBatchDelete(BaseModel):
+    record_ids: list[str] = Field(min_length=1, max_length=100)
+
+    @field_validator("record_ids")
+    @classmethod
+    def normalize_record_ids(cls, value: list[str]) -> list[str]:
+        normalized = list(dict.fromkeys(item.strip() for item in value if item.strip()))
+        if not normalized:
+            raise ValueError("请选择要删除的记录")
+        return normalized
+
+
+class RecordBatchDeleteRead(BaseModel):
+    deleted_count: int
+
+
 class TopupCreate(BaseModel):
     accounting_date: date
     occurred_at: datetime | None = None
