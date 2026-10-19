@@ -11,6 +11,7 @@ import { api, ApiError } from "@/api/client";
 import { useBookMutation, useBookQuery, useLabel, useUndo } from "@/api/queries";
 import type { AgentRun, AgentRunDetail, AgentStatus, AgentStep, Playbook, TokenTier } from "@/api/types";
 import { Badge, Button, Card, Chip, Empty, ErrorNote, Input, PageHeader, Segmented, Select, Skeleton, Textarea } from "@/components/ui";
+import { Markdown } from "@/components/Markdown";
 import { useToast } from "@/components/toast";
 import { shortDate } from "@/lib/format";
 
@@ -340,7 +341,7 @@ function RunView({ runId }: { runId: string }) {
 
         {r.result && (
           <div className={clsx("rounded-field bg-pos-wash px-4 py-3", !folded && "mt-5")}>
-            <p className="whitespace-pre-wrap">{r.result}</p>
+            <Markdown>{r.result}</Markdown>
           </div>
         )}
         {r.error && <p className={clsx("rounded-field bg-well px-4 py-3 text-sm text-ink-2", !folded && "mt-5")}>{r.error}</p>}
@@ -398,7 +399,7 @@ function StepRow({ step: s }: { step: AgentStep }) {
         <span aria-hidden className="mt-0.5 grid size-7 shrink-0 place-items-center rounded-full bg-lime text-lime-ink">
           <Sparkle size={14} weight="fill" />
         </span>
-        <p className="min-w-0 flex-1 whitespace-pre-wrap">{s.text}</p>
+        <Markdown className="flex-1">{s.text ?? ""}</Markdown>
       </li>
     );
   }
