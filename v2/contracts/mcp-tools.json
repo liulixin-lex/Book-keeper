@@ -1,0 +1,4128 @@
+[
+ {
+  "any_of": [],
+  "input_schema": {
+   "additionalProperties": false,
+   "properties": {
+    "batch_id": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Batch Id"
+    },
+    "dry_run": {
+     "default": false,
+     "description": "只计算并返回结果，不保存",
+     "title": "Dry Run",
+     "type": "boolean"
+    },
+    "idempotency_key": {
+     "anyOf": [
+      {
+       "maxLength": 128,
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "description": "重试同一写入时传相同的键，避免重复入账",
+     "title": "Idempotency Key"
+    },
+    "record_ids": {
+     "anyOf": [
+      {
+       "items": {
+        "type": "string"
+       },
+       "maxItems": 20000,
+       "type": "array"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Record Ids"
+    }
+   },
+   "title": "ApplyRulesArgs",
+   "type": "object"
+  },
+  "kind": "write",
+  "name": "apply_rules",
+  "operation": "rules.apply",
+  "rest": "rules_apply",
+  "scopes": [
+   "import:write"
+  ],
+  "title": "执行规则"
+ },
+ {
+  "any_of": [],
+  "input_schema": {
+   "$defs": {
+    "ClassifyIn": {
+     "additionalProperties": false,
+     "properties": {
+      "counterparty": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "title": "Counterparty"
+      },
+      "description": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "title": "Description"
+      },
+      "inputs": {
+       "anyOf": [
+        {
+         "additionalProperties": true,
+         "type": "object"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "description": "只需给出要设置的键，null 删除",
+       "title": "Inputs"
+      },
+      "type": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "title": "Type"
+      }
+     },
+     "title": "ClassifyIn",
+     "type": "object"
+    }
+   },
+   "additionalProperties": false,
+   "properties": {
+    "dry_run": {
+     "default": false,
+     "description": "只计算并返回结果，不保存",
+     "title": "Dry Run",
+     "type": "boolean"
+    },
+    "idempotency_key": {
+     "anyOf": [
+      {
+       "maxLength": 128,
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "description": "重试同一写入时传相同的键，避免重复入账",
+     "title": "Idempotency Key"
+    },
+    "ignore_reason": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "description": "改为忽略（如 personal、gift、duplicate）",
+     "title": "Ignore Reason"
+    },
+    "reclassify": {
+     "default": false,
+     "description": "按当前规则与来源默认值重新分类",
+     "title": "Reclassify",
+     "type": "boolean"
+    },
+    "record_ids": {
+     "items": {
+      "type": "string"
+     },
+     "maxItems": 5000,
+     "minItems": 1,
+     "title": "Record Ids",
+     "type": "array"
+    },
+    "set": {
+     "anyOf": [
+      {
+       "$ref": "#/$defs/ClassifyIn"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "description": "设置交易类型、往来方、输入（人工设置的字段不会被规则覆盖）"
+    }
+   },
+   "required": [
+    "record_ids"
+   ],
+   "title": "ClassifyArgsWithOptions",
+   "type": "object"
+  },
+  "kind": "write",
+  "name": "classify_records",
+  "operation": null,
+  "rest": "source_records_classify",
+  "scopes": [
+   "import:write"
+  ],
+  "title": "分类来源记录"
+ },
+ {
+  "any_of": [],
+  "input_schema": {
+   "additionalProperties": false,
+   "properties": {
+    "accept_row_errors": {
+     "default": false,
+     "description": "个别行无法解析时仍提交其余行",
+     "title": "Accept Row Errors",
+     "type": "boolean"
+    },
+    "batch_id": {
+     "title": "Batch Id",
+     "type": "string"
+    },
+    "dry_run": {
+     "default": false,
+     "description": "只计算并返回结果，不保存",
+     "title": "Dry Run",
+     "type": "boolean"
+    },
+    "exclude": {
+     "description": "不提交的记录 ID",
+     "items": {
+      "type": "string"
+     },
+     "title": "Exclude",
+     "type": "array"
+    },
+    "idempotency_key": {
+     "anyOf": [
+      {
+       "maxLength": 128,
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "description": "重试同一写入时传相同的键，避免重复入账",
+     "title": "Idempotency Key"
+    }
+   },
+   "required": [
+    "batch_id"
+   ],
+   "title": "CommitImportArgs",
+   "type": "object"
+  },
+  "kind": "high",
+  "name": "commit_import",
+  "operation": "imports.commit",
+  "rest": "import_batches_commit",
+  "scopes": [
+   "import:write"
+  ],
+  "title": "完成导入"
+ },
+ {
+  "any_of": [],
+  "input_schema": {
+   "$defs": {
+    "LineIn": {
+     "additionalProperties": false,
+     "properties": {
+      "account": {
+       "description": "科目编码或 ID",
+       "title": "Account",
+       "type": "string"
+      },
+      "amount": {
+       "$ref": "#/$defs/MoneyIn"
+      },
+      "base_amount": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "description": "本位币金额（实际折算值），给出时优先于汇率",
+       "title": "Base Amount"
+      },
+      "counterparty": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "title": "Counterparty"
+      },
+      "counterparty_account": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "title": "Counterparty Account"
+      },
+      "dimensions": {
+       "anyOf": [
+        {
+         "additionalProperties": {
+          "type": "string"
+         },
+         "type": "object"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "description": "{维度类型代码: 维度值代码}",
+       "title": "Dimensions"
+      },
+      "fx_rate": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "title": "Fx Rate"
+      },
+      "memo": {
+       "anyOf": [
+        {
+         "maxLength": 200,
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "title": "Memo"
+      },
+      "quantity": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "title": "Quantity"
+      },
+      "quantity_unit": {
+       "anyOf": [
+        {
+         "maxLength": 12,
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "title": "Quantity Unit"
+      },
+      "side": {
+       "enum": [
+        "debit",
+        "credit"
+       ],
+       "title": "Side",
+       "type": "string"
+      }
+     },
+     "required": [
+      "account",
+      "side",
+      "amount"
+     ],
+     "title": "LineIn",
+     "type": "object"
+    },
+    "MoneyIn": {
+     "additionalProperties": false,
+     "properties": {
+      "amount": {
+       "description": "字符串小数，如 \"51.50\"；不接受浮点数",
+       "title": "Amount",
+       "type": "string"
+      },
+      "commodity": {
+       "pattern": "^[A-Z][A-Z0-9_]{1,11}$",
+       "title": "Commodity",
+       "type": "string"
+      }
+     },
+     "required": [
+      "amount",
+      "commodity"
+     ],
+     "title": "MoneyIn",
+     "type": "object"
+    }
+   },
+   "additionalProperties": false,
+   "properties": {
+    "allow_conversion": {
+     "default": false,
+     "title": "Allow Conversion",
+     "type": "boolean"
+    },
+    "counterparty": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Counterparty"
+    },
+    "date_precision": {
+     "anyOf": [
+      {
+       "enum": [
+        "timestamp",
+        "day",
+        "month"
+       ],
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Date Precision"
+    },
+    "description": {
+     "anyOf": [
+      {
+       "maxLength": 200,
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Description"
+    },
+    "dry_run": {
+     "default": false,
+     "description": "只计算并返回结果，不保存",
+     "title": "Dry Run",
+     "type": "boolean"
+    },
+    "effective_date": {
+     "anyOf": [
+      {
+       "format": "date",
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Effective Date"
+    },
+    "external_ref": {
+     "anyOf": [
+      {
+       "maxLength": 200,
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "External Ref"
+    },
+    "idempotency_key": {
+     "anyOf": [
+      {
+       "maxLength": 128,
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "description": "重试同一写入时传相同的键，避免重复入账",
+     "title": "Idempotency Key"
+    },
+    "inputs": {
+     "anyOf": [
+      {
+       "additionalProperties": true,
+       "type": "object"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "description": "业务类型的输入，结构见该类型的 input_schema",
+     "title": "Inputs"
+    },
+    "journal_code": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Journal Code"
+    },
+    "lines": {
+     "anyOf": [
+      {
+       "items": {
+        "$ref": "#/$defs/LineIn"
+       },
+       "maxItems": 200,
+       "minItems": 1,
+       "type": "array"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Lines"
+    },
+    "metadata": {
+     "anyOf": [
+      {
+       "additionalProperties": true,
+       "type": "object"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Metadata"
+    },
+    "notes": {
+     "anyOf": [
+      {
+       "maxLength": 2000,
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Notes"
+    },
+    "occurred_at": {
+     "anyOf": [
+      {
+       "format": "date-time",
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Occurred At"
+    },
+    "order_no": {
+     "anyOf": [
+      {
+       "maxLength": 128,
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Order No"
+    },
+    "tags": {
+     "description": "标签（活动、项目、待报销等），不存在则自动创建",
+     "items": {
+      "type": "string"
+     },
+     "maxItems": 20,
+     "title": "Tags",
+     "type": "array"
+    },
+    "type": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "description": "交易类型代码；业务类型用 inputs，手工凭证 / 期初余额用 lines（见 GET transaction-types）。省略时用往来方的默认交易类型",
+     "title": "Type"
+    }
+   },
+   "title": "CreateTransactionArgs",
+   "type": "object"
+  },
+  "kind": "write",
+  "name": "create_transaction",
+  "operation": "transactions.create",
+  "rest": "transactions_create",
+  "scopes": [
+   "ledger:write"
+  ],
+  "title": "记账"
+ },
+ {
+  "any_of": [],
+  "input_schema": {
+   "$defs": {
+    "LineIn": {
+     "additionalProperties": false,
+     "properties": {
+      "account": {
+       "description": "科目编码或 ID",
+       "title": "Account",
+       "type": "string"
+      },
+      "amount": {
+       "$ref": "#/$defs/MoneyIn"
+      },
+      "base_amount": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "description": "本位币金额（实际折算值），给出时优先于汇率",
+       "title": "Base Amount"
+      },
+      "counterparty": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "title": "Counterparty"
+      },
+      "counterparty_account": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "title": "Counterparty Account"
+      },
+      "dimensions": {
+       "anyOf": [
+        {
+         "additionalProperties": {
+          "type": "string"
+         },
+         "type": "object"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "description": "{维度类型代码: 维度值代码}",
+       "title": "Dimensions"
+      },
+      "fx_rate": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "title": "Fx Rate"
+      },
+      "memo": {
+       "anyOf": [
+        {
+         "maxLength": 200,
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "title": "Memo"
+      },
+      "quantity": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "title": "Quantity"
+      },
+      "quantity_unit": {
+       "anyOf": [
+        {
+         "maxLength": 12,
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "title": "Quantity Unit"
+      },
+      "side": {
+       "enum": [
+        "debit",
+        "credit"
+       ],
+       "title": "Side",
+       "type": "string"
+      }
+     },
+     "required": [
+      "account",
+      "side",
+      "amount"
+     ],
+     "title": "LineIn",
+     "type": "object"
+    },
+    "MoneyIn": {
+     "additionalProperties": false,
+     "properties": {
+      "amount": {
+       "description": "字符串小数，如 \"51.50\"；不接受浮点数",
+       "title": "Amount",
+       "type": "string"
+      },
+      "commodity": {
+       "pattern": "^[A-Z][A-Z0-9_]{1,11}$",
+       "title": "Commodity",
+       "type": "string"
+      }
+     },
+     "required": [
+      "amount",
+      "commodity"
+     ],
+     "title": "MoneyIn",
+     "type": "object"
+    },
+    "TransactionIn": {
+     "additionalProperties": false,
+     "properties": {
+      "allow_conversion": {
+       "default": false,
+       "title": "Allow Conversion",
+       "type": "boolean"
+      },
+      "counterparty": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "title": "Counterparty"
+      },
+      "date_precision": {
+       "anyOf": [
+        {
+         "enum": [
+          "timestamp",
+          "day",
+          "month"
+         ],
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "title": "Date Precision"
+      },
+      "description": {
+       "anyOf": [
+        {
+         "maxLength": 200,
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "title": "Description"
+      },
+      "effective_date": {
+       "anyOf": [
+        {
+         "format": "date",
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "title": "Effective Date"
+      },
+      "external_ref": {
+       "anyOf": [
+        {
+         "maxLength": 200,
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "title": "External Ref"
+      },
+      "inputs": {
+       "anyOf": [
+        {
+         "additionalProperties": true,
+         "type": "object"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "description": "业务类型的输入，结构见该类型的 input_schema",
+       "title": "Inputs"
+      },
+      "journal_code": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "title": "Journal Code"
+      },
+      "lines": {
+       "anyOf": [
+        {
+         "items": {
+          "$ref": "#/$defs/LineIn"
+         },
+         "maxItems": 200,
+         "minItems": 1,
+         "type": "array"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "title": "Lines"
+      },
+      "metadata": {
+       "anyOf": [
+        {
+         "additionalProperties": true,
+         "type": "object"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "title": "Metadata"
+      },
+      "notes": {
+       "anyOf": [
+        {
+         "maxLength": 2000,
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "title": "Notes"
+      },
+      "occurred_at": {
+       "anyOf": [
+        {
+         "format": "date-time",
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "title": "Occurred At"
+      },
+      "order_no": {
+       "anyOf": [
+        {
+         "maxLength": 128,
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "title": "Order No"
+      },
+      "tags": {
+       "description": "标签（活动、项目、待报销等），不存在则自动创建",
+       "items": {
+        "type": "string"
+       },
+       "maxItems": 20,
+       "title": "Tags",
+       "type": "array"
+      },
+      "type": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "description": "交易类型代码；业务类型用 inputs，手工凭证 / 期初余额用 lines（见 GET transaction-types）。省略时用往来方的默认交易类型",
+       "title": "Type"
+      }
+     },
+     "title": "TransactionIn",
+     "type": "object"
+    }
+   },
+   "additionalProperties": false,
+   "properties": {
+    "atomic": {
+     "default": true,
+     "description": "true：任一失败则全部不入账；false：逐条提交并返回各自结果",
+     "title": "Atomic",
+     "type": "boolean"
+    },
+    "dry_run": {
+     "default": false,
+     "description": "只计算并返回结果，不保存",
+     "title": "Dry Run",
+     "type": "boolean"
+    },
+    "idempotency_key": {
+     "anyOf": [
+      {
+       "maxLength": 128,
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "description": "重试同一写入时传相同的键，避免重复入账",
+     "title": "Idempotency Key"
+    },
+    "items": {
+     "items": {
+      "$ref": "#/$defs/TransactionIn"
+     },
+     "maxItems": 200,
+     "minItems": 1,
+     "title": "Items",
+     "type": "array"
+    }
+   },
+   "required": [
+    "items"
+   ],
+   "title": "CreateTransactionsArgs",
+   "type": "object"
+  },
+  "kind": "write",
+  "name": "create_transactions",
+  "operation": "transactions.batch",
+  "rest": "transactions_batch",
+  "scopes": [
+   "ledger:write"
+  ],
+  "title": "批量记账"
+ },
+ {
+  "any_of": [],
+  "input_schema": {
+   "additionalProperties": false,
+   "properties": {
+    "dry_run": {
+     "default": false,
+     "description": "只计算并返回结果，不保存",
+     "title": "Dry Run",
+     "type": "boolean"
+    },
+    "expected_version": {
+     "anyOf": [
+      {
+       "type": "integer"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Expected Version"
+    },
+    "idempotency_key": {
+     "anyOf": [
+      {
+       "maxLength": 128,
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "description": "重试同一写入时传相同的键，避免重复入账",
+     "title": "Idempotency Key"
+    },
+    "reason": {
+     "anyOf": [
+      {
+       "maxLength": 200,
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "description": "可选：删除原因",
+     "title": "Reason"
+    },
+    "ref": {
+     "description": "交易编号（如 T2026-000123）或 ID",
+     "title": "Ref",
+     "type": "string"
+    }
+   },
+   "required": [
+    "ref"
+   ],
+   "title": "DeleteTransactionArgs",
+   "type": "object"
+  },
+  "kind": "high",
+  "name": "delete_transaction",
+  "operation": "transactions.delete",
+  "rest": "transactions_delete",
+  "scopes": [
+   "ledger:write"
+  ],
+  "title": "删除交易"
+ },
+ {
+  "any_of": [],
+  "input_schema": {
+   "additionalProperties": false,
+   "properties": {
+    "amount": {
+     "description": "计费基数：销售毛额或采购面值，字符串小数",
+     "title": "Amount",
+     "type": "string"
+    },
+    "channel": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Channel"
+    },
+    "commodity": {
+     "default": "CNY",
+     "title": "Commodity",
+     "type": "string"
+    },
+    "counterparty": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Counterparty"
+    },
+    "on": {
+     "format": "date",
+     "title": "On",
+     "type": "string"
+    },
+    "type": {
+     "enum": [
+      "sale",
+      "credit_purchase",
+      "expense",
+      "transfer",
+      "sale_refund"
+     ],
+     "title": "Type",
+     "type": "string"
+    }
+   },
+   "required": [
+    "type",
+    "amount",
+    "on"
+   ],
+   "title": "EvaluateFeeArgs",
+   "type": "object"
+  },
+  "kind": "read",
+  "name": "evaluate_fee",
+  "operation": null,
+  "rest": "fee_rules_evaluate",
+  "scopes": [
+   "ledger:read"
+  ],
+  "title": "试算手续费"
+ },
+ {
+  "any_of": [],
+  "input_schema": {
+   "additionalProperties": false,
+   "properties": {
+    "counterparty": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Counterparty"
+    },
+    "effective_date": {
+     "anyOf": [
+      {
+       "format": "date",
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Effective Date"
+    },
+    "inputs": {
+     "anyOf": [
+      {
+       "additionalProperties": true,
+       "type": "object"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "description": "假设录入：业务输入",
+     "title": "Inputs"
+    },
+    "ref": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "description": "已有交易的编号或 ID",
+     "title": "Ref"
+    },
+    "type": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "description": "假设录入：交易类型",
+     "title": "Type"
+    }
+   },
+   "title": "ExplainArgs",
+   "type": "object"
+  },
+  "kind": "read",
+  "name": "explain_posting",
+  "operation": null,
+  "rest": "transactions_explain",
+  "scopes": [
+   "ledger:read"
+  ],
+  "title": "解释分录"
+ },
+ {
+  "any_of": [],
+  "input_schema": {
+   "additionalProperties": false,
+   "properties": {
+    "date_from": {
+     "anyOf": [
+      {
+       "format": "date",
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "description": "省略则从第一笔分录开始",
+     "title": "Date From"
+    },
+    "date_to": {
+     "anyOf": [
+      {
+       "format": "date",
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Date To"
+    },
+    "format": {
+     "description": "csv / xlsx（表格）、beancount（纯文本复式账本，可用 bean-check / Fava 打开）、json（结构化）",
+     "enum": [
+      "csv",
+      "xlsx",
+      "beancount",
+      "json"
+     ],
+     "title": "Format",
+     "type": "string"
+    }
+   },
+   "required": [
+    "format"
+   ],
+   "title": "ExportArgs",
+   "type": "object"
+  },
+  "kind": "read",
+  "name": "export_ledger",
+  "operation": null,
+  "rest": "exports_get",
+  "scopes": [
+   "ledger:read"
+  ],
+  "title": "导出账本"
+ },
+ {
+  "any_of": [],
+  "input_schema": {
+   "additionalProperties": false,
+   "properties": {
+    "change_set_id": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Change Set Id"
+    },
+    "channel": {
+     "anyOf": [
+      {
+       "enum": [
+        "ui",
+        "api",
+        "mcp",
+        "import",
+        "worker",
+        "cli",
+        "migration",
+        "system"
+       ],
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Channel"
+    },
+    "entity_id": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Entity Id"
+    },
+    "limit": {
+     "default": 30,
+     "maximum": 200,
+     "minimum": 1,
+     "title": "Limit",
+     "type": "integer"
+    },
+    "since": {
+     "anyOf": [
+      {
+       "format": "date-time",
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Since"
+    },
+    "view": {
+     "default": "events",
+     "enum": [
+      "events",
+      "change_sets"
+     ],
+     "title": "View",
+     "type": "string"
+    }
+   },
+   "title": "AuditArgs",
+   "type": "object"
+  },
+  "kind": "read",
+  "name": "get_audit_trail",
+  "operation": null,
+  "rest": "audit_events_list",
+  "scopes": [
+   "ledger:read"
+  ],
+  "title": "审计记录"
+ },
+ {
+  "any_of": [],
+  "input_schema": {
+   "additionalProperties": false,
+   "properties": {
+    "accounts": {
+     "description": "科目编码；空 = 全部有余额的科目",
+     "items": {
+      "type": "string"
+     },
+     "title": "Accounts",
+     "type": "array"
+    },
+    "as_of": {
+     "anyOf": [
+      {
+       "format": "date",
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "description": "截止日期，默认今天",
+     "title": "As Of"
+    }
+   },
+   "title": "BalancesArgs",
+   "type": "object"
+  },
+  "kind": "read",
+  "name": "get_balances",
+  "operation": null,
+  "rest": "balances_get",
+  "scopes": [
+   "ledger:read"
+  ],
+  "title": "科目余额"
+ },
+ {
+  "any_of": [],
+  "input_schema": {
+   "additionalProperties": false,
+   "properties": {},
+   "title": "NoArgs",
+   "type": "object"
+  },
+  "kind": "read",
+  "name": "get_context",
+  "operation": null,
+  "rest": "meta_capabilities",
+  "scopes": [
+   "ledger:read"
+  ],
+  "title": "账套上下文"
+ },
+ {
+  "any_of": [],
+  "input_schema": {
+   "additionalProperties": false,
+   "properties": {
+    "batch_id": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "description": "省略则列出最近的批次",
+     "title": "Batch Id"
+    },
+    "limit": {
+     "default": 50,
+     "maximum": 1000,
+     "minimum": 0,
+     "title": "Limit",
+     "type": "integer"
+    }
+   },
+   "title": "BatchArgs",
+   "type": "object"
+  },
+  "kind": "read",
+  "name": "get_import_batch",
+  "operation": null,
+  "rest": "import_batches_get",
+  "scopes": [
+   "ledger:read"
+  ],
+  "title": "导入批次"
+ },
+ {
+  "any_of": [],
+  "input_schema": {
+   "additionalProperties": false,
+   "properties": {
+    "code": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "description": "kind=transaction_type 时的类型代码；fx_rates 时的外币代码",
+     "title": "Code"
+    },
+    "kind": {
+     "enum": [
+      "transaction_types",
+      "transaction_type",
+      "fee_rules",
+      "channels",
+      "commodities",
+      "fx_rates",
+      "reports",
+      "tags"
+     ],
+     "title": "Kind",
+     "type": "string"
+    }
+   },
+   "required": [
+    "kind"
+   ],
+   "title": "ReferenceArgs",
+   "type": "object"
+  },
+  "kind": "read",
+  "name": "get_reference",
+  "operation": null,
+  "rest": "transaction_types_list",
+  "scopes": [
+   "ledger:read"
+  ],
+  "title": "基础资料"
+ },
+ {
+  "any_of": [],
+  "input_schema": {
+   "additionalProperties": false,
+   "properties": {
+    "explain": {
+     "default": false,
+     "description": "附解释链（手续费规则候选、计算过程）",
+     "title": "Explain",
+     "type": "boolean"
+    },
+    "ref": {
+     "description": "交易编号或 ID",
+     "title": "Ref",
+     "type": "string"
+    }
+   },
+   "required": [
+    "ref"
+   ],
+   "title": "GetTransactionArgs",
+   "type": "object"
+  },
+  "kind": "read",
+  "name": "get_transaction",
+  "operation": null,
+  "rest": "transactions_get",
+  "scopes": [
+   "ledger:read"
+  ],
+  "title": "交易详情"
+ },
+ {
+  "any_of": [],
+  "input_schema": {
+   "$defs": {
+    "RecordIn": {
+     "additionalProperties": false,
+     "properties": {
+      "amount": {
+       "description": "正数字符串，如 \"51.50\"",
+       "title": "Amount",
+       "type": "string"
+      },
+      "balance_after": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "title": "Balance After"
+      },
+      "commodity": {
+       "default": "CNY",
+       "title": "Commodity",
+       "type": "string"
+      },
+      "counterparty": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "title": "Counterparty"
+      },
+      "description": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "title": "Description"
+      },
+      "direction": {
+       "enum": [
+        "in",
+        "out",
+        "neutral"
+       ],
+       "title": "Direction",
+       "type": "string"
+      },
+      "external_id": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "description": "来源内唯一号（订单号、流水号），用于去重",
+       "title": "External Id"
+      },
+      "extracted": {
+       "anyOf": [
+        {
+         "additionalProperties": true,
+         "type": "object"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "description": "补充字段：face（面值）、quantity、credits（额度数量）、account、code（会被摘要化）…",
+       "title": "Extracted"
+      },
+      "fee": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "title": "Fee"
+      },
+      "occurred_at": {
+       "description": "发生时间，ISO 格式；无时区时按来源时区",
+       "title": "Occurred At",
+       "type": "string"
+      },
+      "order_no": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "title": "Order No"
+      },
+      "reference": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "title": "Reference"
+      },
+      "status": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "title": "Status"
+      }
+     },
+     "required": [
+      "occurred_at",
+      "direction",
+      "amount"
+     ],
+     "title": "RecordIn",
+     "type": "object"
+    }
+   },
+   "additionalProperties": false,
+   "properties": {
+    "content_base64": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "description": "文件内容（base64，≤ 10 MB）",
+     "title": "Content Base64"
+    },
+    "dry_run": {
+     "default": false,
+     "description": "只计算并返回结果，不保存",
+     "title": "Dry Run",
+     "type": "boolean"
+    },
+    "file_name": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "description": "随附文件名（决定解析方式：.csv / .xlsx / .json）",
+     "title": "File Name"
+    },
+    "idempotency_key": {
+     "anyOf": [
+      {
+       "maxLength": 128,
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "description": "重试同一写入时传相同的键，避免重复入账",
+     "title": "Idempotency Key"
+    },
+    "note": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Note"
+    },
+    "records": {
+     "anyOf": [
+      {
+       "items": {
+        "$ref": "#/$defs/RecordIn"
+       },
+       "maxItems": 20000,
+       "type": "array"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "description": "结构化记录：从截图 / PDF 读出的流水、订单、兑换记录",
+     "title": "Records"
+    },
+    "source": {
+     "description": "来源代码或 ID",
+     "title": "Source",
+     "type": "string"
+    }
+   },
+   "required": [
+    "source"
+   ],
+   "title": "ImportArgsWithOptions",
+   "type": "object"
+  },
+  "kind": "write",
+  "name": "import_records",
+  "operation": null,
+  "rest": "import_batches_create",
+  "scopes": [
+   "import:write"
+  ],
+  "title": "导入账单"
+ },
+ {
+  "any_of": [],
+  "input_schema": {
+   "additionalProperties": false,
+   "properties": {
+    "kinds": {
+     "description": "空 = 全部：unprocessed_records、pending_matches、uncommitted_batches、estimated、suspense、failed_checks",
+     "items": {
+      "type": "string"
+     },
+     "title": "Kinds",
+     "type": "array"
+    },
+    "limit": {
+     "default": 20,
+     "maximum": 100,
+     "minimum": 1,
+     "title": "Limit",
+     "type": "integer"
+    }
+   },
+   "title": "WorkArgs",
+   "type": "object"
+  },
+  "kind": "read",
+  "name": "list_pending_work",
+  "operation": null,
+  "rest": "work_items_list",
+  "scopes": [
+   "ledger:read"
+  ],
+  "title": "待处理事项"
+ },
+ {
+  "any_of": [],
+  "input_schema": {
+   "$defs": {
+    "FeeRuleIn": {
+     "additionalProperties": false,
+     "properties": {
+      "channels": {
+       "description": "渠道代码；空 = 所有渠道",
+       "items": {
+        "type": "string"
+       },
+       "title": "Channels",
+       "type": "array"
+      },
+      "code": {
+       "description": "规则代码；同代码再次提交 = 新版本",
+       "pattern": "^[a-z0-9][a-z0-9_.-]{1,47}$",
+       "title": "Code",
+       "type": "string"
+      },
+      "commodity": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "description": "fixed / min / max 的币种；只按比例时可省略",
+       "title": "Commodity"
+      },
+      "counterparties": {
+       "description": "往来方名称或 ID；空 = 所有",
+       "items": {
+        "type": "string"
+       },
+       "title": "Counterparties",
+       "type": "array"
+      },
+      "fixed": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "description": "每笔固定额，如 \"0.30\"",
+       "title": "Fixed"
+      },
+      "is_estimate": {
+       "default": false,
+       "description": "按此规则计算的手续费标记为估算，待实际到账核对",
+       "title": "Is Estimate",
+       "type": "boolean"
+      },
+      "max": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "description": "每笔上限",
+       "title": "Max"
+      },
+      "min": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "description": "每笔下限",
+       "title": "Min"
+      },
+      "name": {
+       "anyOf": [
+        {
+         "maxLength": 60,
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "title": "Name"
+      },
+      "note": {
+       "anyOf": [
+        {
+         "maxLength": 200,
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "title": "Note"
+      },
+      "priority": {
+       "default": 0,
+       "maximum": 100,
+       "minimum": -100,
+       "title": "Priority",
+       "type": "integer"
+      },
+      "rate": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "description": "比例，如 \"0.03\" 表示 3%",
+       "title": "Rate"
+      },
+      "transaction_types": {
+       "description": "适用的交易类型；留空 = 销售收入与额度采购（费用支出、资金划转、销售退款须明确列出）",
+       "items": {
+        "enum": [
+         "sale",
+         "credit_purchase",
+         "expense",
+         "transfer",
+         "sale_refund"
+        ],
+        "type": "string"
+       },
+       "title": "Transaction Types",
+       "type": "array"
+      },
+      "valid_from": {
+       "format": "date",
+       "title": "Valid From",
+       "type": "string"
+      }
+     },
+     "required": [
+      "code",
+      "valid_from"
+     ],
+     "title": "FeeRuleIn",
+     "type": "object"
+    }
+   },
+   "additionalProperties": false,
+   "properties": {
+    "action": {
+     "enum": [
+      "save",
+      "retire"
+     ],
+     "title": "Action",
+     "type": "string"
+    },
+    "code": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "description": "action=retire：停用的规则代码",
+     "title": "Code"
+    },
+    "dry_run": {
+     "default": false,
+     "description": "只计算并返回结果，不保存",
+     "title": "Dry Run",
+     "type": "boolean"
+    },
+    "idempotency_key": {
+     "anyOf": [
+      {
+       "maxLength": 128,
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "description": "重试同一写入时传相同的键，避免重复入账",
+     "title": "Idempotency Key"
+    },
+    "rule": {
+     "anyOf": [
+      {
+       "$ref": "#/$defs/FeeRuleIn"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "description": "action=save：规则内容；同 code 再提交即新版本"
+    }
+   },
+   "required": [
+    "action"
+   ],
+   "title": "FeeRuleArgsWithOptions",
+   "type": "object"
+  },
+  "kind": "high",
+  "name": "manage_fee_rule",
+  "operation": null,
+  "rest": "fee_rules_save",
+  "scopes": [
+   "config:write"
+  ],
+  "title": "手续费规则"
+ },
+ {
+  "any_of": [],
+  "input_schema": {
+   "$defs": {
+    "SourceIn": {
+     "additionalProperties": false,
+     "properties": {
+      "code": {
+       "description": "来源代码，如 wechat、ld_orders、relay_log",
+       "pattern": "^[a-z0-9][a-z0-9_.-]{1,47}$",
+       "title": "Code",
+       "type": "string"
+      },
+      "config": {
+       "additionalProperties": true,
+       "description": "defaults（按方向 in / out / neutral 给出 type、channel、category、counterparty…）、unclassified_policy（leave / suspense）、match（匹配窗口与容差）、credit_rate（额度换算本位币，默认 1）、列映射 columns / wide、shop、counterparty；ai_extract 另有 hint（告诉 AI 这是什么页面）与 commodity（如 UCR：金额是站内额度）",
+       "title": "Config",
+       "type": "object"
+      },
+      "kind": {
+       "description": "redeem_page：中转站兑换码页面打印的 PDF；ai_extract：截图与 PDF 由 AI 读取（服务器需配置密钥）",
+       "enum": [
+        "wechat_bill",
+        "alipay_bill",
+        "stripe_balance",
+        "card_shop_orders",
+        "upstream_usage_log",
+        "generic_tabular",
+        "records",
+        "redeem_page",
+        "ai_extract"
+       ],
+       "title": "Kind",
+       "type": "string"
+      },
+      "name": {
+       "anyOf": [
+        {
+         "maxLength": 60,
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "title": "Name"
+      },
+      "timezone": {
+       "default": "Asia/Shanghai",
+       "title": "Timezone",
+       "type": "string"
+      }
+     },
+     "required": [
+      "code",
+      "kind"
+     ],
+     "title": "SourceIn",
+     "type": "object"
+    }
+   },
+   "additionalProperties": false,
+   "properties": {
+    "action": {
+     "enum": [
+      "list",
+      "create",
+      "update"
+     ],
+     "title": "Action",
+     "type": "string"
+    },
+    "changes": {
+     "anyOf": [
+      {
+       "additionalProperties": true,
+       "type": "object"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "description": "action=update：name / timezone / config / is_active",
+     "title": "Changes"
+    },
+    "code": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "description": "action=update：来源代码",
+     "title": "Code"
+    },
+    "dry_run": {
+     "default": false,
+     "description": "只计算并返回结果，不保存",
+     "title": "Dry Run",
+     "type": "boolean"
+    },
+    "expected_version": {
+     "anyOf": [
+      {
+       "type": "integer"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Expected Version"
+    },
+    "idempotency_key": {
+     "anyOf": [
+      {
+       "maxLength": 128,
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "description": "重试同一写入时传相同的键，避免重复入账",
+     "title": "Idempotency Key"
+    },
+    "source": {
+     "anyOf": [
+      {
+       "$ref": "#/$defs/SourceIn"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "description": "action=create"
+    }
+   },
+   "required": [
+    "action"
+   ],
+   "title": "SourceArgsWithOptions",
+   "type": "object"
+  },
+  "kind": "write",
+  "name": "manage_import_source",
+  "operation": null,
+  "rest": "import_sources_create",
+  "scopes": [
+   "import:write"
+  ],
+  "title": "导入来源"
+ },
+ {
+  "any_of": [],
+  "input_schema": {
+   "$defs": {
+    "PairingRuleIn": {
+     "additionalProperties": false,
+     "properties": {
+      "code": {
+       "pattern": "^[a-z0-9][a-z0-9_.-]{1,47}$",
+       "title": "Code",
+       "type": "string"
+      },
+      "config": {
+       "additionalProperties": true,
+       "description": "{\"left\":{\"sources\":[\"ld_orders\"]},\"right\":{\"sources\":[\"relay_log\"]},\"left_keys\":[\"counterparty\",\"extracted.face\"],\"right_keys\":[\"counterparty\",\"extracted.face\"],\"window_minutes\":{\"before\":10,\"after\":4320},\"penalty_minutes\":4320,\"auto_accept_max_gap_minutes\":30}",
+       "title": "Config",
+       "type": "object"
+      },
+      "is_active": {
+       "default": true,
+       "title": "Is Active",
+       "type": "boolean"
+      },
+      "name": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "title": "Name"
+      }
+     },
+     "required": [
+      "code",
+      "config"
+     ],
+     "title": "PairingRuleIn",
+     "type": "object"
+    }
+   },
+   "additionalProperties": false,
+   "properties": {
+    "action": {
+     "enum": [
+      "list",
+      "save"
+     ],
+     "title": "Action",
+     "type": "string"
+    },
+    "dry_run": {
+     "default": false,
+     "description": "只计算并返回结果，不保存",
+     "title": "Dry Run",
+     "type": "boolean"
+    },
+    "idempotency_key": {
+     "anyOf": [
+      {
+       "maxLength": 128,
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "description": "重试同一写入时传相同的键，避免重复入账",
+     "title": "Idempotency Key"
+    },
+    "rule": {
+     "anyOf": [
+      {
+       "$ref": "#/$defs/PairingRuleIn"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null
+    }
+   },
+   "required": [
+    "action"
+   ],
+   "title": "PairingArgsWithOptions",
+   "type": "object"
+  },
+  "kind": "write",
+  "name": "manage_pairing_rule",
+  "operation": null,
+  "rest": "pairing_rules_save",
+  "scopes": [
+   "rules:write"
+  ],
+  "title": "配对规则"
+ },
+ {
+  "any_of": [],
+  "input_schema": {
+   "$defs": {
+    "RuleIn": {
+     "additionalProperties": false,
+     "properties": {
+      "actions": {
+       "description": "动作：{\"type\":\"set_transaction_type\",\"value\":\"credit_purchase\"}、{\"type\":\"set_counterparty\",\"value\":\"relay-b.example\"}、{\"type\":\"set_input\",\"name\":\"face\",\"value\":{\"amount\":\"{captures.face}\",\"commodity\":\"CNY\"}}、set_channel、set_category、set_fee、set_description、ignore（reason）",
+       "items": {
+        "additionalProperties": true,
+        "type": "object"
+       },
+       "title": "Actions",
+       "type": "array"
+      },
+      "code": {
+       "pattern": "^[a-z0-9][a-z0-9_.-]{1,47}$",
+       "title": "Code",
+       "type": "string"
+      },
+      "condition": {
+       "additionalProperties": true,
+       "description": "条件 AST：{\"all\":[…]} / {\"any\":[…]} / {\"not\":…} / {\"field\":\"description\",\"op\":\"regex\",\"value\":\"(?P<face>\\\\d+)R\"}",
+       "title": "Condition",
+       "type": "object"
+      },
+      "is_active": {
+       "default": true,
+       "title": "Is Active",
+       "type": "boolean"
+      },
+      "name": {
+       "anyOf": [
+        {
+         "maxLength": 80,
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "title": "Name"
+      },
+      "note": {
+       "anyOf": [
+        {
+         "maxLength": 200,
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "title": "Note"
+      },
+      "priority": {
+       "default": 100,
+       "maximum": 1000,
+       "minimum": 0,
+       "title": "Priority",
+       "type": "integer"
+      },
+      "stage": {
+       "default": "classify",
+       "enum": [
+        "normalize",
+        "classify",
+        "enrich"
+       ],
+       "title": "Stage",
+       "type": "string"
+      },
+      "stop_processing": {
+       "default": false,
+       "title": "Stop Processing",
+       "type": "boolean"
+      }
+     },
+     "required": [
+      "code",
+      "condition",
+      "actions"
+     ],
+     "title": "RuleIn",
+     "type": "object"
+    }
+   },
+   "additionalProperties": false,
+   "properties": {
+    "action": {
+     "enum": [
+      "list",
+      "save",
+      "enable",
+      "disable",
+      "test"
+     ],
+     "title": "Action",
+     "type": "string"
+    },
+    "code": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "description": "action=enable / disable / test（已有规则）",
+     "title": "Code"
+    },
+    "date_from": {
+     "anyOf": [
+      {
+       "format": "date",
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Date From"
+    },
+    "date_to": {
+     "anyOf": [
+      {
+       "format": "date",
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Date To"
+    },
+    "dry_run": {
+     "default": false,
+     "description": "只计算并返回结果，不保存",
+     "title": "Dry Run",
+     "type": "boolean"
+    },
+    "idempotency_key": {
+     "anyOf": [
+      {
+       "maxLength": 128,
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "description": "重试同一写入时传相同的键，避免重复入账",
+     "title": "Idempotency Key"
+    },
+    "rule": {
+     "anyOf": [
+      {
+       "$ref": "#/$defs/RuleIn"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "description": "action=save / test"
+    },
+    "source": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "description": "action=test：限定来源",
+     "title": "Source"
+    }
+   },
+   "required": [
+    "action"
+   ],
+   "title": "RuleArgsWithOptions",
+   "type": "object"
+  },
+  "kind": "write",
+  "name": "manage_rule",
+  "operation": null,
+  "rest": "rules_save",
+  "scopes": [
+   "rules:write"
+  ],
+  "title": "分类规则"
+ },
+ {
+  "any_of": [],
+  "input_schema": {
+   "additionalProperties": false,
+   "properties": {
+    "accounts": {
+     "description": "科目编码（含下级）",
+     "items": {
+      "type": "string"
+     },
+     "title": "Accounts",
+     "type": "array"
+    },
+    "channels": {
+     "items": {
+      "type": "string"
+     },
+     "title": "Channels",
+     "type": "array"
+    },
+    "classifications": {
+     "items": {
+      "type": "string"
+     },
+     "title": "Classifications",
+     "type": "array"
+    },
+    "commodities": {
+     "items": {
+      "type": "string"
+     },
+     "title": "Commodities",
+     "type": "array"
+    },
+    "counterparties": {
+     "items": {
+      "type": "string"
+     },
+     "title": "Counterparties",
+     "type": "array"
+    },
+    "date_from": {
+     "format": "date",
+     "title": "Date From",
+     "type": "string"
+    },
+    "date_to": {
+     "format": "date",
+     "title": "Date To",
+     "type": "string"
+    },
+    "group_by": {
+     "description": "最多 4 个：year、quarter、month、week、day、account、top_account、classification、channel、counterparty、transaction_type、line_role、commodity、is_estimate",
+     "items": {
+      "type": "string"
+     },
+     "title": "Group By",
+     "type": "array"
+    },
+    "line_roles": {
+     "items": {
+      "type": "string"
+     },
+     "title": "Line Roles",
+     "type": "array"
+    },
+    "measures": {
+     "description": "base_amount、amount、debit、credit、count、quantity",
+     "items": {
+      "type": "string"
+     },
+     "title": "Measures",
+     "type": "array"
+    },
+    "sign": {
+     "default": "natural",
+     "enum": [
+      "natural",
+      "debit"
+     ],
+     "title": "Sign",
+     "type": "string"
+    },
+    "tags": {
+     "description": "只统计带这些标签（任一）的交易",
+     "items": {
+      "type": "string"
+     },
+     "title": "Tags",
+     "type": "array"
+    },
+    "transaction_types": {
+     "items": {
+      "type": "string"
+     },
+     "title": "Transaction Types",
+     "type": "array"
+    }
+   },
+   "required": [
+    "date_from",
+    "date_to"
+   ],
+   "title": "QueryArgs",
+   "type": "object"
+  },
+  "kind": "read",
+  "name": "query_ledger",
+  "operation": null,
+  "rest": "reports_query",
+  "scopes": [
+   "ledger:read"
+  ],
+  "title": "自定义汇总"
+ },
+ {
+  "any_of": [],
+  "input_schema": {
+   "additionalProperties": false,
+   "properties": {
+    "channels": {
+     "description": "渠道代码",
+     "items": {
+      "type": "string"
+     },
+     "title": "Channels",
+     "type": "array"
+    },
+    "date_from": {
+     "anyOf": [
+      {
+       "format": "date",
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Date From"
+    },
+    "date_to": {
+     "anyOf": [
+      {
+       "format": "date",
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Date To"
+    },
+    "dry_run": {
+     "default": false,
+     "description": "只计算并返回结果，不保存",
+     "title": "Dry Run",
+     "type": "boolean"
+    },
+    "idempotency_key": {
+     "anyOf": [
+      {
+       "maxLength": 128,
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "description": "重试同一写入时传相同的键，避免重复入账",
+     "title": "Idempotency Key"
+    },
+    "ids": {
+     "description": "交易 ID 或编号",
+     "items": {
+      "type": "string"
+     },
+     "maxItems": 1000,
+     "title": "Ids",
+     "type": "array"
+    },
+    "limit": {
+     "default": 500,
+     "maximum": 2000,
+     "minimum": 1,
+     "title": "Limit",
+     "type": "integer"
+    },
+    "reason": {
+     "description": "重算原因，如“Stripe 费率调整”",
+     "maxLength": 200,
+     "minLength": 2,
+     "title": "Reason",
+     "type": "string"
+    },
+    "types": {
+     "items": {
+      "enum": [
+       "sale",
+       "credit_purchase",
+       "expense",
+       "transfer",
+       "sale_refund"
+      ],
+      "type": "string"
+     },
+     "title": "Types",
+     "type": "array"
+    }
+   },
+   "required": [
+    "reason"
+   ],
+   "title": "RepostTransactionsArgs",
+   "type": "object"
+  },
+  "kind": "high",
+  "name": "repost_transactions",
+  "operation": "transactions.repost",
+  "rest": "transactions_repost",
+  "scopes": [
+   "ledger:write"
+  ],
+  "title": "按新规则重算"
+ },
+ {
+  "any_of": [],
+  "input_schema": {
+   "$defs": {
+    "Decision": {
+     "additionalProperties": false,
+     "properties": {
+      "accept": {
+       "title": "Accept",
+       "type": "boolean"
+      },
+      "note": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "title": "Note"
+      },
+      "suggestion_id": {
+       "title": "Suggestion Id",
+       "type": "string"
+      }
+     },
+     "required": [
+      "suggestion_id",
+      "accept"
+     ],
+     "title": "Decision",
+     "type": "object"
+    }
+   },
+   "additionalProperties": false,
+   "properties": {
+    "decisions": {
+     "items": {
+      "$ref": "#/$defs/Decision"
+     },
+     "maxItems": 500,
+     "title": "Decisions",
+     "type": "array"
+    },
+    "dry_run": {
+     "default": false,
+     "description": "只计算并返回结果，不保存",
+     "title": "Dry Run",
+     "type": "boolean"
+    },
+    "idempotency_key": {
+     "anyOf": [
+      {
+       "maxLength": 128,
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "description": "重试同一写入时传相同的键，避免重复入账",
+     "title": "Idempotency Key"
+    },
+    "link": {
+     "anyOf": [
+      {
+       "additionalProperties": {
+        "type": "string"
+       },
+       "type": "object"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "description": "手工关联：{\"record_id\": \"...\", \"transaction\": \"T2026-000123\"}",
+     "title": "Link"
+    }
+   },
+   "title": "ResolveArgsWithOptions",
+   "type": "object"
+  },
+  "kind": "write",
+  "name": "resolve_match",
+  "operation": null,
+  "rest": "match_suggestions_accept",
+  "scopes": [
+   "import:write"
+  ],
+  "title": "处理匹配"
+ },
+ {
+  "any_of": [],
+  "input_schema": {
+   "additionalProperties": false,
+   "properties": {
+    "dry_run": {
+     "default": false,
+     "description": "只计算并返回结果，不保存",
+     "title": "Dry Run",
+     "type": "boolean"
+    },
+    "expected_version": {
+     "anyOf": [
+      {
+       "type": "integer"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Expected Version"
+    },
+    "idempotency_key": {
+     "anyOf": [
+      {
+       "maxLength": 128,
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "description": "重试同一写入时传相同的键，避免重复入账",
+     "title": "Idempotency Key"
+    },
+    "ref": {
+     "description": "交易编号（如 T2026-000123）或 ID",
+     "title": "Ref",
+     "type": "string"
+    }
+   },
+   "required": [
+    "ref"
+   ],
+   "title": "RestoreTransactionArgs",
+   "type": "object"
+  },
+  "kind": "write",
+  "name": "restore_transaction",
+  "operation": "transactions.restore",
+  "rest": "transactions_restore",
+  "scopes": [
+   "ledger:write"
+  ],
+  "title": "恢复交易"
+ },
+ {
+  "any_of": [],
+  "input_schema": {
+   "additionalProperties": false,
+   "properties": {
+    "batch_id": {
+     "title": "Batch Id",
+     "type": "string"
+    },
+    "dry_run": {
+     "default": false,
+     "description": "只计算并返回结果，不保存",
+     "title": "Dry Run",
+     "type": "boolean"
+    },
+    "idempotency_key": {
+     "anyOf": [
+      {
+       "maxLength": 128,
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "description": "重试同一写入时传相同的键，避免重复入账",
+     "title": "Idempotency Key"
+    },
+    "reason": {
+     "anyOf": [
+      {
+       "maxLength": 200,
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "description": "可选：撤销原因",
+     "title": "Reason"
+    }
+   },
+   "required": [
+    "batch_id"
+   ],
+   "title": "RevertImportArgs",
+   "type": "object"
+  },
+  "kind": "high",
+  "name": "revert_import",
+  "operation": "imports.revert",
+  "rest": "import_batches_revert",
+  "scopes": [
+   "import:write"
+  ],
+  "title": "撤销导入"
+ },
+ {
+  "any_of": [],
+  "input_schema": {
+   "additionalProperties": false,
+   "properties": {
+    "codes": {
+     "description": "检查代码；空 = 全部",
+     "items": {
+      "type": "string"
+     },
+     "title": "Codes",
+     "type": "array"
+    }
+   },
+   "title": "ChecksArgs",
+   "type": "object"
+  },
+  "kind": "read",
+  "name": "run_checks",
+  "operation": null,
+  "rest": "checks_run",
+  "scopes": [
+   "ledger:read"
+  ],
+  "title": "健康检查"
+ },
+ {
+  "any_of": [],
+  "input_schema": {
+   "additionalProperties": false,
+   "properties": {
+    "columns": {
+     "anyOf": [
+      {
+       "enum": [
+        "year",
+        "quarter",
+        "month",
+        "week",
+        "day"
+       ],
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Columns"
+    },
+    "date_from": {
+     "format": "date",
+     "title": "Date From",
+     "type": "string"
+    },
+    "date_to": {
+     "format": "date",
+     "title": "Date To",
+     "type": "string"
+    },
+    "period": {
+     "anyOf": [
+      {
+       "enum": [
+        "year",
+        "quarter",
+        "month",
+        "week",
+        "day"
+       ],
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "description": "经营 / 销售 / 采购报表的分期；利润表用 columns",
+     "title": "Period"
+    },
+    "report": {
+     "enum": [
+      "summary",
+      "income_statement",
+      "operations",
+      "sales",
+      "fees",
+      "credit_purchases",
+      "trial_balance"
+     ],
+     "title": "Report",
+     "type": "string"
+    }
+   },
+   "required": [
+    "report",
+    "date_from",
+    "date_to"
+   ],
+   "title": "ReportArgs",
+   "type": "object"
+  },
+  "kind": "read",
+  "name": "run_report",
+  "operation": null,
+  "rest": "reports_get",
+  "scopes": [
+   "ledger:read"
+  ],
+  "title": "运行报表"
+ },
+ {
+  "any_of": [],
+  "input_schema": {
+   "additionalProperties": false,
+   "properties": {
+    "classification": {
+     "anyOf": [
+      {
+       "enum": [
+        "asset",
+        "liability",
+        "equity",
+        "revenue",
+        "expense"
+       ],
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Classification"
+    },
+    "include_balances": {
+     "default": false,
+     "description": "附当前余额（各币种）",
+     "title": "Include Balances",
+     "type": "boolean"
+    },
+    "postable_only": {
+     "default": true,
+     "description": "只返回可记账的明细科目",
+     "title": "Postable Only",
+     "type": "boolean"
+    },
+    "query": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "description": "编码前缀或名称片段",
+     "title": "Query"
+    },
+    "role": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "description": "科目角色，如 funds、cost_operating、expense_finance_fee",
+     "title": "Role"
+    }
+   },
+   "title": "SearchAccountsArgs",
+   "type": "object"
+  },
+  "kind": "read",
+  "name": "search_accounts",
+  "operation": null,
+  "rest": "accounts_list",
+  "scopes": [
+   "ledger:read"
+  ],
+  "title": "查找科目"
+ },
+ {
+  "any_of": [],
+  "input_schema": {
+   "additionalProperties": false,
+   "properties": {
+    "category": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Category"
+    },
+    "limit": {
+     "default": 20,
+     "maximum": 100,
+     "minimum": 1,
+     "title": "Limit",
+     "type": "integer"
+    },
+    "query": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "description": "名称、别名、域名或网址；不确定写法时直接给原文",
+     "title": "Query"
+    }
+   },
+   "title": "SearchCounterpartiesArgs",
+   "type": "object"
+  },
+  "kind": "read",
+  "name": "search_counterparties",
+  "operation": null,
+  "rest": "counterparties_list",
+  "scopes": [
+   "ledger:read"
+  ],
+  "title": "查找往来方"
+ },
+ {
+  "any_of": [],
+  "input_schema": {
+   "additionalProperties": false,
+   "properties": {
+    "batch_id": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Batch Id"
+    },
+    "date_from": {
+     "anyOf": [
+      {
+       "format": "date",
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Date From"
+    },
+    "date_to": {
+     "anyOf": [
+      {
+       "format": "date",
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Date To"
+    },
+    "limit": {
+     "default": 50,
+     "maximum": 500,
+     "minimum": 1,
+     "title": "Limit",
+     "type": "integer"
+    },
+    "offset": {
+     "default": 0,
+     "minimum": 0,
+     "title": "Offset",
+     "type": "integer"
+    },
+    "q": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Q"
+    },
+    "source": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Source"
+    },
+    "status": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "description": "new / classified / matched / booked / ignored / duplicate，可逗号分隔",
+     "title": "Status"
+    }
+   },
+   "title": "RecordSearchArgs",
+   "type": "object"
+  },
+  "kind": "read",
+  "name": "search_source_records",
+  "operation": null,
+  "rest": "source_records_list",
+  "scopes": [
+   "ledger:read"
+  ],
+  "title": "查找来源记录"
+ },
+ {
+  "any_of": [],
+  "input_schema": {
+   "additionalProperties": false,
+   "properties": {
+    "account": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "description": "科目编码，含下级科目",
+     "title": "Account"
+    },
+    "amount_max": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Amount Max"
+    },
+    "amount_min": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "description": "金额下限（本位币，字符串小数，如 \"50\"）",
+     "title": "Amount Min"
+    },
+    "channel": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "description": "渠道代码",
+     "title": "Channel"
+    },
+    "commodity": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "description": "有该币种分录行的交易，如 GBP；与 account 同时给出时限定在该科目",
+     "title": "Commodity"
+    },
+    "counterparty": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Counterparty"
+    },
+    "created_channel": {
+     "anyOf": [
+      {
+       "enum": [
+        "ui",
+        "api",
+        "mcp",
+        "import",
+        "system",
+        "migration",
+        "cli"
+       ],
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Created Channel"
+    },
+    "cursor": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "description": "上一页返回的 next_cursor",
+     "title": "Cursor"
+    },
+    "date_from": {
+     "anyOf": [
+      {
+       "format": "date",
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Date From"
+    },
+    "date_to": {
+     "anyOf": [
+      {
+       "format": "date",
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Date To"
+    },
+    "is_estimate": {
+     "anyOf": [
+      {
+       "type": "boolean"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Is Estimate"
+    },
+    "limit": {
+     "default": 20,
+     "maximum": 100,
+     "minimum": 1,
+     "title": "Limit",
+     "type": "integer"
+    },
+    "linked_to": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "description": "与该交易有退款关联的交易",
+     "title": "Linked To"
+    },
+    "q": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "description": "摘要、交易编号或订单号片段",
+     "title": "Q"
+    },
+    "status": {
+     "default": "posted",
+     "description": "posted 正常；reversed 已删除",
+     "enum": [
+      "posted",
+      "reversed"
+     ],
+     "title": "Status",
+     "type": "string"
+    },
+    "tag": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "description": "带有该标签的交易",
+     "title": "Tag"
+    },
+    "type": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "description": "交易类型代码；多个用逗号分隔，如 sale_refund,purchase_refund",
+     "title": "Type"
+    }
+   },
+   "title": "SearchTransactionsArgs",
+   "type": "object"
+  },
+  "kind": "read",
+  "name": "search_transactions",
+  "operation": null,
+  "rest": "transactions_list",
+  "scopes": [
+   "ledger:read"
+  ],
+  "title": "查找交易"
+ },
+ {
+  "any_of": [],
+  "input_schema": {
+   "additionalProperties": false,
+   "properties": {
+    "change_set_id": {
+     "description": "要撤销的变更集 ID（写入回执的 meta.change_set_id）",
+     "title": "Change Set Id",
+     "type": "string"
+    },
+    "dry_run": {
+     "default": false,
+     "description": "只计算并返回结果，不保存",
+     "title": "Dry Run",
+     "type": "boolean"
+    },
+    "idempotency_key": {
+     "anyOf": [
+      {
+       "maxLength": 128,
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "description": "重试同一写入时传相同的键，避免重复入账",
+     "title": "Idempotency Key"
+    },
+    "reason": {
+     "anyOf": [
+      {
+       "maxLength": 200,
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "description": "可选：撤销原因",
+     "title": "Reason"
+    }
+   },
+   "required": [
+    "change_set_id"
+   ],
+   "title": "UndoChangeSetArgs",
+   "type": "object"
+  },
+  "kind": "high",
+  "name": "undo_change_set",
+  "operation": "change_sets.undo",
+  "rest": "change_sets_undo",
+  "scopes": [
+   "ledger:write"
+  ],
+  "title": "撤销变更集"
+ },
+ {
+  "any_of": [],
+  "input_schema": {
+   "$defs": {
+    "LineIn": {
+     "additionalProperties": false,
+     "properties": {
+      "account": {
+       "description": "科目编码或 ID",
+       "title": "Account",
+       "type": "string"
+      },
+      "amount": {
+       "$ref": "#/$defs/MoneyIn"
+      },
+      "base_amount": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "description": "本位币金额（实际折算值），给出时优先于汇率",
+       "title": "Base Amount"
+      },
+      "counterparty": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "title": "Counterparty"
+      },
+      "counterparty_account": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "title": "Counterparty Account"
+      },
+      "dimensions": {
+       "anyOf": [
+        {
+         "additionalProperties": {
+          "type": "string"
+         },
+         "type": "object"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "description": "{维度类型代码: 维度值代码}",
+       "title": "Dimensions"
+      },
+      "fx_rate": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "title": "Fx Rate"
+      },
+      "memo": {
+       "anyOf": [
+        {
+         "maxLength": 200,
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "title": "Memo"
+      },
+      "quantity": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "title": "Quantity"
+      },
+      "quantity_unit": {
+       "anyOf": [
+        {
+         "maxLength": 12,
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "title": "Quantity Unit"
+      },
+      "side": {
+       "enum": [
+        "debit",
+        "credit"
+       ],
+       "title": "Side",
+       "type": "string"
+      }
+     },
+     "required": [
+      "account",
+      "side",
+      "amount"
+     ],
+     "title": "LineIn",
+     "type": "object"
+    },
+    "MoneyIn": {
+     "additionalProperties": false,
+     "properties": {
+      "amount": {
+       "description": "字符串小数，如 \"51.50\"；不接受浮点数",
+       "title": "Amount",
+       "type": "string"
+      },
+      "commodity": {
+       "pattern": "^[A-Z][A-Z0-9_]{1,11}$",
+       "title": "Commodity",
+       "type": "string"
+      }
+     },
+     "required": [
+      "amount",
+      "commodity"
+     ],
+     "title": "MoneyIn",
+     "type": "object"
+    }
+   },
+   "additionalProperties": false,
+   "properties": {
+    "allow_conversion": {
+     "anyOf": [
+      {
+       "type": "boolean"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Allow Conversion"
+    },
+    "counterparty": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Counterparty"
+    },
+    "date_precision": {
+     "anyOf": [
+      {
+       "enum": [
+        "timestamp",
+        "day",
+        "month"
+       ],
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Date Precision"
+    },
+    "description": {
+     "anyOf": [
+      {
+       "maxLength": 200,
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Description"
+    },
+    "dry_run": {
+     "default": false,
+     "description": "只计算并返回结果，不保存",
+     "title": "Dry Run",
+     "type": "boolean"
+    },
+    "effective_date": {
+     "anyOf": [
+      {
+       "format": "date",
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Effective Date"
+    },
+    "expected_version": {
+     "anyOf": [
+      {
+       "type": "integer"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "description": "读取时的 version；给出时可防止覆盖别人的修改",
+     "title": "Expected Version"
+    },
+    "external_ref": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "External Ref"
+    },
+    "idempotency_key": {
+     "anyOf": [
+      {
+       "maxLength": 128,
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "description": "重试同一写入时传相同的键，避免重复入账",
+     "title": "Idempotency Key"
+    },
+    "inputs": {
+     "anyOf": [
+      {
+       "additionalProperties": true,
+       "type": "object"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "description": "部分修改：只需给出要改的键，值为 null 表示删除",
+     "title": "Inputs"
+    },
+    "journal_code": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Journal Code"
+    },
+    "lines": {
+     "anyOf": [
+      {
+       "items": {
+        "$ref": "#/$defs/LineIn"
+       },
+       "type": "array"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Lines"
+    },
+    "metadata": {
+     "anyOf": [
+      {
+       "additionalProperties": true,
+       "type": "object"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Metadata"
+    },
+    "notes": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Notes"
+    },
+    "occurred_at": {
+     "anyOf": [
+      {
+       "format": "date-time",
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Occurred At"
+    },
+    "order_no": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Order No"
+    },
+    "ref": {
+     "description": "交易编号（如 T2026-000123）或 ID",
+     "title": "Ref",
+     "type": "string"
+    },
+    "tags": {
+     "anyOf": [
+      {
+       "items": {
+        "type": "string"
+       },
+       "maxItems": 20,
+       "type": "array"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "description": "整体替换标签",
+     "title": "Tags"
+    }
+   },
+   "required": [
+    "ref"
+   ],
+   "title": "UpdateTransactionArgs",
+   "type": "object"
+  },
+  "kind": "write",
+  "name": "update_transaction",
+  "operation": "transactions.edit",
+  "rest": "transactions_edit",
+  "scopes": [
+   "ledger:write"
+  ],
+  "title": "修改交易"
+ },
+ {
+  "any_of": [],
+  "input_schema": {
+   "additionalProperties": false,
+   "properties": {
+    "dry_run": {
+     "default": false,
+     "description": "只计算并返回结果，不保存",
+     "title": "Dry Run",
+     "type": "boolean"
+    },
+    "fields": {
+     "additionalProperties": true,
+     "description": "counterparty: name, category, roles?, domains?, aliases?, notes?；counterparty_update: id, expected_version, 及要改的字段；alias: counterparty, pattern, match_type；counterparty_account: counterparty, label, identifier?；channel: code, name?, aliases?, is_active?（代码已存在则修改）；commodity: code, name?, kind?(fiat/credit/other), scale?, symbol?, is_active?（代码已存在则修改）；fx_rate: base, quote, rate_date, rate",
+     "title": "Fields",
+     "type": "object"
+    },
+    "idempotency_key": {
+     "anyOf": [
+      {
+       "maxLength": 128,
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "description": "重试同一写入时传相同的键，避免重复入账",
+     "title": "Idempotency Key"
+    },
+    "kind": {
+     "enum": [
+      "counterparty",
+      "counterparty_update",
+      "alias",
+      "counterparty_account",
+      "channel",
+      "commodity",
+      "fx_rate"
+     ],
+     "title": "Kind",
+     "type": "string"
+    }
+   },
+   "required": [
+    "kind",
+    "fields"
+   ],
+   "title": "UpsertReferenceArgsWithOptions",
+   "type": "object"
+  },
+  "kind": "write",
+  "name": "upsert_reference",
+  "operation": null,
+  "rest": "counterparties_create",
+  "scopes": [
+   "reference:write"
+  ],
+  "title": "维护基础资料"
+ }
+]

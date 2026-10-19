@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#f6f7f9;--card:#fff;--ink:#111827;--mute:#6b7280;--line:#e5e7eb;--acc:#2563eb}
+body{width:1440px;height:900px;overflow:hidden;background:var(--bg);color:var(--ink);font:14px/1.5 Inter,"PingFang SC",system-ui,sans-serif}
+.app{display:grid;grid-template-columns:232px 1fr;height:900px}
+nav{background:var(--card);border-right:1px solid var(--line);padding:20px 12px}
+.brand{font-weight:600;padding:0 10px 20px}
+nav a{display:block;padding:8px 10px;border-radius:6px;color:var(--mute)}
+nav a.on{background:#eff4ff;color:var(--acc);font-weight:500}
+main{padding:24px 32px}
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px}
+h1{font-size:20px;font-weight:600}
+.btn{height:36px;padding:0 14px;border-radius:6px;border:1px solid var(--line);background:#fff}
+.btn.p{background:var(--acc);color:#fff;border:0}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px}
+.k{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px}
+.k span{color:var(--mute);font-size:13px}.k b{display:block;font-size:24px;font-weight:600;margin-top:6px}
+.k i{font-style:normal;font-size:12px;color:#059669}
+.chart{background:var(--card);border:1px solid var(--line);border-radius:10px;height:220px;margin-bottom:20px;padding:16px;position:relative}
+.chart svg{position:absolute;left:16px;right:16px;bottom:16px}
+table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+th{text-align:left;font-weight:500;color:var(--mute);font-size:12px;padding:10px 16px;background:#fafafa;border-bottom:1px solid var(--line)}
+td{padding:11px 16px;border-bottom:1px solid var(--line)}
+td.m{text-align:right;font-variant-numeric:tabular-nums}
+.badge{font-size:12px;padding:2px 8px;border-radius:999px;background:#fef3c7;color:#92400e}
+.badge.ok{background:#dcfce7;color:#166534}
+</style></head><body><div class="app">
+<nav><div class="brand">Bookkeeper</div><a class="on">概览</a><a>交易</a><a>导入</a><a>报表</a><a>往来方</a><a>期末</a><a>设置</a></nav>
+<main>
+<div class="top"><h1>概览</h1><div style="display:flex;gap:8px"><button class="btn">导入账单</button><button class="btn p">新建交易</button></div></div>
+<div class="kpis"><div class="k"><span>资金账户 CNY</span><b>¥29,806.66</b><i>+2.7% 本周</i></div><div class="k"><span>本月收入</span><b>¥19,663.38</b></div><div class="k"><span>本月成本</span><b>¥11,201.70</b></div><div class="k"><span>待处理</span><b>9</b></div></div>
+<div class="chart"><span style="color:var(--mute);font-size:13px">近 30 天收支</span>
+<svg height="160" viewBox="0 0 1100 160" preserveAspectRatio="none" width="100%"><path d="M0 120 L80 100 L160 110 L240 80 L320 90 L400 60 L480 70 L560 50 L640 65 L720 40 L800 55 L880 30 L960 45 L1040 20 L1100 30" fill="none" stroke="#2563eb" stroke-width="2"/></svg></div>
+<table><tr><th>日期</th><th>摘要</th><th>类型</th><th style="text-align:right">金额</th><th>状态</th></tr>
+<tr><td>2026-10-19</td><td>链动 · API 额度销售 · LD2610196QWERT</td><td>销售收入</td><td class="m">¥86.42</td><td><span class="badge">草稿</span></td></tr>
+<tr><td>2026-10-19</td><td>relay-b.example · 额度采购 · 面值 ¥38 · 链动</td><td>额度采购</td><td class="m">−¥39.14</td><td><span class="badge">草稿</span></td></tr>
+<tr><td>2026-10-19</td><td>OpenAI · AI 服务订阅 · Pro</td><td>费用支出</td><td class="m">−$130.92</td><td><span class="badge ok">已过账</span></td></tr>
+<tr><td>2026-10-18</td><td>Stripe · API 额度销售</td><td>销售收入</td><td class="m">£33.27</td><td><span class="badge ok">已过账</span></td></tr></table>
+</main></div></body></html>

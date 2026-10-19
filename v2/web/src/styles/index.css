@@ -1,0 +1,380 @@
+@import "tailwindcss";
+
+/*
+ * Warm consumer surface: white soft-cornered cards on a warm tinted ground, warm ink.
+ * One saturated colour, a Wise-like lime with forest ink, marks primary actions and the current selection.
+ * Money in and profit read in forest green, costs in sand; red is kept for errors and losses.
+ */
+
+:root {
+  color-scheme: light;
+  --ground: oklch(0.972 0.011 75);
+  --card: oklch(1 0 0);
+  --well: oklch(0.955 0.012 75);
+  --well-2: oklch(0.935 0.014 75);
+  --line: oklch(0.925 0.012 75);
+  --line-strong: oklch(0.87 0.016 75);
+  --ink: oklch(0.255 0.012 55);
+  --ink-2: oklch(0.47 0.02 55);
+  --ink-3: oklch(0.52 0.018 60);
+
+  --lime: oklch(0.87 0.18 132);
+  --lime-hover: oklch(0.84 0.18 132);
+  --lime-ink: oklch(0.3 0.08 135);
+  --lime-wash: oklch(0.87 0.18 132 / 0.28);
+
+  --pos: oklch(0.5 0.11 148);
+  --pos-wash: oklch(0.5 0.11 148 / 0.1);
+  --neg: oklch(0.53 0.17 30);
+  --neg-wash: oklch(0.53 0.17 30 / 0.09);
+  --warn: oklch(0.72 0.15 62);
+  --warn-text: oklch(0.52 0.12 60);
+  --warn-wash: oklch(0.72 0.15 62 / 0.14);
+
+  --series-in: oklch(0.72 0.12 150);
+  --series-cost: oklch(0.85 0.042 72);
+  --series-profit: oklch(0.38 0.09 145);
+
+  --ring: oklch(0.5 0.11 148);
+  --mark: oklch(0.42 0.1 148);
+  --scrim: oklch(0.28 0.02 60 / 0.26);
+  --toast: oklch(0.255 0.012 55);
+  --toast-ink: oklch(0.97 0.008 75);
+  --frost: oklch(0.995 0.004 75 / 0.68);
+  --frost-ink: oklch(0.255 0.012 55 / 0.8);
+  --frost-edge: oklch(1 0 0 / 0.75);
+  --toast-accent: oklch(0.87 0.18 132);
+
+  --shadow-card: 0 1px 2px oklch(0.4 0.03 60 / 0.06), 0 8px 24px -12px oklch(0.4 0.04 60 / 0.16);
+  --shadow-lift: 0 1px 2px oklch(0.4 0.03 60 / 0.08), 0 2px 8px -2px oklch(0.4 0.04 60 / 0.12);
+  --shadow-pop: 0 4px 12px -4px oklch(0.3 0.03 60 / 0.12), 0 28px 64px -24px oklch(0.3 0.04 60 / 0.38);
+}
+
+/* The resolved theme is always written to <html data-theme> (see index.html), so one block serves “system” and “dark”. */
+[data-theme="dark"] {
+  color-scheme: dark;
+  --ground: oklch(0.18 0.008 60);
+  --card: oklch(0.225 0.009 60);
+  --well: oklch(0.26 0.01 60);
+  --well-2: oklch(0.3 0.01 60);
+  --line: oklch(0.29 0.01 60);
+  --line-strong: oklch(0.36 0.012 60);
+  --ink: oklch(0.95 0.008 75);
+  --ink-2: oklch(0.78 0.012 70);
+  --ink-3: oklch(0.68 0.012 70);
+
+  --lime-wash: oklch(0.87 0.18 132 / 0.2);
+
+  --pos: oklch(0.8 0.15 138);
+  --pos-wash: oklch(0.8 0.15 138 / 0.12);
+  --neg: oklch(0.72 0.15 30);
+  --neg-wash: oklch(0.72 0.15 30 / 0.13);
+  --warn: oklch(0.8 0.14 70);
+  --warn-text: oklch(0.82 0.12 70);
+  --warn-wash: oklch(0.8 0.14 70 / 0.14);
+
+  --series-in: oklch(0.6 0.12 150);
+  --series-cost: oklch(0.45 0.03 70);
+  --series-profit: oklch(0.92 0.1 130);
+
+  --ring: oklch(0.87 0.18 132);
+  --scrim: oklch(0.05 0.01 60 / 0.6);
+  --toast: oklch(0.95 0.008 75);
+  --toast-ink: oklch(0.255 0.012 55);
+  --frost: oklch(0.24 0.009 60 / 0.68);
+  --frost-ink: oklch(0.95 0.008 75 / 0.82);
+  --frost-edge: oklch(1 0 0 / 0.09);
+  --toast-accent: oklch(0.5 0.11 148);
+
+  --shadow-card: 0 1px 2px oklch(0.05 0.01 60 / 0.4), 0 8px 24px -12px oklch(0.05 0.01 60 / 0.6);
+  --shadow-lift: 0 1px 2px oklch(0.05 0.01 60 / 0.5), 0 2px 8px -2px oklch(0.05 0.01 60 / 0.5);
+  --shadow-pop: 0 4px 12px -4px oklch(0.05 0.01 60 / 0.5), 0 28px 64px -24px oklch(0.02 0.01 60 / 0.85);
+}
+
+@theme inline {
+  /* Apple's own face where the platform has it (SF Pro + PingFang SC); the stack degrades to each platform's UI face. */
+  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+
+  --color-ground: var(--ground);
+  --color-card: var(--card);
+  --color-well: var(--well);
+  --color-well-2: var(--well-2);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-lime: var(--lime);
+  --color-lime-hover: var(--lime-hover);
+  --color-lime-ink: var(--lime-ink);
+  --color-lime-wash: var(--lime-wash);
+  --color-pos: var(--pos);
+  --color-pos-wash: var(--pos-wash);
+  --color-neg: var(--neg);
+  --color-neg-wash: var(--neg-wash);
+  --color-warn: var(--warn);
+  --color-warn-text: var(--warn-text);
+  --color-warn-wash: var(--warn-wash);
+  --color-series-in: var(--series-in);
+  --color-series-cost: var(--series-cost);
+  --color-series-profit: var(--series-profit);
+  --color-mark: var(--mark);
+  --color-toast: var(--toast);
+  --color-toast-ink: var(--toast-ink);
+  --color-toast-accent: var(--toast-accent);
+
+  /* Shape rule: capsules for controls (buttons, chips, segments, icon buttons), 12px fields and inner tiles, 20px cards and sheets. */
+  --radius-field: 12px;
+  --radius-card: 20px;
+
+  /* Fixed rem scale, ratio ≈ 1.2: caption 12, small 13, body 15, title 17, sheet 20, page 28, figure 34 / 46. */
+  --text-xs: 0.75rem;
+  --text-xs--line-height: 1rem;
+  --text-sm: 0.8125rem;
+  --text-sm--line-height: 1.125rem;
+  --text-base: 0.9375rem;
+  --text-base--line-height: 1.375rem;
+  --text-md: 1.0625rem;
+  --text-md--line-height: 1.5rem;
+  --text-lg: 1.25rem;
+  --text-lg--line-height: 1.625rem;
+  --text-xl: 1.75rem;
+  --text-xl--line-height: 2.125rem;
+  --text-2xl: 2.125rem;
+  --text-2xl--line-height: 2.5rem;
+  --text-3xl: 2.875rem;
+  --text-3xl--line-height: 3.25rem;
+
+  --shadow-card: var(--shadow-card);
+  --shadow-lift: var(--shadow-lift);
+  --shadow-pop: var(--shadow-pop);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@layer base {
+  html {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    font-size: var(--text-base);
+    line-height: var(--text-base--line-height);
+    min-height: 100dvh;
+  }
+
+  ::selection {
+    background: var(--lime-wash);
+    color: var(--ink);
+  }
+
+  input,
+  textarea,
+  select {
+    caret-color: var(--pos);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--line-strong) transparent;
+  }
+
+  a {
+    text-underline-offset: 3px;
+    text-decoration-thickness: 1px;
+  }
+
+  button {
+    cursor: pointer;
+  }
+
+  button:disabled {
+    cursor: not-allowed;
+  }
+
+  input[type="number"]::-webkit-inner-spin-button {
+    appearance: none;
+  }
+
+  /* A grid without explicit columns is one column that never grows past its container: long text truncates
+     instead of pushing the page sideways. grid-cols-* utilities override this. */
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Every amount, count, date and number in the app sets in tabular figures so columns and rolling digits line up. */
+@utility num {
+  font-variant-numeric: tabular-nums lining-nums;
+  letter-spacing: 0;
+}
+
+/* Headline figures: display weight, slightly tightened. */
+@utility figure {
+  font-variant-numeric: tabular-nums lining-nums;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
+
+/* ---- Overlays. Sheets and dialogs are native <dialog>; GSAP moves the panel, CSS fades the scrim. ---- */
+@layer components {
+  .sheet::backdrop,
+  .dialog::backdrop {
+    background: var(--scrim);
+    backdrop-filter: blur(10px) saturate(1.25);
+    -webkit-backdrop-filter: blur(10px) saturate(1.25);
+    animation: frost-in 360ms var(--ease-out-expo);
+  }
+  .sheet[data-closing]::backdrop,
+  .dialog[data-closing]::backdrop {
+    opacity: 0;
+    backdrop-filter: blur(0) saturate(1);
+    transition:
+      opacity 200ms ease-in,
+      backdrop-filter 200ms ease-in;
+  }
+  .toast {
+    animation: toast-in 320ms var(--ease-out-expo);
+  }
+  .skeleton {
+    background: linear-gradient(90deg, var(--well) 0%, var(--well-2) 50%, var(--well) 100%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s ease-in-out infinite;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes frost-in {
+  from {
+    opacity: 0;
+    backdrop-filter: blur(0) saturate(1);
+  }
+}
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.96);
+  }
+}
+@keyframes shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+
+/*
+ * Frosted glass, for what floats over content (the phone tab bar, toasts, chart read-outs): a translucent warm fill,
+ * backdrop blur with a little extra saturation so colour glows through, a fine matte grain and a hairline top light.
+ */
+@layer components {
+  .frost,
+  .frost-ink {
+    background-image: url("/grain.png");
+    background-size: 80px 80px; /* one speckle per device pixel on a 2x screen */
+    backdrop-filter: blur(22px) saturate(1.6);
+    -webkit-backdrop-filter: blur(22px) saturate(1.6);
+  }
+  .frost {
+    background-color: var(--frost);
+    box-shadow:
+      inset 0 1px 0 var(--frost-edge),
+      var(--shadow-lift);
+  }
+  .frost-ink {
+    background-color: var(--frost-ink);
+    box-shadow:
+      inset 0 1px 0 oklch(1 0 0 / 0.12),
+      var(--shadow-pop);
+  }
+
+  /*
+   * Progressive blur: content scrolling toward an edge dissolves instead of being cut. Five stacked layers blur
+   * 1 → 16px, each masked to a shorter band, so the blur deepens toward the edge; a ground tint keeps text calm.
+   * data-edge="top" (deepest at the top) or "bottom".
+   */
+  .blur-edge {
+    pointer-events: none;
+    transition: opacity 220ms ease-out;
+  }
+  .blur-edge > i {
+    position: absolute;
+    inset: 0;
+  }
+  .blur-edge > i:nth-child(1) {
+    backdrop-filter: blur(1px);
+    mask-image: linear-gradient(var(--edge-dir), #000 0%, #000 60%, transparent 100%);
+  }
+  .blur-edge > i:nth-child(2) {
+    backdrop-filter: blur(2px);
+    mask-image: linear-gradient(var(--edge-dir), #000 0%, #000 45%, transparent 80%);
+  }
+  .blur-edge > i:nth-child(3) {
+    backdrop-filter: blur(4px);
+    mask-image: linear-gradient(var(--edge-dir), #000 0%, #000 30%, transparent 60%);
+  }
+  .blur-edge > i:nth-child(4) {
+    backdrop-filter: blur(8px);
+    mask-image: linear-gradient(var(--edge-dir), #000 0%, #000 15%, transparent 40%);
+  }
+  .blur-edge > i:nth-child(5) {
+    backdrop-filter: blur(16px);
+    mask-image: linear-gradient(var(--edge-dir), #000 0%, transparent 20%);
+  }
+  .blur-edge > i:nth-child(6) {
+    background: linear-gradient(var(--edge-dir), var(--edge-tint, color-mix(in oklch, var(--ground) 70%, transparent)) 0%, transparent 100%);
+  }
+  .blur-edge[data-edge="top"] {
+    --edge-dir: to bottom;
+  }
+  .blur-edge[data-edge="bottom"] {
+    --edge-dir: to top;
+  }
+  .blur-edge[data-on="false"] {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .frost {
+    background-color: var(--card);
+    backdrop-filter: none;
+  }
+  .frost-ink {
+    background-color: var(--toast);
+    backdrop-filter: none;
+  }
+  .blur-edge {
+    display: none;
+  }
+  .sheet::backdrop,
+  .dialog::backdrop {
+    backdrop-filter: none;
+  }
+}

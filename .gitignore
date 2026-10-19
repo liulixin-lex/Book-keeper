@@ -1,0 +1,7 @@
+# Cloned third-party repositories (read-only research material, ~2.4 GB)
+/research/repos/
+# Clone of the legacy repository (has its own git history)
+/legacy/
+.DS_Store
+.impeccable/questions/
+.impeccable/review/

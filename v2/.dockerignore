@@ -1,0 +1,15 @@
+.venv
+.local
+.git
+.pytest_cache
+.mypy_cache
+.ruff_cache
+data
+tests
+**/__pycache__
+.env
+backups
+*.db
+migration-report
+web/node_modules
+web/dist

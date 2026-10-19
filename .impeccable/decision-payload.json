@@ -1,0 +1,132 @@
+{
+  "title": "选择账本的视觉世界",
+  "question": "随机分配到「翻牌信息屏」。保留它、改选备选方向，或重新抽取。",
+  "options": [
+    {
+      "id": "assigned",
+      "label": "翻牌信息屏",
+      "kicker": "THE ROLL",
+      "lineage": "火车站、机场的 Solari 翻牌时刻屏",
+      "thesis": "每天的资金进出像列车时刻：时间、去向、编号、状态，变化时逐字翻牌。",
+      "palette": ["#141517", "#202226", "#ece9e2", "#f2b705", "#e5484d", "#3fb68b"],
+      "materials": ["哑光翻牌面", "翻牌中缝", "等宽数字列"],
+      "viewport": "左侧模块导航；主区「今日」：顶部各币种资金余额（数字翻牌），下方待办与草稿以时刻表行排列（时间、往来方、类型、金额、状态），选中行琥珀色；右侧随手记账面板。",
+      "risk": "天生偏暗色，浅色主题必须作为“白天的站厅”单独设计；翻牌动画每格须控制在 300ms 内，不能拖慢操作。",
+      "raised": [
+        {"from": "challenger-mascots", "raise": "每个往来方和渠道有一块固定身份牌（简码 + 色条），在列表、筛选和报表中完全一致地复用。"},
+        {"from": "challenger-orienteering", "raise": "分类颜色是固定的“地形语言”；只有当前任务使用信号琥珀色，别处一律不用。"},
+        {"from": "challenger-botanical", "raise": "期间对比使用同一比例尺和共同基线，各月份可直接比较。"},
+        {"from": "challenger-exposure", "raise": "中性色收敛为一条编号色阶，所有表面、线条和文字灰度只从中取值。"}
+      ],
+      "html": ".impeccable/mocks/decision/assigned.html"
+    },
+    {
+      "id": "model-pick",
+      "label": "记账凭证与财务章",
+      "kicker": "IMPECCABLE’S PICK",
+      "lineage": "中国会计记账凭证、复写联与财务专用章",
+      "thesis": "账本是一叠记账凭证；过账就是财务章压在凭证上。",
+      "palette": ["#f4f5f2", "#1d1f23", "#c8322b", "#2d4ea2", "#8a8f98"],
+      "materials": ["红色格线凭证", "蓝色复写联", "朱砂印泥"],
+      "viewport": "左侧模块导航；待办以凭证存根列出，草稿是蓝色复写联；录入表单是借贷两栏的凭证；已过账的凭证盖朱红印章。",
+      "risk": "这是对“记账”最字面的解读，也是这个品类最常见的落点；表格一旦做成纸张就成了戏服。",
+      "html": ".impeccable/mocks/decision/model-pick.html"
+    },
+    {
+      "id": "challenger-transit",
+      "label": "夜色地铁线路图",
+      "verdict": "competitive",
+      "lineage": "城市轨道交通线路图（搪瓷壁画版）",
+      "thesis": "渠道是线路，资金账户是换乘站，成本与费用是终点站。",
+      "palette": ["#0f1b3d", "#f4f1ea", "#e0402f", "#2f6fdf", "#f0a92b", "#2fa36b"],
+      "materials": ["深蓝搪瓷底", "45° 折线", "换乘圆环"],
+      "viewport": "左侧导航；首页是一张资金线路图：各渠道线汇入资金账户换乘站，再分流到成本、费用；下方待办列表。",
+      "case": "融合顺畅：现金流天然是线路网络；但日常录入和复核只用到线路图的一小部分，清晰度略逊。",
+      "risk": "线路图容易抢走任务本身的注意力，只在现金流和渠道分析上真正有用。",
+      "hero": "https://impeccable.style/worlds/cards/wayfinding-cartography-signage-midnight-transit-diagram-hero.webp",
+      "html": ".impeccable/mocks/decision/challenger-transit.html"
+    },
+    {
+      "id": "challenger-warm",
+      "label": "温和消费级应用",
+      "verdict": "competitive",
+      "lineage": "现代消费级 App 界面",
+      "thesis": "圆角卡片、说人话的标签，唯一的亮色永远是可以按的东西。",
+      "palette": ["#f3f1ee", "#ffffff", "#24262b", "#ff5b2e", "#8d8f94"],
+      "materials": ["大圆角卡片", "暖色底", "弹性按压"],
+      "viewport": "单列卡片流：今日余额卡、待办卡、快速记账卡；手机端底部常驻导航。",
+      "case": "融合后操作最直观；但像个人记账 App，不像经营账本，身份认同偏弱。",
+      "risk": "数据密集的报表、凭证会被卡片稀释，桌面端效率下降。",
+      "hero": "https://impeccable.style/worlds/cards/digital-design-canon-warm-consumer-app-surface-hero.webp",
+      "html": ".impeccable/mocks/decision/challenger-warm.html"
+    },
+    {
+      "id": "challenger-mascots",
+      "label": "角色周边目录",
+      "verdict": "declined",
+      "lineage": "角色商品排行目录",
+      "thesis": "一组圆润角色按人气排名，每个有名牌与一句话性格。",
+      "palette": ["#fde2e4", "#cde7f0", "#fff3b0", "#ffffff"],
+      "materials": ["粉彩底", "白色描边", "色带"],
+      "viewport": "粉彩网格中的角色排行。",
+      "case": "融合失败：账本用户不认同角色目录，交易也不是排行。",
+      "risk": "幼稚化，削弱可信度。",
+      "kept": "固定身份牌：每个往来方、渠道有一块统一复用的身份牌。",
+      "hero": "https://impeccable.style/worlds/cards/pop-culture-shelf-character-goods-catalog-hero.webp"
+    },
+    {
+      "id": "challenger-orienteering",
+      "label": "定向越野地图",
+      "verdict": "declined",
+      "lineage": "ISOM 定向越野地图与图例",
+      "thesis": "地形是固定色彩语言，路线用唯一的紫色叠在上面。",
+      "palette": ["#ffffff", "#7a9a3a", "#f6d44a", "#8a5a2b", "#a0207a"],
+      "materials": ["等高线", "地图油墨"],
+      "viewport": "地图为底，检查点逐个推进。",
+      "case": "融合失败：记账不是在地形中寻路。",
+      "risk": "隐喻过远，用户需要翻译。",
+      "kept": "当前任务独占一种保留色，分类颜色作为固定地形语言。",
+      "hero": "https://impeccable.style/worlds/cards/notation-diagram-systems-orienteering-map-hero.webp"
+    },
+    {
+      "id": "challenger-botanical",
+      "label": "植物图谱",
+      "verdict": "declined",
+      "lineage": "植物学季节图版",
+      "thesis": "同一植物五个季节，固定比例尺与基线。",
+      "palette": ["#f2ecdf", "#3f6b3a", "#b8322a", "#6f6a62"],
+      "materials": ["图版", "细线"],
+      "viewport": "五张同比例图版并排。",
+      "case": "融合失败：与账本内容无关。",
+      "risk": "装饰性强，偏离任务。",
+      "kept": "期间对比固定比例尺与共同基线。",
+      "hero": "https://impeccable.style/worlds/cards/editorial-sequence-montage-botanical-folio-season-hero.webp"
+    },
+    {
+      "id": "challenger-exposure",
+      "label": "暗房曝光记录",
+      "verdict": "declined",
+      "lineage": "暗房放大机曝光记录卡与分区灰阶",
+      "thesis": "半透明叠层与十一级灰阶，冲突用交叉网线表示。",
+      "palette": ["#0e0e0e", "#5a5a5a", "#bdbdbd", "#f2f2f2", "#d0208f"],
+      "materials": ["描图纸叠层", "灰阶楔"],
+      "viewport": "叠放的半透明记录卡。",
+      "case": "融合失败：抽象度高，用户难以把交易映射到曝光区。",
+      "risk": "阅读成本高。",
+      "kept": "中性色收敛为一条编号色阶。",
+      "hero": "https://impeccable.style/worlds/cards/operate-b-exposure-record-zone-sheets-hero.webp"
+    }
+  ],
+  "reroll": {"registers": ["safer", "bolder"]},
+  "canon": true,
+  "canonCard": {
+    "label": "品类标准",
+    "thesis": "财务 SaaS 后台的标准做法，做到极致。",
+    "palette": ["#ffffff", "#f6f7f9", "#111827", "#2563eb"],
+    "materials": ["干净网格", "细边框", "中性灰"],
+    "viewport": "左侧栏 + 顶部栏；首页指标卡与图表，下方交易表格。",
+    "risk": "与竞品无法区分，正是这一品类的默认样子。",
+    "html": ".impeccable/mocks/decision/canon.html"
+  },
+  "steer": true
+}

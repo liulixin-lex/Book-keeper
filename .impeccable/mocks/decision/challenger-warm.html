@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#f3f1ee;--card:#fff;--ink:#24262b;--mute:#8d8f94;--act:#ff5b2e;--line:#e9e6e1}
+body{width:1440px;height:900px;overflow:hidden;background:var(--bg);color:var(--ink);font:15px/1.5 "PingFang SC",system-ui,sans-serif}
+.wrap{width:760px;margin:0 auto;padding:28px 0}
+header{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px}
+h1{font-size:26px;font-weight:700}
+.av{display:flex;gap:10px}
+.chip{height:40px;padding:0 18px;border-radius:999px;background:var(--card);display:grid;place-items:center;color:var(--ink);box-shadow:0 2px 8px rgba(36,38,43,.06)}
+.card{background:var(--card);border-radius:22px;padding:22px 24px;margin-bottom:14px;box-shadow:0 6px 24px -12px rgba(36,38,43,.18)}
+.big{font:700 40px/1.1 system-ui;letter-spacing:-.02em;margin:6px 0 4px}
+.mute{color:var(--mute);font-size:13px}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px}
+.grid div{background:var(--bg);border-radius:14px;padding:12px 14px}
+.grid b{display:block;font-size:18px}
+.todo{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}
+.todo:last-child{border:0}
+.todo b{font-weight:600}
+.go{height:34px;padding:0 16px;border-radius:999px;background:var(--act);color:#fff;font-weight:600;display:grid;place-items:center;font-size:13px}
+.ghost{height:34px;padding:0 16px;border-radius:999px;background:var(--bg);display:grid;place-items:center;font-size:13px}
+.quick{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px}
+.quick div{background:var(--bg);border-radius:16px;padding:16px;text-align:center;font-weight:600}
+.bar{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--ink);color:#fff;border-radius:999px;padding:8px;display:flex;gap:4px}
+.bar span{padding:10px 20px;border-radius:999px;font-size:14px;color:#c9cacd}
+.bar span.on{background:var(--act);color:#fff}
+</style></head><body><div class="wrap">
+<header><h1>早上好，今天有 9 件事</h1><div class="av"><div class="chip">导入账单</div></div></header>
+<div class="card"><span class="mute">资金账户 · 人民币</span><div class="big">¥29,806.66</div><span class="mute">今天 +¥801.24</span>
+<div class="grid"><div><span class="mute">美元</span><b>$801.17</b></div><div><span class="mute">英镑</span><b>£200.63</b></div><div><span class="mute">额度</span><b>12,450</b></div></div></div>
+<div class="card"><b style="font-size:17px">待处理</b>
+<div class="todo"><div><b>3 张草稿</b><div class="mute">AI 写入，等你确认后过账</div></div><div class="go">去过账</div></div>
+<div class="todo"><div><b>5 条账单记录没分类</b><div class="mute">来自微信账单 10-18</div></div><div class="ghost">去分类</div></div>
+<div class="todo"><div><b>Stripe 余额对不上</b><div class="mute">差 £8.24</div></div><div class="ghost">去核对</div></div></div>
+<div class="card"><b style="font-size:17px">记一笔</b><div class="quick"><div>卖出额度</div><div>采购额度</div><div>花了钱</div><div>转账</div></div></div>
+</div>
+<div class="bar"><span class="on">今日</span><span>交易</span><span>报表</span><span>更多</span></div>
+</body></html>

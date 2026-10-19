@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--n0:#0e0f10;--n1:#141517;--n2:#1b1c1f;--n3:#232528;--n4:#2e3034;--n6:#5d6068;--n8:#a4a7ad;--n10:#ece9e2;--amber:#f2b705;--red:#e5484d;--green:#3fb68b}
+body{width:1440px;height:900px;overflow:hidden;background:var(--n1);color:var(--n10);font:14px/1.45 "PingFang SC","Archivo",system-ui,sans-serif}
+.app{display:grid;grid-template-columns:216px 1fr 360px;height:900px}
+nav{background:var(--n0);padding:20px 14px;display:flex;flex-direction:column;gap:2px;border-right:1px solid var(--n3)}
+.brand{font:700 15px "Archivo";font-stretch:75%;letter-spacing:.06em;text-transform:uppercase;padding:4px 10px 22px;color:var(--n10)}
+.brand b{color:var(--amber)}
+nav a{display:flex;justify-content:space-between;padding:9px 10px;border-radius:8px;color:var(--n8);text-decoration:none;font-size:14px}
+nav a.on{background:var(--n3);color:var(--n10)}
+nav a .c{font:600 12px "Archivo";font-stretch:75%;color:var(--n1);background:var(--amber);border-radius:5px;padding:1px 6px}
+nav .sep{height:1px;background:var(--n3);margin:12px 6px}
+main{padding:24px 28px;overflow:hidden}
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+h1{font-size:22px;font-weight:600;letter-spacing:-.01em}
+.date{color:var(--n8);font:500 14px "Archivo";font-stretch:80%;margin-left:12px}
+.btn{height:36px;padding:0 16px;border-radius:8px;border:1px solid var(--n4);background:var(--n2);color:var(--n10);font-size:13px}
+.btn.p{background:var(--amber);border-color:var(--amber);color:#141517;font-weight:600}
+.bal{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:12px;margin-bottom:24px}
+.b{background:var(--n2);border:1px solid var(--n3);border-radius:12px;padding:14px 16px}
+.b .l{color:var(--n8);font-size:12px;margin-bottom:10px;display:flex;justify-content:space-between}
+.flap{display:flex;gap:3px;align-items:center}
+.flap i{font:700 26px/1 "Archivo";font-stretch:70%;font-style:normal;width:21px;height:36px;display:grid;place-items:center;background:var(--n3);border-radius:4px;position:relative;color:var(--n10)}
+.flap i::after{content:"";position:absolute;left:0;right:0;top:50%;height:1px;background:var(--n1)}
+.flap i.s{background:none;width:10px;color:var(--n8)}
+.b.sm .flap i{font-size:20px;width:16px;height:30px}
+.delta{font:500 12px "Archivo";font-stretch:80%;color:var(--green)}
+.board{background:var(--n2);border:1px solid var(--n3);border-radius:12px;overflow:hidden}
+.bh{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--n3)}
+.tabs{display:flex;gap:4px}
+.tabs span{padding:6px 12px;border-radius:7px;color:var(--n8);font-size:13px}
+.tabs span.on{background:var(--n4);color:var(--n10)}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font:600 11px "Archivo";font-stretch:80%;letter-spacing:.08em;text-transform:uppercase;color:var(--n6);padding:10px 16px}
+td{padding:12px 16px;border-top:1px solid var(--n3);white-space:nowrap}
+td.t{font:600 15px "Archivo";font-stretch:75%;color:var(--n8)}
+td.m{font:600 16px "Archivo";font-stretch:75%;text-align:right;font-variant-numeric:tabular-nums}
+td.m.neg{color:var(--n8)}
+tr.sel{background:rgba(242,183,5,.08);box-shadow:inset 2px 0 0 var(--amber)}
+.st{display:inline-flex;gap:2px}
+.st i{font:600 12px/1 "PingFang SC";font-style:normal;width:20px;height:24px;display:grid;place-items:center;background:var(--n3);border-radius:3px;position:relative}
+.st i::after{content:"";position:absolute;left:0;right:0;top:50%;height:1px;background:var(--n1)}
+.st.d i{color:var(--amber)} .st.r i{color:var(--n8)} .st.p i{color:var(--green)}
+.src{font:600 11px "Archivo";font-stretch:80%;color:var(--n6);border:1px solid var(--n4);border-radius:4px;padding:1px 5px;margin-left:6px}
+.ch{display:inline-block;width:6px;height:14px;border-radius:2px;margin-right:8px;vertical-align:-2px}
+aside{background:var(--n0);border-left:1px solid var(--n3);padding:24px 20px}
+aside h2{font-size:15px;font-weight:600;margin-bottom:16px}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;background:var(--n2);border-radius:9px;padding:4px;margin-bottom:18px}
+.seg span{text-align:center;padding:7px 0;border-radius:6px;color:var(--n8);font-size:13px}
+.seg span.on{background:var(--n4);color:var(--n10)}
+label{display:block;color:var(--n8);font-size:12px;margin:14px 0 6px}
+.in{height:40px;border:1px solid var(--n4);border-radius:8px;background:var(--n1);padding:0 12px;display:flex;align-items:center;justify-content:space-between;color:var(--n10)}
+.in.big{font:700 22px "Archivo";font-stretch:75%}
+.prev{margin-top:20px;border-top:1px solid var(--n3);padding-top:14px;font:500 13px "Archivo";font-stretch:85%;color:var(--n8)}
+.prev div{display:flex;justify-content:space-between;padding:4px 0}
+.alert{margin-top:16px;padding:10px 12px;border-radius:8px;background:rgba(229,72,77,.1);color:#ffb3b5;font-size:12px}
+</style></head><body><div class="app">
+<nav>
+<div class="brand">Book<b>·</b>keeper</div>
+<a class="on">今日 <span class="c">9</span></a><a>交易</a><a>导入</a><a>报表</a><a>往来方</a>
+<div class="sep"></div><a>期末</a><a>设置</a>
+</nav>
+<main>
+<div class="top"><div><h1 style="display:inline">今日</h1><span class="date">2026-10-19 周一</span></div><div style="display:flex;gap:8px"><button class="btn">导入账单</button><button class="btn p">记一笔</button></div></div>
+<div class="bal">
+<div class="b"><div class="l"><span>资金账户 · CNY</span><span class="delta">+¥801.24 今日</span></div><div class="flap"><i class="s">¥</i><i>4</i><i>8</i><i class="s">,</i><i>2</i><i>1</i><i>6</i><i class="s">.</i><i>3</i><i>7</i></div></div>
+<div class="b sm"><div class="l"><span>USD</span></div><div class="flap"><i class="s">$</i><i>1</i><i class="s">,</i><i>2</i><i>8</i><i>4</i><i class="s">.</i><i>5</i><i>0</i></div></div>
+<div class="b sm"><div class="l"><span>GBP</span></div><div class="flap"><i class="s">£</i><i>3</i><i>1</i><i>2</i><i class="s">.</i><i>8</i><i>0</i></div></div>
+<div class="b sm"><div class="l"><span>额度 UCR</span></div><div class="flap"><i>1</i><i>2</i><i class="s">,</i><i>4</i><i>5</i><i>0</i></div></div>
+</div>
+<div class="board">
+<div class="bh"><div class="tabs"><span class="on">待处理 9</span><span>草稿 3</span><span>待分类 5</span><span>今日全部</span></div><button class="btn">全部过账</button></div>
+<table><tr><th>时间</th><th>摘要</th><th>类型</th><th style="text-align:right">金额</th><th>状态</th></tr>
+<tr class="sel"><td class="t">09:42</td><td><span class="ch" style="background:#2f6fdf"></span>链动 · API 额度销售 · LD2610196QWERT<span class="src">MCP</span></td><td>销售收入</td><td class="m">¥86.42</td><td><span class="st d"><i>草</i><i>稿</i></span></td></tr>
+<tr><td class="t">09:15</td><td><span class="ch" style="background:#2f6fdf"></span>relay-b.example · 额度采购 · 面值 ¥38 · 链动<span class="src">MCP</span></td><td>额度采购</td><td class="m neg">−¥39.14</td><td><span class="st d"><i>草</i><i>稿</i></span></td></tr>
+<tr><td class="t">08:51</td><td><span class="ch" style="background:#8a8f98"></span>未识别 · 支出 · 微信转账</td><td>待分类</td><td class="m neg">−¥14.73</td><td><span class="st r"><i>待</i><i>分</i><i>类</i></span></td></tr>
+<tr><td class="t">08:03</td><td><span class="ch" style="background:#3fb68b"></span>OpenAI · AI 服务订阅 · Pro</td><td>费用支出</td><td class="m neg">−$130.92</td><td><span class="st p"><i>已</i><i>过</i><i>账</i></span></td></tr>
+<tr><td class="t">昨 22:47</td><td><span class="ch" style="background:#a35cf0"></span>Stripe · API 额度销售</td><td>销售收入</td><td class="m">£33.27</td><td><span class="st p"><i>已</i><i>过</i><i>账</i></span></td></tr>
+<tr><td class="t">昨 21:10</td><td><span class="ch" style="background:#3fb68b"></span>腾讯云 · 服务器与网络 · TDSQL-C MySQL<span class="src">导入</span></td><td>费用支出</td><td class="m neg">−¥60.71</td><td><span class="st d"><i>草</i><i>稿</i></span></td></tr>
+<tr><td class="t">昨 19:30</td><td><span class="ch" style="background:#8a8f98"></span>结汇 · GBP → CNY</td><td>资金划转</td><td class="m">£192.72</td><td><span class="st p"><i>已</i><i>过</i><i>账</i></span></td></tr>
+</table></div>
+</main>
+<aside>
+<h2>记一笔</h2>
+<div class="seg"><span class="on">销售收入</span><span>额度采购</span><span>费用支出</span></div>
+<label>往来方 / 渠道</label><div class="in">链动 <span style="color:var(--n6)">默认 销售收入</span></div>
+<label>毛额</label><div class="in big">¥ 86.42</div>
+<label>订单号</label><div class="in">LD2610196QWERT</div>
+<div class="prev"><div><span>借 资金账户</span><span>¥84.05</span></div><div><span>借 手续费 3%</span><span>¥9.68</span></div><div><span>贷 API 额度销售</span><span>¥86.42</span></div></div>
+<div class="alert">余额断言不符：Stripe 余额 £15.22，账面 £16.15。去核对</div>
+</aside>
+</div></body></html>

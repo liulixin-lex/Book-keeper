@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--paper:#f4f5f2;--sheet:#fbfbf9;--ink:#1d1f23;--mute:#6b7079;--rule:#e2c9c5;--red:#c8322b;--blue:#2d4ea2;--line:#dcded9}
+body{width:1440px;height:900px;overflow:hidden;background:var(--paper);color:var(--ink);font:14px/1.5 "PingFang SC",system-ui,sans-serif}
+.app{display:grid;grid-template-columns:208px 1fr;height:900px}
+nav{border-right:1px solid var(--line);padding:22px 14px;background:#eceee9}
+.brand{font-weight:700;font-size:16px;padding:0 10px 24px;letter-spacing:.02em}
+.brand span{color:var(--red)}
+nav a{display:flex;justify-content:space-between;padding:9px 10px;border-radius:6px;color:var(--mute)}
+nav a.on{background:var(--sheet);color:var(--ink);box-shadow:0 1px 2px rgba(29,31,35,.06)}
+nav a b{font-weight:600;color:var(--red);font-size:12px}
+main{padding:26px 32px;display:grid;grid-template-columns:1fr 440px;gap:28px}
+h1{font-size:22px;font-weight:600;margin-bottom:4px}
+.sub{color:var(--mute);margin-bottom:20px}
+.stats{display:flex;gap:28px;margin-bottom:22px;padding-bottom:18px;border-bottom:1px solid var(--line)}
+.stats div span{display:block;color:var(--mute);font-size:12px}
+.stats div b{font:600 24px/1.2 "SF Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums}
+.stub{background:var(--sheet);border:1px solid var(--line);border-radius:10px;margin-bottom:10px;display:grid;grid-template-columns:86px 1fr 120px 92px;align-items:center;padding:12px 16px;gap:12px;position:relative}
+.stub.draft{background:linear-gradient(#eef1fa,#eef1fa);border-color:#c9d3ee}
+.no{font:600 12px ui-monospace,monospace;color:var(--mute)}
+.ds{font-weight:500}
+.ds small{display:block;color:var(--mute);font-size:12px;font-weight:400}
+.amt{font:600 16px ui-monospace,monospace;text-align:right;font-variant-numeric:tabular-nums}
+.tag{justify-self:end;font-size:12px;padding:2px 8px;border-radius:4px;border:1px solid currentColor}
+.tag.d{color:var(--blue)} .tag.p{color:var(--red)}
+.seal{position:absolute;right:120px;top:50%;transform:translateY(-50%) rotate(-12deg);width:58px;height:58px;border:2px solid var(--red);border-radius:50%;color:var(--red);font-size:11px;font-weight:700;display:grid;place-items:center;opacity:.85}
+.voucher{background:var(--sheet);border:1px solid var(--line);border-radius:12px;padding:20px 22px;box-shadow:0 10px 30px -18px rgba(29,31,35,.25)}
+.vh{display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px solid var(--red);padding-bottom:10px;margin-bottom:14px}
+.vh h2{font-size:18px;letter-spacing:.3em;color:var(--red);font-weight:600}
+.vh span{font:12px ui-monospace,monospace;color:var(--mute)}
+.f{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+.f label{display:block;font-size:12px;color:var(--mute);margin-bottom:5px}
+.f .in{height:38px;border:1px solid var(--line);border-radius:7px;background:#fff;padding:0 10px;display:flex;align-items:center}
+table{width:100%;border-collapse:collapse;margin-top:6px}
+th{font-size:12px;color:var(--red);font-weight:500;text-align:left;border-bottom:1px solid var(--rule);padding:6px 4px}
+td{padding:9px 4px;border-bottom:1px solid var(--rule)}
+td.n{text-align:right;font:500 14px ui-monospace,monospace;font-variant-numeric:tabular-nums}
+.tot td{font-weight:600;border-bottom:2px solid var(--red)}
+.act{display:flex;gap:10px;margin-top:18px;justify-content:flex-end}
+.btn{height:38px;padding:0 18px;border-radius:8px;border:1px solid var(--line);background:#fff;font-size:14px}
+.btn.p{background:var(--red);border-color:var(--red);color:#fff;font-weight:600}
+</style></head><body><div class="app">
+<nav><div class="brand">记账<span>本</span></div>
+<a class="on">今日 <b>9</b></a><a>交易</a><a>导入</a><a>报表</a><a>往来方</a><a>期末</a><a>设置</a></nav>
+<main>
+<section>
+<h1>今日</h1><p class="sub">2026-10-19 周一 · 3 张草稿待过账，5 条来源记录待分类</p>
+<div class="stats"><div><span>资金账户 CNY</span><b>¥29,806.66</b></div><div><span>USD</span><b>$801.17</b></div><div><span>GBP</span><b>£200.63</b></div><div><span>额度 UCR</span><b>12,450</b></div></div>
+<div class="stub draft"><span class="no">TX-2610-0418</span><span class="ds">链动 · API 额度销售 · LD2610196QWERT<small>09:42 · MCP 写入</small></span><span class="amt">¥86.42</span><span class="tag d">草稿</span></div>
+<div class="stub draft"><span class="no">TX-2610-0417</span><span class="ds">relay-b.example · 额度采购 · 面值 ¥38 · 链动<small>09:15 · MCP 写入</small></span><span class="amt">−¥39.14</span><span class="tag d">草稿</span></div>
+<div class="stub"><span class="no">TX-2610-0416</span><span class="ds">OpenAI · AI 服务订阅 · Pro<small>08:03 · 界面</small></span><span class="amt">−$130.92</span><span class="tag p">已过账</span><span class="seal">财务章</span></div>
+<div class="stub"><span class="no">TX-2610-0415</span><span class="ds">Stripe · API 额度销售<small>昨 22:47 · 导入</small></span><span class="amt">£33.27</span><span class="tag p">已过账</span></div>
+<div class="stub draft"><span class="no">TX-2610-0414</span><span class="ds">腾讯云 · 服务器与网络 · TDSQL-C MySQL<small>昨 21:10 · 导入</small></span><span class="amt">−¥60.71</span><span class="tag d">草稿</span></div>
+</section>
+<section class="voucher">
+<div class="vh"><h2>记账凭证</h2><span>草稿 · 2026-10-19</span></div>
+<div class="f"><div><label>交易类型</label><div class="in">销售收入</div></div><div><label>往来方 / 渠道</label><div class="in">链动</div></div><div><label>毛额</label><div class="in">¥86.42</div></div><div><label>订单号</label><div class="in">LD2610196QWERT</div></div></div>
+<table><tr><th>摘要</th><th>科目</th><th style="text-align:right">借方</th><th style="text-align:right">贷方</th></tr>
+<tr><td>链动 · API 额度销售</td><td>1012.01 资金账户</td><td class="n">124.16</td><td class="n"></td></tr>
+<tr><td></td><td>5603.01 手续费</td><td class="n">3.84</td><td class="n"></td></tr>
+<tr><td></td><td>5001.01 API 额度销售</td><td class="n"></td><td class="n">128.00</td></tr>
+<tr class="tot"><td>合计</td><td></td><td class="n">128.00</td><td class="n">128.00</td></tr></table>
+<div class="act"><button class="btn">存为草稿</button><button class="btn p">过账</button></div>
+</section>
+</main></div></body></html>

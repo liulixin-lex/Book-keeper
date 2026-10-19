@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0f1b3d;--bg2:#15244d;--line:#26386a;--ink:#f4f1ea;--mute:#9aa6c4;--red:#e0402f;--blue:#2f6fdf;--amber:#f0a92b;--green:#2fa36b}
+body{width:1440px;height:900px;overflow:hidden;background:var(--bg);color:var(--ink);font:14px/1.45 "PingFang SC",system-ui,sans-serif}
+.app{display:grid;grid-template-columns:200px 1fr;height:900px}
+nav{background:#0b1430;padding:22px 14px;border-right:1px solid var(--line)}
+.brand{font-weight:700;font-size:16px;padding:0 10px 24px}
+nav a{display:block;padding:9px 10px;border-radius:8px;color:var(--mute)}
+nav a.on{background:var(--bg2);color:var(--ink)}
+main{padding:24px 28px;display:grid;grid-template-rows:auto 430px 1fr;gap:18px}
+.top{display:flex;justify-content:space-between;align-items:center}
+h1{font-size:22px;font-weight:600}
+.btn{height:36px;padding:0 16px;border-radius:999px;border:1px solid var(--line);background:var(--bg2);color:var(--ink)}
+.btn.p{background:var(--ink);color:var(--bg);font-weight:600;border:0}
+.map{background:var(--bg2);border:1px solid var(--line);border-radius:14px;position:relative;overflow:hidden}
+.map svg{position:absolute;inset:0}
+.lbl{position:absolute;font-size:13px;white-space:nowrap}
+.lbl b{display:block;font:600 15px ui-monospace,monospace;font-variant-numeric:tabular-nums}
+.lbl span{color:var(--mute);font-size:12px}
+.hub{position:absolute;left:640px;top:170px;width:150px;text-align:center}
+.hub b{font:700 22px ui-monospace,monospace}
+.list{background:var(--bg2);border:1px solid var(--line);border-radius:14px;padding:6px 0;overflow:hidden}
+.row{display:grid;grid-template-columns:90px 1fr 120px 90px;padding:10px 18px;border-bottom:1px solid var(--line);align-items:center}
+.row .m{text-align:right;font:600 15px ui-monospace,monospace}
+.pill{justify-self:end;font-size:12px;padding:2px 10px;border-radius:999px}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;border:2px solid;margin-right:8px}
+</style></head><body><div class="app">
+<nav><div class="brand">Bookkeeper</div><a class="on">今日</a><a>交易</a><a>导入</a><a>报表</a><a>往来方</a><a>期末</a><a>设置</a></nav>
+<main>
+<div class="top"><h1>资金线路 · 2026 年 10 月</h1><div style="display:flex;gap:8px"><button class="btn">导入账单</button><button class="btn p">记一笔</button></div></div>
+<div class="map">
+<svg width="1192" height="430" viewBox="0 0 1192 430" fill="none" stroke-linecap="round" stroke-linejoin="round">
+<path d="M40 70 H400 L560 230 H715" stroke="#2f6fdf" stroke-width="10"/>
+<path d="M40 150 H360 L470 230 H715" stroke="#e0402f" stroke-width="10"/>
+<path d="M40 310 H420 L500 230 H715" stroke="#a35cf0" stroke-width="10"/>
+<path d="M715 230 H860 L960 130 H1150" stroke="#f0a92b" stroke-width="10"/>
+<path d="M715 230 H900 L980 310 H1150" stroke="#2fa36b" stroke-width="10"/>
+<path d="M715 230 H1150" stroke="#9aa6c4" stroke-width="10"/>
+<circle cx="715" cy="230" r="34" fill="#f4f1ea" stroke="#0f1b3d" stroke-width="6"/>
+</svg>
+<div class="lbl" style="left:40px;top:34px"><span>链动</span><b>¥11,391.49</b></div>
+<div class="lbl" style="left:40px;top:114px"><span>云猫</span><b>¥5,765.22</b></div>
+<div class="lbl" style="left:40px;top:274px"><span>Stripe</span><b>£800.87</b></div>
+<div class="hub" style="top:280px"><span style="color:var(--mute);font-size:12px">资金账户</span><b>¥29,806.66</b></div>
+<div class="lbl" style="left:1000px;top:94px"><span>上游额度</span><b>¥9,203.65</b></div>
+<div class="lbl" style="left:1000px;top:194px"><span>手续费</span><b>¥682.39</b></div>
+<div class="lbl" style="left:1000px;top:322px"><span>服务器与网络</span><b>¥1,330.27</b></div>
+</div>
+<div class="list">
+<div class="row"><span style="color:var(--mute)">09:42</span><span><i class="dot" style="border-color:#2f6fdf"></i>链动 · API 额度销售 · LD2610196QWERT</span><span class="m">¥86.42</span><span class="pill" style="background:#f0a92b;color:#0f1b3d">草稿</span></div>
+<div class="row"><span style="color:var(--mute)">09:15</span><span><i class="dot" style="border-color:#f0a92b"></i>relay-b.example · 额度采购 · 面值 ¥38 · 链动</span><span class="m">−¥39.14</span><span class="pill" style="background:#f0a92b;color:#0f1b3d">草稿</span></div>
+<div class="row"><span style="color:var(--mute)">08:03</span><span><i class="dot" style="border-color:#2fa36b"></i>OpenAI · AI 服务订阅 · Pro</span><span class="m">−$130.92</span><span class="pill" style="background:#26386a">已过账</span></div>
+<div class="row"><span style="color:var(--mute)">昨 22:47</span><span><i class="dot" style="border-color:#a35cf0"></i>Stripe · API 额度销售</span><span class="m">£33.27</span><span class="pill" style="background:#26386a">已过账</span></div>
+</div>
+</main></div></body></html>

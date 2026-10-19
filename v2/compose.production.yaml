@@ -1,0 +1,16 @@
+# Production overrides. Compose merges port lists across files, so ports use !override.
+# BK_HOST_PORT: host port for nginx (v1 occupies 8000 on the current server, so use 8010 until cutover).
+services:
+  api:
+    ports: !override
+      - "127.0.0.1:${BK_HOST_PORT:-8000}:8000"
+    read_only: true
+    tmpfs: ["/tmp"]
+    security_opt: ["no-new-privileges:true"]
+  worker:
+    read_only: true
+    tmpfs: ["/tmp"]
+    security_opt: ["no-new-privileges:true"]
+  migrate:
+    read_only: true
+    tmpfs: ["/tmp"]

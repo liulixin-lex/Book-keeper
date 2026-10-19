@@ -1,0 +1,1118 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-19T00:00:00+08:00",
+  "title": "Design System: 账本 Bookkeeper v2",
+  "extensions": {
+    "colorMeta": {
+      "ground": {
+        "role": "neutral",
+        "displayName": "Warm Ground",
+        "canonical": "oklch(0.972 0.011 75)",
+        "tonalRamp": [
+          "oklch(0.15 0.011 75)",
+          "oklch(0.26 0.011 75)",
+          "oklch(0.37 0.011 75)",
+          "oklch(0.48 0.011 75)",
+          "oklch(0.6 0.011 75)",
+          "oklch(0.72 0.011 75)",
+          "oklch(0.84 0.011 75)",
+          "oklch(0.95 0.011 75)"
+        ]
+      },
+      "card": {
+        "role": "neutral",
+        "displayName": "Card White",
+        "canonical": "oklch(1 0 0)",
+        "tonalRamp": [
+          "oklch(0.15 0 0)",
+          "oklch(0.26 0 0)",
+          "oklch(0.37 0 0)",
+          "oklch(0.48 0 0)",
+          "oklch(0.6 0 0)",
+          "oklch(0.72 0 0)",
+          "oklch(0.84 0 0)",
+          "oklch(0.95 0 0)"
+        ]
+      },
+      "well": {
+        "role": "neutral",
+        "displayName": "Well",
+        "canonical": "oklch(0.955 0.012 75)",
+        "tonalRamp": [
+          "oklch(0.15 0.012 75)",
+          "oklch(0.26 0.012 75)",
+          "oklch(0.37 0.012 75)",
+          "oklch(0.48 0.012 75)",
+          "oklch(0.6 0.012 75)",
+          "oklch(0.72 0.012 75)",
+          "oklch(0.84 0.012 75)",
+          "oklch(0.95 0.012 75)"
+        ]
+      },
+      "well-2": {
+        "role": "neutral",
+        "displayName": "Well Deep",
+        "canonical": "oklch(0.935 0.014 75)",
+        "tonalRamp": [
+          "oklch(0.15 0.014 75)",
+          "oklch(0.26 0.014 75)",
+          "oklch(0.37 0.014 75)",
+          "oklch(0.48 0.014 75)",
+          "oklch(0.6 0.014 75)",
+          "oklch(0.72 0.014 75)",
+          "oklch(0.84 0.014 75)",
+          "oklch(0.95 0.014 75)"
+        ]
+      },
+      "line": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "canonical": "oklch(0.925 0.012 75)",
+        "tonalRamp": [
+          "oklch(0.15 0.012 75)",
+          "oklch(0.26 0.012 75)",
+          "oklch(0.37 0.012 75)",
+          "oklch(0.48 0.012 75)",
+          "oklch(0.6 0.012 75)",
+          "oklch(0.72 0.012 75)",
+          "oklch(0.84 0.012 75)",
+          "oklch(0.95 0.012 75)"
+        ]
+      },
+      "line-strong": {
+        "role": "neutral",
+        "displayName": "Strong Hairline",
+        "canonical": "oklch(0.87 0.016 75)",
+        "tonalRamp": [
+          "oklch(0.15 0.016 75)",
+          "oklch(0.26 0.016 75)",
+          "oklch(0.37 0.016 75)",
+          "oklch(0.48 0.016 75)",
+          "oklch(0.6 0.016 75)",
+          "oklch(0.72 0.016 75)",
+          "oklch(0.84 0.016 75)",
+          "oklch(0.95 0.016 75)"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Warm Ink",
+        "canonical": "oklch(0.255 0.012 55)",
+        "tonalRamp": [
+          "oklch(0.15 0.012 55)",
+          "oklch(0.26 0.012 55)",
+          "oklch(0.37 0.012 55)",
+          "oklch(0.48 0.012 55)",
+          "oklch(0.6 0.012 55)",
+          "oklch(0.72 0.012 55)",
+          "oklch(0.84 0.012 55)",
+          "oklch(0.95 0.012 55)"
+        ]
+      },
+      "ink-2": {
+        "role": "neutral",
+        "displayName": "Warm Ink 2",
+        "canonical": "oklch(0.47 0.02 55)",
+        "tonalRamp": [
+          "oklch(0.15 0.02 55)",
+          "oklch(0.26 0.02 55)",
+          "oklch(0.37 0.02 55)",
+          "oklch(0.48 0.02 55)",
+          "oklch(0.6 0.02 55)",
+          "oklch(0.72 0.02 55)",
+          "oklch(0.84 0.02 55)",
+          "oklch(0.95 0.02 55)"
+        ]
+      },
+      "ink-3": {
+        "role": "neutral",
+        "displayName": "Warm Ink 3",
+        "canonical": "oklch(0.52 0.018 60)",
+        "tonalRamp": [
+          "oklch(0.15 0.018 60)",
+          "oklch(0.26 0.018 60)",
+          "oklch(0.37 0.018 60)",
+          "oklch(0.48 0.018 60)",
+          "oklch(0.6 0.018 60)",
+          "oklch(0.72 0.018 60)",
+          "oklch(0.84 0.018 60)",
+          "oklch(0.95 0.018 60)"
+        ]
+      },
+      "lime": {
+        "role": "primary",
+        "displayName": "Wise Lime",
+        "canonical": "oklch(0.87 0.18 132)",
+        "tonalRamp": [
+          "oklch(0.15 0.18 132)",
+          "oklch(0.26 0.18 132)",
+          "oklch(0.37 0.18 132)",
+          "oklch(0.48 0.18 132)",
+          "oklch(0.6 0.18 132)",
+          "oklch(0.72 0.18 132)",
+          "oklch(0.84 0.18 132)",
+          "oklch(0.95 0.18 132)"
+        ]
+      },
+      "lime-hover": {
+        "role": "primary",
+        "displayName": "Wise Lime Pressed",
+        "canonical": "oklch(0.84 0.18 132)",
+        "tonalRamp": [
+          "oklch(0.15 0.18 132)",
+          "oklch(0.26 0.18 132)",
+          "oklch(0.37 0.18 132)",
+          "oklch(0.48 0.18 132)",
+          "oklch(0.6 0.18 132)",
+          "oklch(0.72 0.18 132)",
+          "oklch(0.84 0.18 132)",
+          "oklch(0.95 0.18 132)"
+        ]
+      },
+      "lime-ink": {
+        "role": "primary",
+        "displayName": "Forest Ink",
+        "canonical": "oklch(0.3 0.08 135)",
+        "tonalRamp": [
+          "oklch(0.15 0.08 135)",
+          "oklch(0.26 0.08 135)",
+          "oklch(0.37 0.08 135)",
+          "oklch(0.48 0.08 135)",
+          "oklch(0.6 0.08 135)",
+          "oklch(0.72 0.08 135)",
+          "oklch(0.84 0.08 135)",
+          "oklch(0.95 0.08 135)"
+        ]
+      },
+      "lime-wash": {
+        "role": "primary",
+        "displayName": "Lime Wash",
+        "canonical": "oklch(0.87 0.18 132 / 0.28)",
+        "tonalRamp": [
+          "oklch(0.15 0.18 132)",
+          "oklch(0.26 0.18 132)",
+          "oklch(0.37 0.18 132)",
+          "oklch(0.48 0.18 132)",
+          "oklch(0.6 0.18 132)",
+          "oklch(0.72 0.18 132)",
+          "oklch(0.84 0.18 132)",
+          "oklch(0.95 0.18 132)"
+        ]
+      },
+      "pos": {
+        "role": "secondary",
+        "displayName": "Ledger Green",
+        "canonical": "oklch(0.5 0.11 148)",
+        "tonalRamp": [
+          "oklch(0.15 0.11 148)",
+          "oklch(0.26 0.11 148)",
+          "oklch(0.37 0.11 148)",
+          "oklch(0.48 0.11 148)",
+          "oklch(0.6 0.11 148)",
+          "oklch(0.72 0.11 148)",
+          "oklch(0.84 0.11 148)",
+          "oklch(0.95 0.11 148)"
+        ]
+      },
+      "pos-wash": {
+        "role": "secondary",
+        "displayName": "Ledger Green Wash",
+        "canonical": "oklch(0.5 0.11 148 / 0.1)",
+        "tonalRamp": [
+          "oklch(0.15 0.11 148)",
+          "oklch(0.26 0.11 148)",
+          "oklch(0.37 0.11 148)",
+          "oklch(0.48 0.11 148)",
+          "oklch(0.6 0.11 148)",
+          "oklch(0.72 0.11 148)",
+          "oklch(0.84 0.11 148)",
+          "oklch(0.95 0.11 148)"
+        ]
+      },
+      "neg": {
+        "role": "tertiary",
+        "displayName": "Loss Red",
+        "canonical": "oklch(0.53 0.17 30)",
+        "tonalRamp": [
+          "oklch(0.15 0.17 30)",
+          "oklch(0.26 0.17 30)",
+          "oklch(0.37 0.17 30)",
+          "oklch(0.48 0.17 30)",
+          "oklch(0.6 0.17 30)",
+          "oklch(0.72 0.17 30)",
+          "oklch(0.84 0.17 30)",
+          "oklch(0.95 0.17 30)"
+        ]
+      },
+      "neg-wash": {
+        "role": "tertiary",
+        "displayName": "Loss Red Wash",
+        "canonical": "oklch(0.53 0.17 30 / 0.09)",
+        "tonalRamp": [
+          "oklch(0.15 0.17 30)",
+          "oklch(0.26 0.17 30)",
+          "oklch(0.37 0.17 30)",
+          "oklch(0.48 0.17 30)",
+          "oklch(0.6 0.17 30)",
+          "oklch(0.72 0.17 30)",
+          "oklch(0.84 0.17 30)",
+          "oklch(0.95 0.17 30)"
+        ]
+      },
+      "warn": {
+        "role": "tertiary",
+        "displayName": "Waiting Amber",
+        "canonical": "oklch(0.72 0.15 62)",
+        "tonalRamp": [
+          "oklch(0.15 0.15 62)",
+          "oklch(0.26 0.15 62)",
+          "oklch(0.37 0.15 62)",
+          "oklch(0.48 0.15 62)",
+          "oklch(0.6 0.15 62)",
+          "oklch(0.72 0.15 62)",
+          "oklch(0.84 0.15 62)",
+          "oklch(0.95 0.15 62)"
+        ]
+      },
+      "warn-text": {
+        "role": "tertiary",
+        "displayName": "Waiting Amber Text",
+        "canonical": "oklch(0.52 0.12 60)",
+        "tonalRamp": [
+          "oklch(0.15 0.12 60)",
+          "oklch(0.26 0.12 60)",
+          "oklch(0.37 0.12 60)",
+          "oklch(0.48 0.12 60)",
+          "oklch(0.6 0.12 60)",
+          "oklch(0.72 0.12 60)",
+          "oklch(0.84 0.12 60)",
+          "oklch(0.95 0.12 60)"
+        ]
+      },
+      "warn-wash": {
+        "role": "tertiary",
+        "displayName": "Waiting Amber Wash",
+        "canonical": "oklch(0.72 0.15 62 / 0.14)",
+        "tonalRamp": [
+          "oklch(0.15 0.15 62)",
+          "oklch(0.26 0.15 62)",
+          "oklch(0.37 0.15 62)",
+          "oklch(0.48 0.15 62)",
+          "oklch(0.6 0.15 62)",
+          "oklch(0.72 0.15 62)",
+          "oklch(0.84 0.15 62)",
+          "oklch(0.95 0.15 62)"
+        ]
+      },
+      "series-in": {
+        "role": "chart",
+        "displayName": "Revenue Green",
+        "canonical": "oklch(0.72 0.12 150)",
+        "tonalRamp": [
+          "oklch(0.15 0.12 150)",
+          "oklch(0.26 0.12 150)",
+          "oklch(0.37 0.12 150)",
+          "oklch(0.48 0.12 150)",
+          "oklch(0.6 0.12 150)",
+          "oklch(0.72 0.12 150)",
+          "oklch(0.84 0.12 150)",
+          "oklch(0.95 0.12 150)"
+        ]
+      },
+      "series-cost": {
+        "role": "chart",
+        "displayName": "Cost Sand",
+        "canonical": "oklch(0.85 0.042 72)",
+        "tonalRamp": [
+          "oklch(0.15 0.042 72)",
+          "oklch(0.26 0.042 72)",
+          "oklch(0.37 0.042 72)",
+          "oklch(0.48 0.042 72)",
+          "oklch(0.6 0.042 72)",
+          "oklch(0.72 0.042 72)",
+          "oklch(0.84 0.042 72)",
+          "oklch(0.95 0.042 72)"
+        ]
+      },
+      "series-profit": {
+        "role": "chart",
+        "displayName": "Profit Forest",
+        "canonical": "oklch(0.38 0.09 145)",
+        "tonalRamp": [
+          "oklch(0.15 0.09 145)",
+          "oklch(0.26 0.09 145)",
+          "oklch(0.37 0.09 145)",
+          "oklch(0.48 0.09 145)",
+          "oklch(0.6 0.09 145)",
+          "oklch(0.72 0.09 145)",
+          "oklch(0.84 0.09 145)",
+          "oklch(0.95 0.09 145)"
+        ]
+      },
+      "ring": {
+        "role": "secondary",
+        "displayName": "Focus Ring",
+        "canonical": "oklch(0.5 0.11 148)",
+        "tonalRamp": [
+          "oklch(0.15 0.11 148)",
+          "oklch(0.26 0.11 148)",
+          "oklch(0.37 0.11 148)",
+          "oklch(0.48 0.11 148)",
+          "oklch(0.6 0.11 148)",
+          "oklch(0.72 0.11 148)",
+          "oklch(0.84 0.11 148)",
+          "oklch(0.95 0.11 148)"
+        ]
+      },
+      "mark": {
+        "role": "secondary",
+        "displayName": "Signet Green",
+        "canonical": "oklch(0.42 0.1 148)",
+        "tonalRamp": [
+          "oklch(0.15 0.1 148)",
+          "oklch(0.26 0.1 148)",
+          "oklch(0.37 0.1 148)",
+          "oklch(0.48 0.1 148)",
+          "oklch(0.6 0.1 148)",
+          "oklch(0.72 0.1 148)",
+          "oklch(0.84 0.1 148)",
+          "oklch(0.95 0.1 148)"
+        ]
+      },
+      "scrim": {
+        "role": "neutral",
+        "displayName": "Scrim",
+        "canonical": "oklch(0.28 0.02 60 / 0.26)",
+        "tonalRamp": [
+          "oklch(0.15 0.02 60)",
+          "oklch(0.26 0.02 60)",
+          "oklch(0.37 0.02 60)",
+          "oklch(0.48 0.02 60)",
+          "oklch(0.6 0.02 60)",
+          "oklch(0.72 0.02 60)",
+          "oklch(0.84 0.02 60)",
+          "oklch(0.95 0.02 60)"
+        ]
+      },
+      "toast": {
+        "role": "neutral",
+        "displayName": "Toast Ink",
+        "canonical": "oklch(0.255 0.012 55)",
+        "tonalRamp": [
+          "oklch(0.15 0.012 55)",
+          "oklch(0.26 0.012 55)",
+          "oklch(0.37 0.012 55)",
+          "oklch(0.48 0.012 55)",
+          "oklch(0.6 0.012 55)",
+          "oklch(0.72 0.012 55)",
+          "oklch(0.84 0.012 55)",
+          "oklch(0.95 0.012 55)"
+        ]
+      },
+      "toast-ink": {
+        "role": "neutral",
+        "displayName": "Toast Text",
+        "canonical": "oklch(0.97 0.008 75)",
+        "tonalRamp": [
+          "oklch(0.15 0.008 75)",
+          "oklch(0.26 0.008 75)",
+          "oklch(0.37 0.008 75)",
+          "oklch(0.48 0.008 75)",
+          "oklch(0.6 0.008 75)",
+          "oklch(0.72 0.008 75)",
+          "oklch(0.84 0.008 75)",
+          "oklch(0.95 0.008 75)"
+        ]
+      },
+      "frost": {
+        "role": "neutral",
+        "displayName": "Frost Fill",
+        "canonical": "oklch(0.995 0.004 75 / 0.68)",
+        "tonalRamp": [
+          "oklch(0.15 0.004 75)",
+          "oklch(0.26 0.004 75)",
+          "oklch(0.37 0.004 75)",
+          "oklch(0.48 0.004 75)",
+          "oklch(0.6 0.004 75)",
+          "oklch(0.72 0.004 75)",
+          "oklch(0.84 0.004 75)",
+          "oklch(0.95 0.004 75)"
+        ]
+      },
+      "frost-ink": {
+        "role": "neutral",
+        "displayName": "Frost Ink Fill",
+        "canonical": "oklch(0.255 0.012 55 / 0.8)",
+        "tonalRamp": [
+          "oklch(0.15 0.012 55)",
+          "oklch(0.26 0.012 55)",
+          "oklch(0.37 0.012 55)",
+          "oklch(0.48 0.012 55)",
+          "oklch(0.6 0.012 55)",
+          "oklch(0.72 0.012 55)",
+          "oklch(0.84 0.012 55)",
+          "oklch(0.95 0.012 55)"
+        ]
+      },
+      "frost-edge": {
+        "role": "neutral",
+        "displayName": "Frost Top Light",
+        "canonical": "oklch(1 0 0 / 0.75)",
+        "tonalRamp": [
+          "oklch(0.15 0 0)",
+          "oklch(0.26 0 0)",
+          "oklch(0.37 0 0)",
+          "oklch(0.48 0 0)",
+          "oklch(0.6 0 0)",
+          "oklch(0.72 0 0)",
+          "oklch(0.84 0 0)",
+          "oklch(0.95 0 0)"
+        ]
+      },
+      "ground-dark": {
+        "role": "neutral",
+        "displayName": "Warm Ground (dark)",
+        "canonical": "oklch(0.18 0.008 60)",
+        "tonalRamp": [
+          "oklch(0.15 0.008 60)",
+          "oklch(0.26 0.008 60)",
+          "oklch(0.37 0.008 60)",
+          "oklch(0.48 0.008 60)",
+          "oklch(0.6 0.008 60)",
+          "oklch(0.72 0.008 60)",
+          "oklch(0.84 0.008 60)",
+          "oklch(0.95 0.008 60)"
+        ]
+      },
+      "card-dark": {
+        "role": "neutral",
+        "displayName": "Card White (dark)",
+        "canonical": "oklch(0.225 0.009 60)",
+        "tonalRamp": [
+          "oklch(0.15 0.009 60)",
+          "oklch(0.26 0.009 60)",
+          "oklch(0.37 0.009 60)",
+          "oklch(0.48 0.009 60)",
+          "oklch(0.6 0.009 60)",
+          "oklch(0.72 0.009 60)",
+          "oklch(0.84 0.009 60)",
+          "oklch(0.95 0.009 60)"
+        ]
+      },
+      "well-dark": {
+        "role": "neutral",
+        "displayName": "Well (dark)",
+        "canonical": "oklch(0.26 0.01 60)",
+        "tonalRamp": [
+          "oklch(0.15 0.01 60)",
+          "oklch(0.26 0.01 60)",
+          "oklch(0.37 0.01 60)",
+          "oklch(0.48 0.01 60)",
+          "oklch(0.6 0.01 60)",
+          "oklch(0.72 0.01 60)",
+          "oklch(0.84 0.01 60)",
+          "oklch(0.95 0.01 60)"
+        ]
+      },
+      "well-2-dark": {
+        "role": "neutral",
+        "displayName": "Well Deep (dark)",
+        "canonical": "oklch(0.3 0.01 60)",
+        "tonalRamp": [
+          "oklch(0.15 0.01 60)",
+          "oklch(0.26 0.01 60)",
+          "oklch(0.37 0.01 60)",
+          "oklch(0.48 0.01 60)",
+          "oklch(0.6 0.01 60)",
+          "oklch(0.72 0.01 60)",
+          "oklch(0.84 0.01 60)",
+          "oklch(0.95 0.01 60)"
+        ]
+      },
+      "line-dark": {
+        "role": "neutral",
+        "displayName": "Hairline (dark)",
+        "canonical": "oklch(0.29 0.01 60)",
+        "tonalRamp": [
+          "oklch(0.15 0.01 60)",
+          "oklch(0.26 0.01 60)",
+          "oklch(0.37 0.01 60)",
+          "oklch(0.48 0.01 60)",
+          "oklch(0.6 0.01 60)",
+          "oklch(0.72 0.01 60)",
+          "oklch(0.84 0.01 60)",
+          "oklch(0.95 0.01 60)"
+        ]
+      },
+      "line-strong-dark": {
+        "role": "neutral",
+        "displayName": "Strong Hairline (dark)",
+        "canonical": "oklch(0.36 0.012 60)",
+        "tonalRamp": [
+          "oklch(0.15 0.012 60)",
+          "oklch(0.26 0.012 60)",
+          "oklch(0.37 0.012 60)",
+          "oklch(0.48 0.012 60)",
+          "oklch(0.6 0.012 60)",
+          "oklch(0.72 0.012 60)",
+          "oklch(0.84 0.012 60)",
+          "oklch(0.95 0.012 60)"
+        ]
+      },
+      "ink-dark": {
+        "role": "neutral",
+        "displayName": "Warm Ink (dark)",
+        "canonical": "oklch(0.95 0.008 75)",
+        "tonalRamp": [
+          "oklch(0.15 0.008 75)",
+          "oklch(0.26 0.008 75)",
+          "oklch(0.37 0.008 75)",
+          "oklch(0.48 0.008 75)",
+          "oklch(0.6 0.008 75)",
+          "oklch(0.72 0.008 75)",
+          "oklch(0.84 0.008 75)",
+          "oklch(0.95 0.008 75)"
+        ]
+      },
+      "ink-2-dark": {
+        "role": "neutral",
+        "displayName": "Warm Ink 2 (dark)",
+        "canonical": "oklch(0.78 0.012 70)",
+        "tonalRamp": [
+          "oklch(0.15 0.012 70)",
+          "oklch(0.26 0.012 70)",
+          "oklch(0.37 0.012 70)",
+          "oklch(0.48 0.012 70)",
+          "oklch(0.6 0.012 70)",
+          "oklch(0.72 0.012 70)",
+          "oklch(0.84 0.012 70)",
+          "oklch(0.95 0.012 70)"
+        ]
+      },
+      "ink-3-dark": {
+        "role": "neutral",
+        "displayName": "Warm Ink 3 (dark)",
+        "canonical": "oklch(0.68 0.012 70)",
+        "tonalRamp": [
+          "oklch(0.15 0.012 70)",
+          "oklch(0.26 0.012 70)",
+          "oklch(0.37 0.012 70)",
+          "oklch(0.48 0.012 70)",
+          "oklch(0.6 0.012 70)",
+          "oklch(0.72 0.012 70)",
+          "oklch(0.84 0.012 70)",
+          "oklch(0.95 0.012 70)"
+        ]
+      },
+      "pos-dark": {
+        "role": "secondary",
+        "displayName": "Ledger Green (dark)",
+        "canonical": "oklch(0.8 0.15 138)",
+        "tonalRamp": [
+          "oklch(0.15 0.15 138)",
+          "oklch(0.26 0.15 138)",
+          "oklch(0.37 0.15 138)",
+          "oklch(0.48 0.15 138)",
+          "oklch(0.6 0.15 138)",
+          "oklch(0.72 0.15 138)",
+          "oklch(0.84 0.15 138)",
+          "oklch(0.95 0.15 138)"
+        ]
+      },
+      "neg-dark": {
+        "role": "tertiary",
+        "displayName": "Loss Red (dark)",
+        "canonical": "oklch(0.72 0.15 30)",
+        "tonalRamp": [
+          "oklch(0.15 0.15 30)",
+          "oklch(0.26 0.15 30)",
+          "oklch(0.37 0.15 30)",
+          "oklch(0.48 0.15 30)",
+          "oklch(0.6 0.15 30)",
+          "oklch(0.72 0.15 30)",
+          "oklch(0.84 0.15 30)",
+          "oklch(0.95 0.15 30)"
+        ]
+      },
+      "warn-dark": {
+        "role": "tertiary",
+        "displayName": "Waiting Amber (dark)",
+        "canonical": "oklch(0.8 0.14 70)",
+        "tonalRamp": [
+          "oklch(0.15 0.14 70)",
+          "oklch(0.26 0.14 70)",
+          "oklch(0.37 0.14 70)",
+          "oklch(0.48 0.14 70)",
+          "oklch(0.6 0.14 70)",
+          "oklch(0.72 0.14 70)",
+          "oklch(0.84 0.14 70)",
+          "oklch(0.95 0.14 70)"
+        ]
+      },
+      "warn-text-dark": {
+        "role": "tertiary",
+        "displayName": "Waiting Amber Text (dark)",
+        "canonical": "oklch(0.82 0.12 70)",
+        "tonalRamp": [
+          "oklch(0.15 0.12 70)",
+          "oklch(0.26 0.12 70)",
+          "oklch(0.37 0.12 70)",
+          "oklch(0.48 0.12 70)",
+          "oklch(0.6 0.12 70)",
+          "oklch(0.72 0.12 70)",
+          "oklch(0.84 0.12 70)",
+          "oklch(0.95 0.12 70)"
+        ]
+      },
+      "series-in-dark": {
+        "role": "chart",
+        "displayName": "Revenue Green (dark)",
+        "canonical": "oklch(0.6 0.12 150)",
+        "tonalRamp": [
+          "oklch(0.15 0.12 150)",
+          "oklch(0.26 0.12 150)",
+          "oklch(0.37 0.12 150)",
+          "oklch(0.48 0.12 150)",
+          "oklch(0.6 0.12 150)",
+          "oklch(0.72 0.12 150)",
+          "oklch(0.84 0.12 150)",
+          "oklch(0.95 0.12 150)"
+        ]
+      },
+      "series-cost-dark": {
+        "role": "chart",
+        "displayName": "Cost Sand (dark)",
+        "canonical": "oklch(0.45 0.03 70)",
+        "tonalRamp": [
+          "oklch(0.15 0.03 70)",
+          "oklch(0.26 0.03 70)",
+          "oklch(0.37 0.03 70)",
+          "oklch(0.48 0.03 70)",
+          "oklch(0.6 0.03 70)",
+          "oklch(0.72 0.03 70)",
+          "oklch(0.84 0.03 70)",
+          "oklch(0.95 0.03 70)"
+        ]
+      },
+      "series-profit-dark": {
+        "role": "chart",
+        "displayName": "Profit Forest (dark)",
+        "canonical": "oklch(0.92 0.1 130)",
+        "tonalRamp": [
+          "oklch(0.15 0.1 130)",
+          "oklch(0.26 0.1 130)",
+          "oklch(0.37 0.1 130)",
+          "oklch(0.48 0.1 130)",
+          "oklch(0.6 0.1 130)",
+          "oklch(0.72 0.1 130)",
+          "oklch(0.84 0.1 130)",
+          "oklch(0.95 0.1 130)"
+        ]
+      },
+      "ring-dark": {
+        "role": "secondary",
+        "displayName": "Focus Ring (dark)",
+        "canonical": "oklch(0.87 0.18 132)",
+        "tonalRamp": [
+          "oklch(0.15 0.18 132)",
+          "oklch(0.26 0.18 132)",
+          "oklch(0.37 0.18 132)",
+          "oklch(0.48 0.18 132)",
+          "oklch(0.6 0.18 132)",
+          "oklch(0.72 0.18 132)",
+          "oklch(0.84 0.18 132)",
+          "oklch(0.95 0.18 132)"
+        ]
+      },
+      "toast-dark": {
+        "role": "neutral",
+        "displayName": "Toast Ink (dark)",
+        "canonical": "oklch(0.95 0.008 75)",
+        "tonalRamp": [
+          "oklch(0.15 0.008 75)",
+          "oklch(0.26 0.008 75)",
+          "oklch(0.37 0.008 75)",
+          "oklch(0.48 0.008 75)",
+          "oklch(0.6 0.008 75)",
+          "oklch(0.72 0.008 75)",
+          "oklch(0.84 0.008 75)",
+          "oklch(0.95 0.008 75)"
+        ]
+      },
+      "toast-ink-dark": {
+        "role": "neutral",
+        "displayName": "Toast Text (dark)",
+        "canonical": "oklch(0.255 0.012 55)",
+        "tonalRamp": [
+          "oklch(0.15 0.012 55)",
+          "oklch(0.26 0.012 55)",
+          "oklch(0.37 0.012 55)",
+          "oklch(0.48 0.012 55)",
+          "oklch(0.6 0.012 55)",
+          "oklch(0.72 0.012 55)",
+          "oklch(0.84 0.012 55)",
+          "oklch(0.95 0.012 55)"
+        ]
+      },
+      "frost-dark": {
+        "role": "neutral",
+        "displayName": "Frost Fill (dark)",
+        "canonical": "oklch(0.24 0.009 60 / 0.68)",
+        "tonalRamp": [
+          "oklch(0.15 0.009 60)",
+          "oklch(0.26 0.009 60)",
+          "oklch(0.37 0.009 60)",
+          "oklch(0.48 0.009 60)",
+          "oklch(0.6 0.009 60)",
+          "oklch(0.72 0.009 60)",
+          "oklch(0.84 0.009 60)",
+          "oklch(0.95 0.009 60)"
+        ]
+      },
+      "frost-ink-dark": {
+        "role": "neutral",
+        "displayName": "Frost Ink Fill (dark)",
+        "canonical": "oklch(0.95 0.008 75 / 0.82)",
+        "tonalRamp": [
+          "oklch(0.15 0.008 75)",
+          "oklch(0.26 0.008 75)",
+          "oklch(0.37 0.008 75)",
+          "oklch(0.48 0.008 75)",
+          "oklch(0.6 0.008 75)",
+          "oklch(0.72 0.008 75)",
+          "oklch(0.84 0.008 75)",
+          "oklch(0.95 0.008 75)"
+        ]
+      },
+      "frost-edge-dark": {
+        "role": "neutral",
+        "displayName": "Frost Top Light (dark)",
+        "canonical": "oklch(1 0 0 / 0.09)",
+        "tonalRamp": [
+          "oklch(0.15 0 0)",
+          "oklch(0.26 0 0)",
+          "oklch(0.37 0 0)",
+          "oklch(0.48 0 0)",
+          "oklch(0.6 0 0)",
+          "oklch(0.72 0 0)",
+          "oklch(0.84 0 0)",
+          "oklch(0.95 0 0)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "figure-hero": {
+        "displayName": "Figure hero",
+        "purpose": "Period profit, base-currency balance, the 记一笔 amount field. Rolls digit by digit."
+      },
+      "figure": {
+        "displayName": "Figure",
+        "purpose": "Secondary headline figures."
+      },
+      "headline": {
+        "displayName": "Page title",
+        "purpose": "One per page: 概览, 交易, 统计, 导入, 设置."
+      },
+      "title-sheet": {
+        "displayName": "Sheet title",
+        "purpose": "Sheet and dialog titles."
+      },
+      "title": {
+        "displayName": "Card title",
+        "purpose": "Card titles and the wordmark."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Rows, nav items, fields, buttons."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Field labels, chips, legends, card actions, small buttons."
+      },
+      "caption": {
+        "displayName": "Caption",
+        "purpose": "Axis ticks, badges, counts, tab-bar labels."
+      }
+    },
+    "shadows": [
+      {
+        "name": "card",
+        "value": "0 1px 2px oklch(0.4 0.03 60 / 0.06), 0 8px 24px -12px oklch(0.4 0.04 60 / 0.16)",
+        "purpose": "Every card at rest; the only card shadow."
+      },
+      {
+        "name": "lift",
+        "value": "0 1px 2px oklch(0.4 0.03 60 / 0.08), 0 2px 8px -2px oklch(0.4 0.04 60 / 0.12)",
+        "purpose": "Active nav pill, segmented thumb, toggle knob, frost tab bar."
+      },
+      {
+        "name": "pop",
+        "value": "0 4px 12px -4px oklch(0.3 0.03 60 / 0.12), 0 28px 64px -24px oklch(0.3 0.04 60 / 0.38)",
+        "purpose": "Sheets, the raised phone ＋, ink toasts."
+      },
+      {
+        "name": "card-dark",
+        "value": "0 1px 2px oklch(0.05 0.01 60 / 0.4), 0 8px 24px -12px oklch(0.05 0.01 60 / 0.6)",
+        "purpose": "Card shadow in dark theme."
+      },
+      {
+        "name": "lift-dark",
+        "value": "0 1px 2px oklch(0.05 0.01 60 / 0.5), 0 2px 8px -2px oklch(0.05 0.01 60 / 0.5)",
+        "purpose": "Lift shadow in dark theme."
+      },
+      {
+        "name": "pop-dark",
+        "value": "0 4px 12px -4px oklch(0.05 0.01 60 / 0.5), 0 28px 64px -24px oklch(0.02 0.01 60 / 0.85)",
+        "purpose": "Pop shadow in dark theme."
+      },
+      {
+        "name": "frost",
+        "value": "background-color: var(--frost); background-image: url(/grain.png) 80px; backdrop-filter: blur(22px) saturate(1.6); box-shadow: inset 0 1px 0 var(--frost-edge), var(--shadow-lift)",
+        "purpose": "Light frosted material: phone tab bar, chart read-outs."
+      },
+      {
+        "name": "frost-ink",
+        "value": "background-color: var(--frost-ink); background-image: url(/grain.png) 80px; backdrop-filter: blur(22px) saturate(1.6); box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.12), var(--shadow-pop)",
+        "purpose": "Dark frosted material: toasts."
+      },
+      {
+        "name": "sheet-backdrop",
+        "value": "background: var(--scrim); backdrop-filter: blur(10px) saturate(1.25)",
+        "purpose": "Page behind a sheet or dialog; fades in over 360ms."
+      },
+      {
+        "name": "progressive-blur",
+        "value": "5 stacked backdrop layers blur 1/2/4/8/16px, masked to bands 100/80/60/40/20% from the edge, plus a ground (or card) tint at 70–85%",
+        "purpose": "Every scroll edge: page top once scrolled, above the phone tab bar, both ends of a sheet body."
+      },
+      {
+        "name": "focus-ring",
+        "value": "outline: 2px solid var(--ring); outline-offset: 2px",
+        "purpose": "All keyboard focus; ring is ledger green in light, lime in dark."
+      },
+      {
+        "name": "field-focus",
+        "value": "border-color: var(--pos); box-shadow: 0 0 0 3px var(--lime-wash)",
+        "purpose": "Inputs, textareas, selects on focus."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-out-expo",
+        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Default easing for thumbs, toggles, overlays, bar growth."
+      },
+      {
+        "name": "control",
+        "value": "150ms",
+        "purpose": "Hover/press colour and scale (0.97 buttons, 0.96 chips, 0.95 icon buttons)."
+      },
+      {
+        "name": "thumb",
+        "value": "300ms ease-out-expo",
+        "purpose": "Segmented thumb and toggle knob."
+      },
+      {
+        "name": "rolling-figure",
+        "value": "620ms expo.out, 30ms per-digit stagger; first arrival 900ms, 35ms stagger",
+        "purpose": "Every money figure when a period changes or a write lands."
+      },
+      {
+        "name": "check-draw",
+        "value": "420ms power3.out stroke-dashoffset",
+        "purpose": "记一笔 submit after a successful write."
+      },
+      {
+        "name": "bar-grow",
+        "value": "700ms ease-out-expo scaleX from left",
+        "purpose": "Bar-list fills."
+      },
+      {
+        "name": "frost-in",
+        "value": "360ms ease-out-expo; out 200ms ease-in",
+        "purpose": "Sheet/dialog backdrop."
+      },
+      {
+        "name": "toast-in",
+        "value": "320ms ease-out-expo, from translateY(14px) scale(0.96)",
+        "purpose": "Toast entry; stays 3.2s, 6.5s with undo."
+      },
+      {
+        "name": "edge-fade",
+        "value": "220ms ease-out",
+        "purpose": "Progressive blur appearing when content is under it."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "all transitions/animations 0.01ms; GSAP sets values directly",
+        "purpose": "prefers-reduced-motion."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Lime capsule for the one primary action per view (记一笔, save).",
+      "html": "<button class=\"ds-btn ds-btn-primary\">保存</button>",
+      "css": ".ds-btn{font-family:var(--font-sans,system-ui,-apple-system,\"PingFang SC\",sans-serif);display:inline-flex;align-items:center;justify-content:center;gap:8px;height:40px;padding:0 18px;border:0;border-radius:9999px;font-size:.9375rem;cursor:pointer;transition:background-color 150ms,color 150ms,transform 150ms}.ds-btn:active{transform:scale(.97)}.ds-btn:focus-visible{outline:2px solid var(--ring,oklch(0.5 0.11 148));outline-offset:2px}.ds-btn-primary{background:var(--lime,oklch(0.87 0.18 132));color:var(--lime-ink,oklch(0.3 0.08 135));font-weight:600}.ds-btn-primary:hover{background:var(--lime-hover,oklch(0.84 0.18 132))}"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Well-filled capsule for everything that is not the primary action.",
+      "html": "<button class=\"ds-btn2\">取消</button>",
+      "css": ".ds-btn2{font-family:var(--font-sans,system-ui,-apple-system,\"PingFang SC\",sans-serif);height:40px;padding:0 18px;border:0;border-radius:9999px;font-size:.9375rem;font-weight:500;background:var(--well,oklch(0.955 0.012 75));color:var(--ink,oklch(0.255 0.012 55));cursor:pointer;transition:background-color 150ms,transform 150ms}.ds-btn2:hover{background:var(--well-2,oklch(0.935 0.014 75))}.ds-btn2:active{transform:scale(.97)}.ds-btn2:focus-visible{outline:2px solid var(--ring,oklch(0.5 0.11 148));outline-offset:2px}"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Transparent capsule for tertiary actions; danger variant swaps ink-2 for red.",
+      "html": "<button class=\"ds-btn3\">导出</button> <button class=\"ds-btn3 ds-btn3-danger\">删除</button>",
+      "css": ".ds-btn3{font-family:var(--font-sans,system-ui,-apple-system,\"PingFang SC\",sans-serif);height:40px;padding:0 18px;border:0;border-radius:9999px;font-size:.9375rem;font-weight:500;background:transparent;color:var(--ink-2,oklch(0.47 0.02 55));cursor:pointer;transition:background-color 150ms,color 150ms}.ds-btn3:hover{background:var(--well,oklch(0.955 0.012 75));color:var(--ink,oklch(0.255 0.012 55))}.ds-btn3-danger{color:var(--neg,oklch(0.53 0.17 30))}.ds-btn3-danger:hover{background:var(--neg-wash,oklch(0.53 0.17 30 / .09));color:var(--neg,oklch(0.53 0.17 30))}.ds-btn3:focus-visible{outline:2px solid var(--ring,oklch(0.5 0.11 148));outline-offset:2px}"
+    },
+    {
+      "name": "Chips",
+      "kind": "chip",
+      "refersTo": "chip",
+      "description": "Filter and type capsules; the selected one turns lime.",
+      "html": "<div class=\"ds-chips\"><button class=\"ds-chip ds-chip-on\">销售收入</button><button class=\"ds-chip\">额度采购</button><button class=\"ds-chip\">费用支出</button></div>",
+      "css": ".ds-chips{display:flex;gap:8px}.ds-chip{font-family:var(--font-sans,system-ui,-apple-system,\"PingFang SC\",sans-serif);height:32px;padding:0 14px;border:0;border-radius:9999px;font-size:.8125rem;font-weight:500;background:var(--well,oklch(0.955 0.012 75));color:var(--ink-2,oklch(0.47 0.02 55));cursor:pointer;transition:background-color 150ms,transform 150ms}.ds-chip:hover{background:var(--well-2,oklch(0.935 0.014 75));color:var(--ink,oklch(0.255 0.012 55))}.ds-chip:active{transform:scale(.96)}.ds-chip-on,.ds-chip-on:hover{background:var(--lime,oklch(0.87 0.18 132));color:var(--lime-ink,oklch(0.3 0.08 135));font-weight:600}.ds-chip:focus-visible{outline:2px solid var(--ring,oklch(0.5 0.11 148));outline-offset:2px}"
+    },
+    {
+      "name": "Text Field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "12px field with label above; focus turns the border green with a lime-wash halo.",
+      "html": "<label class=\"ds-field\"><span>备注</span><input class=\"ds-input\" placeholder=\"可选\"></label>",
+      "css": ".ds-field{font-family:var(--font-sans,system-ui,-apple-system,\"PingFang SC\",sans-serif);display:grid;gap:6px;width:280px}.ds-field span{font-size:.8125rem;font-weight:500;color:var(--ink-2,oklch(0.47 0.02 55))}.ds-input{font-family:var(--font-sans,system-ui,-apple-system,\"PingFang SC\",sans-serif);height:40px;padding:0 14px;border:1px solid var(--line-strong,oklch(0.87 0.016 75));border-radius:12px;background:var(--card,#fff);color:var(--ink,oklch(0.255 0.012 55));font-size:.9375rem;outline:none;transition:border-color 150ms,box-shadow 150ms}.ds-input::placeholder{color:var(--ink-3,oklch(0.52 0.018 60))}.ds-input:hover{border-color:oklch(0.52 0.018 60 / .6)}.ds-input:focus{border-color:var(--pos,oklch(0.5 0.11 148));box-shadow:0 0 0 3px var(--lime-wash,oklch(0.87 0.18 132 / .28))}"
+    },
+    {
+      "name": "Segmented Control",
+      "kind": "custom",
+      "refersTo": "segmented",
+      "description": "Well track with a sliding white thumb; period and theme switches.",
+      "html": "<div class=\"ds-seg\"><button class=\"ds-seg-on\">本月</button><button>上月</button><button>近 30 天</button><button>今年</button></div>",
+      "css": ".ds-seg{font-family:var(--font-sans,system-ui,-apple-system,\"PingFang SC\",sans-serif);display:inline-flex;padding:4px;border-radius:9999px;background:var(--well,oklch(0.955 0.012 75))}.ds-seg button{font-family:var(--font-sans,system-ui,-apple-system,\"PingFang SC\",sans-serif);height:32px;padding:0 16px;border:0;border-radius:9999px;background:transparent;font-size:.8125rem;font-weight:500;color:var(--ink-2,oklch(0.47 0.02 55));cursor:pointer;transition:color 150ms,background-color 300ms cubic-bezier(.16,1,.3,1)}.ds-seg button:hover{color:var(--ink,oklch(0.255 0.012 55))}.ds-seg .ds-seg-on{background:var(--card,#fff);color:var(--ink,oklch(0.255 0.012 55));font-weight:600;box-shadow:0 1px 2px oklch(0.4 0.03 60 / .08),0 2px 8px -2px oklch(0.4 0.04 60 / .12)}.ds-seg button:focus-visible{outline:2px solid var(--ring,oklch(0.5 0.11 148));outline-offset:2px}"
+    },
+    {
+      "name": "Card with Figure",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Solid white 20px card, one warm shadow, 24px inset; hero figure semibold tabular with negative tracking.",
+      "html": "<section class=\"ds-card\"><header><h2>本月利润</h2><a href=\"#\">查看全部 ›</a></header><p class=\"ds-fig\">¥12,345.67</p><p class=\"ds-delta\">↗ 12.3% 较上月同期</p></section>",
+      "css": ".ds-card{font-family:var(--font-sans,system-ui,-apple-system,\"PingFang SC\",sans-serif);width:360px;padding:24px;border-radius:20px;background:var(--card,#fff);color:var(--ink,oklch(0.255 0.012 55));box-shadow:0 1px 2px oklch(0.4 0.03 60 / .06),0 8px 24px -12px oklch(0.4 0.04 60 / .16)}.ds-card header{display:flex;justify-content:space-between;align-items:center;min-height:32px}.ds-card h2{margin:0;font-size:1.0625rem;font-weight:600}.ds-card a{font-size:.8125rem;font-weight:500;color:var(--ink-2,oklch(0.47 0.02 55));text-decoration:none}.ds-card a:hover{color:var(--ink,oklch(0.255 0.012 55))}.ds-fig{margin:8px 0 0;font-size:2.875rem;line-height:3.25rem;font-weight:600;letter-spacing:-.025em;font-variant-numeric:tabular-nums lining-nums}.ds-delta{margin:4px 0 0;font-size:.8125rem;color:var(--pos,oklch(0.5 0.11 148));font-variant-numeric:tabular-nums}"
+    },
+    {
+      "name": "Sidebar Navigation",
+      "kind": "nav",
+      "refersTo": "nav-item",
+      "description": "Lime 记一笔 capsule then module pills on the ground; active pill is white with the lift shadow.",
+      "html": "<nav class=\"ds-nav\"><button class=\"ds-nav-add\"><span>＋ 记一笔</span><kbd>N</kbd></button><a class=\"ds-nav-on\" href=\"#\">概览</a><a href=\"#\">交易</a><a href=\"#\">统计</a><a href=\"#\">导入 <b>3</b></a><a href=\"#\">设置</a></nav>",
+      "css": ".ds-nav{font-family:var(--font-sans,system-ui,-apple-system,\"PingFang SC\",sans-serif);display:grid;gap:4px;width:200px;padding:16px;background:var(--ground,oklch(0.972 0.011 75))}.ds-nav-add{font-family:var(--font-sans,system-ui,-apple-system,\"PingFang SC\",sans-serif);display:flex;justify-content:space-between;align-items:center;height:44px;margin-bottom:20px;padding:0 10px 0 16px;border:0;border-radius:9999px;background:var(--lime,oklch(0.87 0.18 132));color:var(--lime-ink,oklch(0.3 0.08 135));font-size:.9375rem;font-weight:600;cursor:pointer;transition:background-color 150ms,transform 150ms}.ds-nav-add:hover{background:var(--lime-hover,oklch(0.84 0.18 132))}.ds-nav-add:active{transform:scale(.98)}.ds-nav-add kbd{font-family:var(--font-sans,system-ui,-apple-system,\"PingFang SC\",sans-serif);padding:0 6px;border-radius:6px;background:oklch(0.3 0.08 135 / .1);font-size:.75rem;line-height:20px}.ds-nav a{display:flex;align-items:center;justify-content:space-between;height:40px;padding:0 16px;border-radius:9999px;font-size:.9375rem;font-weight:500;color:var(--ink-2,oklch(0.47 0.02 55));text-decoration:none;transition:background-color 150ms,color 150ms}.ds-nav a:hover{background:var(--well,oklch(0.955 0.012 75));color:var(--ink,oklch(0.255 0.012 55))}.ds-nav a.ds-nav-on{background:var(--card,#fff);color:var(--ink,oklch(0.255 0.012 55));font-weight:600;box-shadow:0 1px 2px oklch(0.4 0.03 60 / .08),0 2px 8px -2px oklch(0.4 0.04 60 / .12)}.ds-nav a b{min-width:20px;height:20px;padding:0 6px;border-radius:9999px;background:var(--warn-wash,oklch(0.72 0.15 62 / .14));color:var(--warn-text,oklch(0.52 0.12 60));font-size:.75rem;text-align:center;line-height:20px}.ds-nav a:focus-visible,.ds-nav-add:focus-visible{outline:2px solid var(--ring,oklch(0.5 0.11 148));outline-offset:2px}"
+    },
+    {
+      "name": "Undo Toast",
+      "kind": "custom",
+      "refersTo": "toast",
+      "description": "Frost-ink capsule with a check and a lime 撤销; replaces confirmation dialogs.",
+      "html": "<div class=\"ds-toast\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"10\" fill=\"oklch(0.87 0.18 132)\"/><path d=\"M7.5 12.5l3 3 6-6.5\" fill=\"none\" stroke=\"oklch(0.3 0.08 135)\" stroke-width=\"2.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg><span>已记一笔</span><button>撤销</button></div>",
+      "css": ".ds-toast{font-family:var(--font-sans,system-ui,-apple-system,\"PingFang SC\",sans-serif);display:inline-flex;align-items:center;gap:12px;min-height:48px;padding:8px 8px 8px 16px;border-radius:9999px;background-color:var(--frost-ink,oklch(0.255 0.012 55 / .8));color:var(--toast-ink,oklch(0.97 0.008 75));font-size:.9375rem;backdrop-filter:blur(22px) saturate(1.6);-webkit-backdrop-filter:blur(22px) saturate(1.6);box-shadow:inset 0 1px 0 oklch(1 0 0 / .12),0 4px 12px -4px oklch(0.3 0.03 60 / .12),0 28px 64px -24px oklch(0.3 0.04 60 / .38)}.ds-toast button{font-family:var(--font-sans,system-ui,-apple-system,\"PingFang SC\",sans-serif);height:32px;padding:0 14px;border:0;border-radius:9999px;background:var(--lime,oklch(0.87 0.18 132));color:var(--lime-ink,oklch(0.3 0.08 135));font-size:.8125rem;font-weight:600;cursor:pointer;transition:transform 150ms}.ds-toast button:active{transform:scale(.95)}.ds-toast button:focus-visible{outline:2px solid var(--lime,oklch(0.87 0.18 132));outline-offset:2px}"
+    },
+    {
+      "name": "Bar List Row",
+      "kind": "custom",
+      "refersTo": "card",
+      "description": "Channel / upstream row: name, tabular amount, 8px capsule track filled in series-in or series-cost, muted count.",
+      "html": "<a class=\"ds-bar\" href=\"#\"><span class=\"ds-bar-top\"><span>链动</span><span>¥12,345.67</span></span><span class=\"ds-bar-bot\"><span class=\"ds-track\"><i style=\"width:62%\"></i></span><span>12 笔</span></span></a>",
+      "css": ".ds-bar{font-family:var(--font-sans,system-ui,-apple-system,\"PingFang SC\",sans-serif);display:block;width:320px;padding:10px 12px;border-radius:12px;color:var(--ink,oklch(0.255 0.012 55));text-decoration:none;font-size:.9375rem;transition:background-color 150ms}.ds-bar:hover{background:var(--well,oklch(0.955 0.012 75))}.ds-bar-top{display:flex;justify-content:space-between;font-weight:500}.ds-bar-top span:last-child{font-weight:600;letter-spacing:-.025em;font-variant-numeric:tabular-nums lining-nums}.ds-bar-bot{display:flex;align-items:center;gap:12px;margin-top:8px}.ds-track{flex:1;height:8px;overflow:hidden;border-radius:9999px;background:var(--well,oklch(0.955 0.012 75))}.ds-track i{display:block;height:100%;border-radius:9999px;background:var(--series-in,oklch(0.72 0.12 150))}.ds-bar-bot>span:last-child{width:56px;text-align:right;font-size:.8125rem;color:var(--ink-3,oklch(0.52 0.018 60));font-variant-numeric:tabular-nums}.ds-bar:focus-visible{outline:2px solid var(--ring,oklch(0.5 0.11 148));outline-offset:2px}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Warm Pocket Ledger",
+    "overview": "**Creative North Star: \"The Warm Pocket Ledger\"**\n\nThe books read like a calm personal-finance app rather than an accounting tool. A warm, faintly tinted ground carries solid white cards with soft 20px corners, each lifted by one low warm shadow. Inside the cards, the money does the talking: big semibold figures in tabular numerals, a daily bar chart in green and sand, short bar lists for channels and upstream sites. Each figure links to its transactions. Density is generous but not airy. Every module fits in one card, and a screen shows few elements.\n\nThere is one saturated colour, a Wise-like lime with forest ink. It appears only where the owner acts (记一笔, the primary submit, the selected chip, a toggle that is on) or on the toast's undo. Money in and profit belong to one green family, from the lime through to forest. Costs sit in sand, red is kept for errors and losses, and amber marks what is waiting. Type is Apple's platform face (SF Pro with PingFang SC on the owner's Mac and iPhone) at a fixed rem scale.\n\nThe material is frosted glass for anything that floats above content (the phone tab bar, toasts, chart read-outs, the page behind a sheet). Content dissolves into a progressive blur at every scroll edge instead of being cut off. Motion is quick and exponential. The signature is the rolling figure: when a period changes or a write lands, every money figure rolls digit by digit to its new value.",
+    "keyCharacteristics": [
+      "Warm tinted ground, solid white 20px cards, one low warm shadow per card.",
+      "One lime action colour; green for money in and profit, sand for costs, red only for errors and losses.",
+      "Apple platform type, tabular numerals for every number, semibold hero figures with negative tracking.",
+      "Capsule controls, 12px fields, 20px cards and sheets.",
+      "Frosted glass with matte grain for anything floating; a progressive blur at scroll edges.",
+      "Rolling figures and a self-drawing check after 记一笔.",
+      "Light and dark themes share one token set; dark is a warm charcoal, not neutral grey."
+    ],
+    "rules": [
+      {
+        "name": "The One Lime Rule",
+        "body": "Lime marks where the owner acts or what is currently selected, and nothing else. It is never used for decoration, headings, chart series or status.",
+        "section": "colors"
+      },
+      {
+        "name": "The One Green Family Rule",
+        "body": "Action, income and profit all use one green family, running from lime through ledger green to forest. Costs are sand, not red. Red means an error or a loss.",
+        "section": "colors"
+      },
+      {
+        "name": "The Tabular Rule",
+        "body": "Every amount, count, date and number is set in tabular lining figures (`num`), so columns and rolling digits line up. Headline money uses `figure`: semibold, −0.025em.",
+        "section": "typography"
+      },
+      {
+        "name": "The True Minus Rule",
+        "body": "Outflows use a true minus (−), never a hyphen. Income carries an explicit + and reads green, while money out reads in ink.",
+        "section": "typography"
+      },
+      {
+        "name": "The One Inset Rule",
+        "body": "Card content is inset 24px (20px on phone). Card headers and rows align to that inset. Hover rows bleed out by 12px on each side (−mx-3 px-3) so their hover fill extends past the inset while the text stays on it.",
+        "section": "layout"
+      },
+      {
+        "name": "The No-Overflow Grid Rule",
+        "body": "A grid with no explicit columns is a single `minmax(0, 1fr)` column. Long text truncates instead of pushing the page sideways.",
+        "section": "layout"
+      },
+      {
+        "name": "The Solid Cards Rule",
+        "body": "Cards and sheets stay solid. Glass is only for surfaces that float over moving content.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Dissolving Edge Rule",
+        "body": "Scrolling content never hits a hard cut at a fixed edge; it dissolves into the progressive blur.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do keep lime for the primary action, the current selection and undo only, always with forest-ink text.",
+      "Do set every number in tabular figures and every headline amount in semibold with −0.025em tracking, and roll money figures when they change.",
+      "Do use capsules for controls, 12px for fields and inner tiles, and 20px for cards and sheets.",
+      "Do inset card content 24px (20px on phone) and let hover rows bleed out 12px past it.",
+      "Do use frost (blur 22px, saturate 1.6, grain, hairline top light) for anything that floats over content, and the progressive blur at every scroll edge.",
+      "Do confirm writes with a toast that offers 撤销, not with a confirmation dialog.",
+      "Do honour `prefers-reduced-motion` and `prefers-reduced-transparency` in every new animation and glass surface.",
+      "Do keep the warm hue (55–75) in every neutral, in both themes."
+    ],
+    "donts": [
+      "Don't put lime on headings, chart series, decoration or status.",
+      "Don't render costs in red. Costs are sand; red is for errors and losses only.",
+      "Don't make cards or sheets translucent, and don't add borders to cards.",
+      "Don't stack more than one shadow role on an element, or give a card anything other than the card shadow.",
+      "Don't use neutral or cool greys for ink, ground or dividers.",
+      "Don't introduce radii outside 12 / 20 / 24px and the capsule.",
+      "Don't build grey KPI-tile grids, journal-style ledgers or dense accounting tables."
+    ]
+  }
+}

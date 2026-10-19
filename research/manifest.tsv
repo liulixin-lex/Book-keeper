@@ -1,0 +1,82 @@
+# category	repo	sparse_paths(comma, optional)	focus
+01-plaintext-accounting	ledger/ledger		C++ 经典纯文本复式记账引擎：自动平衡、价格历史、报表查询语言
+01-plaintext-accounting	hledgerorg/hledger		Haskell 纯文本记账：严格校验、CSV 规则导入、多币种成本/市值、Web API
+01-plaintext-accounting	beancount/beancount		Python 复式记账语言：插件、余额断言、lot 成本、BQL 查询
+01-plaintext-accounting	beancount/fava		Beancount Web 界面：编辑、报表、导入
+01-plaintext-accounting	rustledger/rustledger		Rust 实现的 Beancount 兼容引擎
+01-plaintext-accounting	tackler-ng/tackler		Rust 记账引擎：原生 Git 存储、审计追溯
+01-plaintext-accounting	ananthakumaran/paisa		基于 ledger/hledger/beancount 的个人财务看板
+01-plaintext-accounting	sboehler/knut		Go 纯文本记账：多币种估值
+02-ledger-engines	formancehq/ledger		可编程核心账本：Numscript、幂等、不可变日志、多币种
+02-ledger-engines	tigerbeetle/tigerbeetle		高性能复式记账数据库：转账/账户模型、两阶段转账、强一致
+02-ledger-engines	blnkfinance/blnk		开源金融核心账本：余额监控、对账引擎、inflight 交易
+02-ledger-engines	LerianStudio/midaz		云原生账本平台：多资产、组合/科目、交易 DSL
+02-ledger-engines	devaccuracy/ledgerforge		面向 AI 资金流转的复式账本
+02-ledger-engines	hoophq/sequence		不可变账本服务
+02-ledger-engines	pgr0ss/pgledger		纯 PostgreSQL 复式账本实现
+02-ledger-engines	flash-oss/medici		Node/Mongo 复式记账库：日记账/分录/余额快照
+02-ledger-engines	apache/fineract		核心银行系统：总账、会计规则映射、期末结账
+02-ledger-engines	Ekwo-ai/ekwo-os		Postgres/Supabase 复式会计内核
+03-accounting-libraries	envato/double_entry		Ruby 复式记账：账户/转账白名单、锁、余额缓存
+03-accounting-libraries	mbulat/plutus		Ruby 复式记账：科目类型、分录借贷校验
+03-accounting-libraries	adamcharnock/django-hordak		Django 复式记账模型层：多币种腿、数据库约束
+03-accounting-libraries	arrobalytics/django-ledger		Django 复式会计与财务分析引擎：实体/科目表/账簿
+03-accounting-libraries	ekmungai/python-accounting		Python IFRS/GAAP 会计库：报表、税、对账
+03-accounting-libraries	datasignstech/pyluca		Python 复式记账库：规则配置化
+04-smb-accounting	bigcapitalhq/bigcapital		中小企业会计：科目表、手工凭证、报表、库存、API
+04-smb-accounting	akaunting/akaunting		Laravel 在线会计：多币种、交易、对账、模块化
+04-smb-accounting	frappe/books		桌面会计：Schema 驱动、复式过账、报表
+04-smb-accounting	ledgersmb/LedgerSMB		Web 复式会计/ERP：期间关闭、对账、审批工作流
+04-smb-accounting	andrewdwallo/erpsaas		Laravel/Filament 复式权责发生制会计平台
+04-smb-accounting	dubbl-org/dubbl		API-first 的 Xero/QuickBooks 开源替代
+04-smb-accounting	crater-invoice-inc/crater		开票与支出管理
+04-smb-accounting	midday-ai/midday		小企业财务：银行同步、交易匹配、发票、收件箱
+04-smb-accounting	erp-mafia/accounted		为 Agent 构建的开源 ERP
+05-erp-accounting	frappe/erpnext	erpnext/accounts,erpnext/setup	ERPNext 会计模块：总账、会计维度、期间关闭、银行对账
+05-erp-accounting	odoo/odoo	addons/account,addons/account_payment,addons/analytic,addons/base_import	Odoo 会计：科目、凭证、对账模型、税、锁账日期
+05-erp-accounting	OCA/account-reconcile		Odoo 社区对账模块
+05-erp-accounting	tryton/tryton	modules/account,modules/account_statement,modules/currency,modules/account_statement_rule	Tryton 会计：期间/年度、对账、银行流水规则
+05-erp-accounting	Dolibarr/dolibarr	htdocs/accountancy,htdocs/compta	Dolibarr 会计：日记账绑定、导出
+05-erp-accounting	apache/ofbiz-framework	applications/accounting	OFBiz 会计：GL 账户、会计交易、过账规则
+05-erp-accounting	idempiere/idempiere	org.adempiere.base/src/org/compiere/acct	iDempiere 会计引擎：Doc/Fact 过账、多会计架构
+05-erp-accounting	osbzr/gooderp_addons	finance,money,core	GoodERP（中国）财务：凭证、科目、期间
+06-personal-finance	firefly-iii/firefly-iii		个人财务（复式）：规则引擎、预算、多币种、REST API
+06-personal-finance	actualbudget/actual		本地优先预算：CRDT 同步、规则、对账
+06-personal-finance	we-promise/sure		Maybe Finance 社区续作：账户、交易、同步
+06-personal-finance	Gnucash/gnucash	libgnucash/engine,libgnucash/backend/sql	GnuCash 引擎：Split/Transaction/Lot、调度事务、价格库
+06-personal-finance	KDE/kmymoney		KMyMoney：对账、计划交易、导入匹配
+06-personal-finance	moneymanagerex/moneymanagerex		Money Manager Ex：账户、计划交易、资产
+06-personal-finance	ghostfolio/ghostfolio		财富管理：投资组合计算、汇率、数据源
+06-personal-finance	mayswind/ezbookkeeping		自托管个人记账（Go+Vue）：多币种、导入、MCP
+06-personal-finance	TNT-Likely/BeeCount		本地优先记账 App（Flutter）
+06-personal-finance	TNT-Likely/BeeCount-Cloud		BeeCount 自托管同步服务端
+06-personal-finance	getmoneynote/moneynote-api		九快记账后端（Java）：账本/账户/分类
+06-personal-finance	glink25/Cent		多人协作记账 Web App
+06-personal-finance	dingdangdog/cashbook		家庭私人记账本
+06-personal-finance	kresusapp/kresus		个人财务：银行同步、自动分类
+06-personal-finance	rotki/rotki		加密资产会计：成本基础、盈亏计算、事件建模
+07-import-reconciliation	beancount/beangulp		Beancount 导入框架：识别/提取/归档
+07-import-reconciliation	beancount/smart_importer		机器学习自动分类与去重
+07-import-reconciliation	jbms/beancount-import		交互式导入与匹配（Web UI）
+07-import-reconciliation	deb-sig/double-entry-generator		规则驱动导入：支付宝/微信/火币 → Beancount/Ledger
+07-import-reconciliation	dhr2333/Beancount-Trans		中国账单上传自动转换为 Beancount
+07-import-reconciliation	firefly-iii/data-importer		Firefly III 导入器：CSV/银行接口、映射与去重
+07-import-reconciliation	egh/ledger-autosync		银行同步与去重（OFX）
+07-import-reconciliation	GrandmasterTash/OpenRec		Rust 对账引擎：规则匹配、分组
+07-import-reconciliation	juspay/hyperswitch-reconciliation		支付对账引擎（Rust）
+07-import-reconciliation	benjamin-awd/monopoly		银行对账单 PDF → CSV
+07-import-reconciliation	kedder/ofxstatement		银行对账单 → OFX 转换框架
+08-mcp-ai-access	XeroAPI/xero-mcp-server		Xero 官方 MCP：会计对象读写工具设计
+08-mcp-ai-access	intuit/quickbooks-online-mcp-server		QuickBooks 官方 MCP
+08-mcp-ai-access	stripe/ai		Stripe 官方 Agent Toolkit 与 MCP
+08-mcp-ai-access	etnperlong/firefly-iii-mcp		Firefly III MCP
+08-mcp-ai-access	henfrydls/actual-budget-mcp		Actual Budget MCP
+08-mcp-ai-access	vanto/beanquery-mcp		Beancount 查询 MCP
+08-mcp-ai-access	StdioA/beancount-mcp		Beancount 查询+提交交易 MCP
+08-mcp-ai-access	iiAtlas/hledger-mcp		hledger MCP
+08-mcp-ai-access	erpipe-org/mcp-odoo		Odoo MCP：受控写入、多实例
+08-mcp-ai-access	rakeshgangwar/erpnext-mcp-server		ERPNext MCP
+08-mcp-ai-access	norman-finance/norman-mcp-server		欧洲记账/开票/税务 MCP
+09-api-specs-standards	XeroAPI/Xero-OpenAPI		Xero 会计 API OpenAPI 规范
+09-api-specs-standards	apideck-libraries/openapi-specs		Apideck 统一会计 API 规范
+09-api-specs-standards	r3f/china-chart-of-accounts		中国会计科目表模板
