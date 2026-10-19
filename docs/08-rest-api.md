@@ -231,7 +231,9 @@
 
 “仅网页端”：API 令牌（含 MCP）即使有 `config:write` 也返回 403。细节见 19 号文档。
 
-| GET | `/ai/handbook` | admin:read | ✅ 识别规则手册（当前版本或内置默认）、门槛、历史版本 |
+| GET | `/ai/handbook` | ledger:read | ✅ 识别规则手册（当前版本或内置默认）、门槛、历史版本（通用规则，不含密钥与费率） |
+| GET | `/ai/playbooks` | ledger:read | ✅ 场景（与 MCP 提示词同源），每个附 `tiers`：你可以用哪些档位让 AI 助手按它执行 |
+| PUT · DELETE | `/ai/playbooks/{code}` | rules:write | ✅ 修改内置场景或新增（`expected_version`，工具必须存在，作用域自动算出）/ 恢复内置（自定义的删除） |
 | PUT | `/ai/handbook` · POST `/ai/handbook:restore` | rules:write | ✅ 保存新版本（`expected_version`，0 = 替换内置默认）/ 恢复旧版本 |
 | POST | `/source-records/{id}:save-rule` | rules:write | ✅ 存为规则：按这条记录的分类生成或更新规则，并重新分类同批记录 |
 

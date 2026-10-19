@@ -8,7 +8,7 @@ import { clsx } from "clsx";
 import { ArrowDown, ArrowUp, Lightning, Plus, Trash, X } from "@phosphor-icons/react";
 import { api, ApiError } from "@/api/client";
 import { useBookMutation, useBookQuery, useCan } from "@/api/queries";
-import type { AiCapabilities, AiHandbook, AiKind, AiProbe, AiProvider, AiRoute, AiRoutes, AiTask, AiUsageItem } from "@/api/types";
+import type { AiCapabilities, AiHandbook, AiKind, AiProbe, AiProvider, AiRoute, AiRoutes, AiTask, AiUsageItem, Playbook } from "@/api/types";
 import { Badge, Button, Card, Chip, Empty, ErrorNote, Field, Input, Segmented, Select, Sheet, Skeleton, Switch, Textarea } from "@/components/ui";
 import { useToast } from "@/components/toast";
 
@@ -586,6 +586,7 @@ export function AiRules() {
           </div>
         )}
       </Card>
+      <Scenarios />
       {h.versions.length > 1 && (
         <section className="grid gap-2" aria-labelledby="handbook-versions">
           <h2 id="handbook-versions" className="pl-6 text-sm font-semibold text-ink-2 max-sm:pl-5">
@@ -625,6 +626,133 @@ export function AiRules() {
             </ul>
           </Card>
         </section>
+      )}
+    </div>
+  );
+}
+
+/** 场景: the step-by-step playbooks MCP clients see as prompts and AI 助手 offers as scenarios — one list for both. */
+export function Scenarios() {
+  const canEdit = useCan("rules:write");
+  const list = useBookQuery<Playbook[]>("/ai/playbooks");
+  const [open, setOpen] = useState<string | null>(null);
+  if (list.error) return <ErrorNote error={list.error} onRetry={() => list.refetch()} />;
+  if (!list.data) return <Skeleton className="h-40 w-full" />;
+  return (
+    <section className="grid gap-2" aria-labelledby="scenarios-title">
+      <div className="pl-6 max-sm:pl-5">
+        <h2 id="scenarios-title" className="text-sm font-semibold text-ink-2">
+          场景
+        </h2>
+        <p className="text-sm text-ink-3">常见任务的步骤：MCP 客户端看到的提示词、AI 助手里可选的场景，都是这一份。</p>
+      </div>
+      <Card className="px-6 py-2 max-sm:px-5">
+        <ul className="divide-y divide-line">
+          {list.data.data.map((p) => (
+            <li key={p.code} className="py-3">
+              <button type="button" onClick={() => setOpen(open === p.code ? null : p.code)} aria-expanded={open === p.code} className="flex w-full items-center gap-3 text-left">
+                <span className="min-w-0 flex-1">
+                  <span className="flex items-center gap-2">
+                    <span className="font-medium">{p.title}</span>
+                    {!p.built_in ? <Badge>自定义</Badge> : p.changed ? <Badge tone="warn">改过</Badge> : null}
+                  </span>
+                  <span className="block truncate text-sm text-ink-3">{p.when}</span>
+                </span>
+                <span className="num shrink-0 text-sm text-ink-3">{p.steps.length} 步</span>
+              </button>
+              {open === p.code && <ScenarioForm playbook={p} editable={canEdit} onDone={() => setOpen(null)} />}
+            </li>
+          ))}
+        </ul>
+      </Card>
+    </section>
+  );
+}
+
+function ScenarioForm({ playbook: p, editable, onDone }: { playbook: Playbook; editable: boolean; onDone: () => void }) {
+  const toast = useToast();
+  const [f, setF] = useState({ title: p.title, when: p.when, steps: p.steps.join("\n"), tools: p.tools.join(", "), done: p.done });
+  const save = useBookMutation(async (_: void, b) =>
+    api.put<Playbook>(`/books/${b}/ai/playbooks/${p.code}`, {
+      title: f.title.trim(),
+      when: f.when.trim(),
+      steps: f.steps
+        .split("\n")
+        .map((s) => s.trim())
+        .filter(Boolean),
+      tools: f.tools
+        .split(/[,，\s]+/)
+        .map((s) => s.trim())
+        .filter(Boolean),
+      done: f.done.trim(),
+      arguments: p.arguments,
+      expected_version: p.version,
+    }),
+  );
+  const reset = useBookMutation(async (_: void, b) => api.del(`/books/${b}/ai/playbooks/${p.code}`));
+  return (
+    <div className="mt-3 grid gap-3 rounded-field border border-line p-4">
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Field label="名称">{(id) => <Input id={id} value={f.title} readOnly={!editable} onChange={(e) => setF({ ...f, title: e.target.value })} />}</Field>
+        <Field label="完成标准">{(id) => <Input id={id} value={f.done} readOnly={!editable} onChange={(e) => setF({ ...f, done: e.target.value })} />}</Field>
+        <Field label="适用条件" className="col-span-full">
+          {(id) => <Input id={id} value={f.when} readOnly={!editable} onChange={(e) => setF({ ...f, when: e.target.value })} />}
+        </Field>
+        <Field label="步骤" hint="一行一步；{参数} 会换成填写的值" className="col-span-full">
+          {(id, note) => (
+            <Textarea
+              id={id}
+              aria-describedby={note}
+              rows={Math.max(4, p.steps.length + 1)}
+              value={f.steps}
+              readOnly={!editable}
+              onChange={(e) => setF({ ...f, steps: e.target.value })}
+              className="text-sm"
+            />
+          )}
+        </Field>
+        <Field label="工具顺序" hint={`需要的权限按工具自动算出：${p.scopes.join("、")}`} className="col-span-full">
+          {(id, note) => <Input id={id} aria-describedby={note} className="num" value={f.tools} readOnly={!editable} onChange={(e) => setF({ ...f, tools: e.target.value })} />}
+        </Field>
+      </div>
+      {(save.error || reset.error) && <p className="text-sm text-neg">{errorText(save.error ?? reset.error, "保存失败：请稍后重试。")}</p>}
+      {editable && (
+        <div className="flex flex-wrap gap-2">
+          <Button
+            size="sm"
+            variant="primary"
+            loading={save.isPending}
+            onClick={async () => {
+              try {
+                await save.mutateAsync();
+                toast({ tone: "ok", text: `已保存场景「${f.title}」` });
+                onDone();
+              } catch {
+                /* inline */
+              }
+            }}
+          >
+            保存
+          </Button>
+          {p.changed && (
+            <Button
+              size="sm"
+              variant="ghost"
+              loading={reset.isPending}
+              onClick={async () => {
+                try {
+                  await reset.mutateAsync();
+                  toast({ tone: "ok", text: p.built_in ? `「${p.title}」已恢复内置版本` : `已删除场景「${p.title}」` });
+                  onDone();
+                } catch {
+                  /* inline */
+                }
+              }}
+            >
+              {p.built_in ? "恢复内置" : "删除"}
+            </Button>
+          )}
+        </div>
       )}
     </div>
   );

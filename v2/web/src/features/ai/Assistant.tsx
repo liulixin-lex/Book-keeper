@@ -9,8 +9,8 @@ import { clsx } from "clsx";
 import { ArrowCounterClockwise, CheckCircle, ChatCircleDots, Paperclip, ShieldWarning, Sparkle, Stop, X, XCircle } from "@phosphor-icons/react";
 import { api, ApiError } from "@/api/client";
 import { useBookMutation, useBookQuery, useLabel, useUndo } from "@/api/queries";
-import type { AgentRun, AgentRunDetail, AgentStatus, AgentStep, TokenTier } from "@/api/types";
-import { Badge, Button, Card, Empty, ErrorNote, Input, PageHeader, Segmented, Select, Skeleton, Textarea } from "@/components/ui";
+import type { AgentRun, AgentRunDetail, AgentStatus, AgentStep, Playbook, TokenTier } from "@/api/types";
+import { Badge, Button, Card, Chip, Empty, ErrorNote, Input, PageHeader, Segmented, Select, Skeleton, Textarea } from "@/components/ui";
 import { useToast } from "@/components/toast";
 import { shortDate } from "@/lib/format";
 
@@ -116,6 +116,9 @@ function Composer({ onStarted }: { onStarted: (id: string) => void }) {
   const [text, setText] = useState("");
   const [tier, setTier] = useState<TokenTier>("user_write");
   const [files, setFiles] = useState<{ id: string; name: string }[]>([]);
+  const [playbook, setPlaybook] = useState<string | null>(null);
+  const scenarios = (useBookQuery<Playbook[]>("/ai/playbooks").data?.data ?? []).filter((p) => p.tiers.includes(tier));
+  const chosen = scenarios.find((p) => p.code === playbook) ?? null;
   const picker = useRef<HTMLInputElement>(null);
   const upload = useBookMutation(async (list: File[], b) => {
     const out: { id: string; name: string }[] = [];
@@ -127,7 +130,9 @@ function Composer({ onStarted }: { onStarted: (id: string) => void }) {
     }
     return out;
   });
-  const start = useBookMutation(async (_: void, b) => (await api.post<AgentRun>(`/books/${b}/agent/runs`, { instruction: text.trim(), tier, file_ids: files.map((f) => f.id) })).data);
+  const start = useBookMutation(
+    async (_: void, b) => (await api.post<AgentRun>(`/books/${b}/agent/runs`, { instruction: text.trim(), tier, file_ids: files.map((f) => f.id), playbook: chosen?.code ?? null })).data,
+  );
 
   return (
     <Card className="p-6 max-sm:p-5">
@@ -139,6 +144,7 @@ function Composer({ onStarted }: { onStarted: (id: string) => void }) {
             const run = await start.mutateAsync();
             setText("");
             setFiles([]);
+            setPlaybook(null);
             onStarted(run.id);
           } catch {
             /* inline */
@@ -148,6 +154,33 @@ function Composer({ onStarted }: { onStarted: (id: string) => void }) {
         <label htmlFor="agent-instruction" className="font-semibold">
           要做什么
         </label>
+        {scenarios.length > 0 && (
+          <div className="grid gap-2">
+            <div role="radiogroup" aria-label="场景（可选）" className="flex flex-wrap gap-2">
+              {scenarios.map((p) => (
+                <Chip
+                  key={p.code}
+                  role="radio"
+                  aria-checked={chosen?.code === p.code}
+                  on={chosen?.code === p.code}
+                  title={p.when}
+                  onClick={() => {
+                    const next = chosen?.code === p.code ? null : p.code;
+                    setPlaybook(next);
+                    if (next && !text.trim()) setText(`${p.title}：`);
+                  }}
+                >
+                  {p.title}
+                </Chip>
+              ))}
+            </div>
+            {chosen && (
+              <p className="text-sm text-ink-3">
+                按场景步骤做：{chosen.when} 完成标准：{chosen.done}
+              </p>
+            )}
+          </div>
+        )}
         <Textarea
           id="agent-instruction"
           rows={3}

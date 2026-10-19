@@ -29,9 +29,12 @@
 
 | 方法 | 路径 | 权限 | 说明 |
 |---|---|---|---|
-| GET | `…/ai/handbook` | admin:read | The 识别规则手册 in force (the built-in default until the book saves its own) and its earlier versions. |
+| GET | `…/ai/handbook` | ledger:read | The 识别规则手册 in force (the built-in default until the book saves its own) and its earlier versions. |
 | PUT | `…/ai/handbook` | rules:write | Save a new version; the next AI 识别 uses it. ``expected_version`` 0 replaces the built-in default. |
 | POST | `…/ai/handbook:restore` | rules:write | Bring an earlier version back as the newest one. |
+| GET | `…/ai/playbooks` | ledger:read | Scenario playbooks (the same as the MCP prompts) and, for each, the tiers an AI 助手 run could use it with. |
+| DELETE | `…/ai/playbooks/{code}` | rules:write | Back to the built-in version (a book's own scenario is removed). |
+| PUT | `…/ai/playbooks/{code}` | rules:write | Change a built-in scenario or add one; its scopes are worked out from its tools. |
 | GET | `…/ai/providers` | admin:read | Providers without keys (only the last 4 characters). |
 | POST | `…/ai/providers` | config:write，仅网页端 | Add a provider; the key is sealed with BK_MASTER_KEY. Web app only. |
 | DELETE | `…/ai/providers/{provider_id}` | config:write，仅网页端 | Remove a provider and drop it from task routing. Web app only. |
@@ -238,7 +241,7 @@
 | GET | `/api/v1/users` | — | List Users |
 | POST | `/api/v1/users` | — | Create User |
 
-共 133 个 REST 操作。
+共 136 个 REST 操作。
 
 ## MCP 工具
 

@@ -1281,3 +1281,15 @@ class AiHandbook(Base):
         UniqueConstraint("book_id", "version"),
         CheckConstraint("threshold BETWEEN 0.5 AND 1", name="threshold"),
     )
+
+
+class AiPlaybook(Base, Timestamps, Versioned):
+    """A book's change to a built-in scenario playbook, or its own playbook (services/playbooks.py)."""
+
+    __tablename__ = "ai_playbooks"
+    id: Mapped[str] = mapped_column(Text, primary_key=True)
+    book_id: Mapped[str] = mapped_column(ForeignKey("books.id"), nullable=False)
+    code: Mapped[str] = mapped_column(Text, nullable=False)
+    data: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
+    updated_by: Mapped[str | None] = mapped_column(ForeignKey("users.id"))
+    __table_args__ = (UniqueConstraint("book_id", "code"),)

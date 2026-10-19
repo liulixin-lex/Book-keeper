@@ -56,7 +56,7 @@ const GROUPS: { title: string; sections: Section[] }[] = [
     sections: [
       { key: "ai", label: "AI 接入", hint: "MCP 地址与 API 令牌", icon: Plug, render: () => <AiAccess /> },
       { key: "ai-models", label: "AI 模型", hint: "提供商、任务分配与用量", icon: Sparkle, render: () => <AiModels />, scope: "admin:read" },
-      { key: "ai-rules", label: "AI 规则", hint: "识别规则手册与把握程度门槛", icon: BookOpenText, render: () => <AiRules />, scope: "admin:read" },
+      { key: "ai-rules", label: "AI 规则", hint: "识别规则手册、把握门槛与场景", icon: BookOpenText, render: () => <AiRules />, scope: "admin:read" },
       { key: "activity", label: "操作记录", hint: "每次写入，可整次撤销", icon: ClockCounterClockwise, render: () => <Activity /> },
       { key: "data", label: "账户与数据", hint: "外观、导出、数据检查、密码", icon: UserCircle, render: () => <Account /> },
     ],

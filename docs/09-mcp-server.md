@@ -156,27 +156,43 @@ AI 提供商与密钥没有 MCP 写工具，管理员读写也改不了；`get_r
 
 ### 7.1 资源
 
-| URI | 内容 |
-|---|---|
-| `ledger://context` | 同 `get_context` |
-| `ledger://accounts` | 科目表 |
-| `ledger://transaction-types` | 交易类型、输入结构与示例 |
-| `ledger://fee-rules` | 手续费规则 |
-| `ledger://channels` | 渠道 |
-| `ledger://reports` | 报表目录 |
-| `ledger://work` | 待处理事项 |
-| `ledger://guides/{topic}` | 操作指南：`posting`、`edits`、`fees`、`review` |
+`resources/list` 只列出当前档位能读的资源。
+
+| URI | 内容 | 需要 |
+|---|---|---|
+| `ledger://context` | 同 `get_context`（含 `tool_groups`） | ledger:read |
+| `ledger://accounts` | 科目表 | ledger:read |
+| `ledger://transaction-types` | 交易类型、输入结构与示例 | ledger:read |
+| `ledger://fee-rules` | 手续费规则 | admin:read |
+| `ledger://channels` | 渠道 | ledger:read |
+| `ledger://reports` | 报表目录 | ledger:read |
+| `ledger://work` | 待处理事项 | ledger:read |
+| `ledger://handbook` | 识别规则手册（当前版本与门槛）：读截图与账单的通用规则 | ledger:read |
+| `ledger://playbooks` | 全部可用场景的步骤（与提示词同源，给不支持提示词的客户端） | ledger:read |
+| `ledger://rules` | 规则快照：分类规则、配对规则、手续费规则、忽略规则、渠道与别名 | admin:read |
+| `ledger://guides/{topic}` | 操作指南：`posting`、`edits`、`fees`、`review` | — |
 
 资源模板：`ledger://transactions/{ref}`、`ledger://accounts/{code}`。
 
-### 7.2 提示词
+### 7.2 提示词 = 场景（与站内 AI 助手同源）
 
-| 名称 | 参数 | 流程 |
-|---|---|---|
-| `record_transactions` | `description`（业务描述或证据要点） | `get_context` → 判断类型 → 确认往来方 → 不确定的先问 → 记账 → 列出每笔编号、金额与手续费 |
-| `monthly_review` | `month` | `list_pending_work` 逐项处理 → 概览、经营日报、销售与采购分析（与上月对比）→ `run_checks` |
-| `fix_fee_rule` | 规则、新费率、生效日 | `manage_fee_rule` 保存新版本 → `repost_transactions(dry_run)` 列出影响 → 确认后执行 |
-| `investigate_difference` | 科目或报表项目、期望值 | `run_report` / `query_ledger` 定位 → `search_transactions` 列明细 → 给出修改建议（不直接修改） |
+提示词由账套的场景数据生成（内置 `ai/playbooks.json`，账套可在 设置 → AI 规则 → 场景 修改或新增；19 号 §5）。每个场景写明适用条件、步骤、工具顺序、需要的作用域（按工具自动算出）与完成标准；`prompts/list` 只列出当前档位能完整执行的场景，`prompts/get` 把参数填进步骤。
+
+| 名称 | 场景 | 参数 | 档位 |
+|---|---|---|---|
+| `import_screenshots` | 导入截图并入账 | `files?` | 用户读写起 |
+| `monthly_review` | 月度经营分析 | `month` | 用户只读起 |
+| `check_site_topups` | 核对某站点充值 | `site`、`period?` | 用户只读起 |
+| `fix_and_save_rule` | 修正分类并存为规则 | `batch?` | 管理员读写 |
+| `add_upstream_site` | 新增上游站点与手续费规则 | `site`、`channel?`、`rate?` | 管理员读写 |
+| `undo_ai_run` | 撤销某次 AI 操作 | `hint?` | 管理员读写 |
+| `record_transactions` | 用自然语言记账 | `description` | 用户读写起 |
+| `fix_fee_rule` | 修正手续费规则 | `rule`、`rate`、`valid_from` | 管理员读写 |
+| `investigate_difference` | 查找差异 | `target`、`expected` | 用户只读起 |
+
+### 7.3 工具分组、示例与下一步
+
+每个工具属于一个组（开始、查询与报表、记账、导入、规则与基础资料、文件、管理），写在 `tools/list` 的 `_meta["bookkeeper/group"]`；`get_context` 的 `tool_groups` 按组列出当前档位能用的工具与用途，客户端可只看相关的一组（渐进披露）。每个工具的说明末尾附一个可直接使用的调用示例与“下一步”（`mcp_api/hints.py`；测试逐个用工具的 schema 校验示例）。站内 AI 助手拿到的是同样的说明。
 
 ## 8. 安全控制
 

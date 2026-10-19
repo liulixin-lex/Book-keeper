@@ -107,6 +107,13 @@ class NoArgs(Args):
     pass
 
 
+def _groups(ctx: RequestContext) -> list[dict[str, Any]]:
+    from bookkeeper.mcp_api import hints
+    from bookkeeper.mcp_api.server import permitted
+
+    return hints.tool_groups({t.name for t in TOOLS.values() if permitted(t, ctx.actor.scopes)})
+
+
 def _get_context(session: Session, ctx: RequestContext, args: NoArgs) -> Output:
     book = _book(session, ctx)
     today = datetime.now(ZoneInfo(book.timezone)).date()
@@ -123,6 +130,7 @@ def _get_context(session: Session, ctx: RequestContext, args: NoArgs) -> Output:
         "today": today.isoformat(),
         "caller": {"scopes": sorted(s.value for s in ctx.actor.scopes), "token_id": ctx.actor.token_id},
         "pending_work": {k: v["count"] for k, v in pending["summary"].items()},
+        "tool_groups": _groups(ctx),
         "conventions": {
             "amount": '写入金额用字符串小数 {"amount": "51.50", "commodity": "CNY"}，读取以 minor（最小单位整数）为准',
             "references": "科目可用编码 / 名称 / ID，渠道用代码，往来方用名称 / ID，交易用编号 T2026-000123 / ID",
@@ -666,7 +674,7 @@ class AuditArgs(Args):
     view: Literal["events", "change_sets"] = "events"
     entity_id: str | None = None
     change_set_id: str | None = None
-    channel: Literal["ui", "api", "mcp", "import", "worker", "cli", "migration", "system"] | None = None
+    channel: Literal["ui", "api", "mcp", "agent", "import", "worker", "cli", "migration", "system"] | None = None
     since: datetime | None = None
     limit: int = Field(default=30, ge=1, le=200)
 

@@ -156,7 +156,10 @@ ROUTES: dict[tuple[str, str], Need] = {
     ("DELETE", "/ai/providers/{provider_id}"): AI_CONFIG,
     ("POST", "/ai/providers/{provider_id}:test"): AI_CONFIG,
     ("PUT", "/ai/routes"): AI_CONFIG,
-    ("GET", "/ai/handbook"): ADMIN_READ,
+    ("GET", "/ai/handbook"): READ,  # generic reading rules, no secrets: useful to any client that reads bills
+    ("GET", "/ai/playbooks"): READ,
+    ("PUT", "/ai/playbooks/{code}"): RULES,
+    ("DELETE", "/ai/playbooks/{code}"): RULES,
     ("PUT", "/ai/handbook"): RULES,
     ("POST", "/ai/handbook:restore"): RULES,
     # AI assistant: anyone in the book may ask (it works within their own permissions), from the web app only

@@ -10,9 +10,9 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field
 
 from bookkeeper.api.deps import AuthDep, DbDep, SettingsDep, run_read, run_write
-from bookkeeper.domain.scopes import Scope
+from bookkeeper.domain.scopes import ROLE_CAPS, TIER_SCOPES, Scope, Tier
 from bookkeeper.services import ai_providers as service
-from bookkeeper.services import handbook
+from bookkeeper.services import handbook, playbooks
 
 router = APIRouter(prefix="/books/{book_id}/ai", tags=["ai"])
 
@@ -276,4 +276,73 @@ def restore_handbook(
         "ai.handbook.restore",
         body.model_dump(),
         lambda: handbook.view(handbook.restore(db, auth.ctx, body.version, body.expected_version)),
+    )
+
+
+# ------------------------------------------------------------------ 场景 (playbooks)
+
+
+class PlaybookArg(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    name: str = Field(min_length=1, max_length=32)
+    description: str = Field(default="", max_length=120)
+    required: bool = False
+
+
+class PlaybookIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    title: str = Field(min_length=1, max_length=40)
+    when: str = Field(min_length=1, max_length=300)
+    steps: list[str] = Field(min_length=1, max_length=12)
+    tools: list[str] = Field(min_length=1, max_length=20)
+    done: str = Field(min_length=1, max_length=300)
+    arguments: list[PlaybookArg] = Field(default_factory=list, max_length=6)
+    expected_version: int = Field(ge=0)
+
+
+@router.get("/playbooks")
+def list_playbooks(book_id: str, auth: AuthDep, db: DbDep) -> dict[str, Any]:
+    """Scenario playbooks (the same as the MCP prompts) and, for each, the tiers an AI 助手 run could use it with."""
+
+    def load() -> list[dict[str, Any]]:
+        role = auth.ctx.actor.role
+        out = []
+        for item in playbooks.all_for(db, book_id):
+            tiers = [t.value for t in Tier if role and playbooks.usable(item, ROLE_CAPS[role] & TIER_SCOPES[t])]
+            out.append(item | {"tiers": tiers})
+        return out
+
+    return run_read(db, load, auth.ctx)
+
+
+@router.put("/playbooks/{code}")
+def save_playbook(
+    book_id: str, code: str, body: PlaybookIn, request: Request, auth: AuthDep, db: DbDep, settings: SettingsDep
+) -> JSONResponse:
+    """Change a built-in scenario or add one; its scopes are worked out from its tools."""
+    data = body.model_dump(exclude={"expected_version"})
+    return run_write(
+        request,
+        db,
+        auth.ctx,
+        settings,
+        "ai.playbooks.save",
+        data | {"code": code, "expected_version": body.expected_version},
+        lambda: playbooks.save(db, auth.ctx, code, data, body.expected_version),
+    )
+
+
+@router.delete("/playbooks/{code}")
+def reset_playbook(
+    book_id: str, code: str, request: Request, auth: AuthDep, db: DbDep, settings: SettingsDep
+) -> JSONResponse:
+    """Back to the built-in version (a book's own scenario is removed)."""
+    return run_write(
+        request,
+        db,
+        auth.ctx,
+        settings,
+        "ai.playbooks.reset",
+        {"code": code},
+        lambda: {"code": code, "playbook": playbooks.reset(db, auth.ctx, code)},
     )

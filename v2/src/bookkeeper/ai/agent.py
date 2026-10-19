@@ -15,6 +15,7 @@ Guardrails, in the order they apply:
 
 from __future__ import annotations
 
+import contextlib
 import json
 import logging
 import re
@@ -35,9 +36,10 @@ from bookkeeper.domain.ids import new_id
 from bookkeeper.domain.scopes import ROLE_CAPS, TIER_SCOPES, TIER_TEXT, Role, Scope, Tier
 from bookkeeper.files.storage import ContentStore
 from bookkeeper.jobs import queue
+from bookkeeper.mcp_api import hints
 from bookkeeper.mcp_api.server import Caller, Executor, permitted
 from bookkeeper.mcp_api.tools import TOOLS, Tool
-from bookkeeper.services import ai_providers, files, identity
+from bookkeeper.services import ai_providers, files, identity, playbooks
 from bookkeeper.services.context import Actor, RequestContext
 
 log = logging.getLogger("bookkeeper.agent")
@@ -81,7 +83,7 @@ def offered(scopes: frozenset[Scope], stage: str) -> list[Tool]:
 def tool_spec(t: Tool) -> ToolSpec:
     schema = t.model.model_json_schema()
     schema.get("properties", {}).pop("idempotency_key", None)  # the runtime sets it
-    return ToolSpec(t.name, t.description, schema)
+    return ToolSpec(t.name, hints.describe(t.name, t.description), schema)
 
 
 # ------------------------------------------------------------------ starting, answering, stopping
@@ -114,6 +116,14 @@ def start(
         ).scalar_one()
         if count >= settings.agent_daily_runs:
             raise DomainError("RATE_LIMITED", f"今天已运行 {count} 次 AI 助手，达到每日上限，明天再试。")
+    if playbook:  # the scenario must fit what this run may do
+        item = playbooks.get(session, book_id, playbook)
+        allowed = run_scopes(ctx.actor.role, tier, "recognition" if attached else "general")
+        if not playbooks.usable(item, allowed):
+            raise DomainError(
+                "FORBIDDEN_SCOPE",
+                f"场景「{item['title']}」需要 {'、'.join(item['scopes'])}，所选档位做不了；换个档位或不选场景。",
+            )
     if not ai_providers.targets(session, book_id, "agent", settings):
         raise DomainError(
             "AI_UNAVAILABLE", "AI 助手还没配置：管理员在 设置 → AI 模型 给“AI 助手”分配模型（或设置 BK_AI_API_KEY）。"
@@ -473,6 +483,9 @@ def _request(
         tier=TIER_TEXT[Tier(run.tier)][0],
         stage=RECOGNITION_NOTE if run.stage == "recognition" else "",
     )
+    if run.playbook:  # the scenario's steps, from the same data as the MCP prompts (removed since: go without)
+        with contextlib.suppress(DomainError):
+            system += "\n\n" + playbooks.render(playbooks.get(session, run.book_id, run.playbook))
     specs = [tool_spec(t) for t in tools] + [ASK_USER]
     return Request(system, _messages(session, steps, settings), tools=specs, max_tokens=8000)
 

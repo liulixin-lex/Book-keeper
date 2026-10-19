@@ -1399,6 +1399,7 @@
         "ui",
         "api",
         "mcp",
+        "agent",
         "import",
         "worker",
         "cli",

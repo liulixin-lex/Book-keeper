@@ -2122,6 +2122,97 @@
     "title": "PasswordIn",
     "type": "object"
    },
+   "PlaybookArg": {
+    "additionalProperties": false,
+    "properties": {
+     "description": {
+      "default": "",
+      "maxLength": 120,
+      "title": "Description",
+      "type": "string"
+     },
+     "name": {
+      "maxLength": 32,
+      "minLength": 1,
+      "title": "Name",
+      "type": "string"
+     },
+     "required": {
+      "default": false,
+      "title": "Required",
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "name"
+    ],
+    "title": "PlaybookArg",
+    "type": "object"
+   },
+   "PlaybookIn": {
+    "additionalProperties": false,
+    "properties": {
+     "arguments": {
+      "items": {
+       "$ref": "#/components/schemas/PlaybookArg"
+      },
+      "maxItems": 6,
+      "title": "Arguments",
+      "type": "array"
+     },
+     "done": {
+      "maxLength": 300,
+      "minLength": 1,
+      "title": "Done",
+      "type": "string"
+     },
+     "expected_version": {
+      "minimum": 0.0,
+      "title": "Expected Version",
+      "type": "integer"
+     },
+     "steps": {
+      "items": {
+       "type": "string"
+      },
+      "maxItems": 12,
+      "minItems": 1,
+      "title": "Steps",
+      "type": "array"
+     },
+     "title": {
+      "maxLength": 40,
+      "minLength": 1,
+      "title": "Title",
+      "type": "string"
+     },
+     "tools": {
+      "items": {
+       "type": "string"
+      },
+      "maxItems": 20,
+      "minItems": 1,
+      "title": "Tools",
+      "type": "array"
+     },
+     "when": {
+      "maxLength": 300,
+      "minLength": 1,
+      "title": "When",
+      "type": "string"
+     }
+    },
+    "required": [
+     "title",
+     "when",
+     "steps",
+     "tools",
+     "done",
+     "expected_version"
+    ],
+    "title": "PlaybookIn",
+    "type": "object"
+   },
    "Price": {
     "additionalProperties": false,
     "properties": {
@@ -4622,6 +4713,159 @@
      }
     },
     "summary": "Restore Handbook",
+    "tags": [
+     "ai"
+    ]
+   }
+  },
+  "/api/v1/books/{book_id}/ai/playbooks": {
+   "get": {
+    "description": "Scenario playbooks (the same as the MCP prompts) and, for each, the tiers an AI 助手 run could use it with.",
+    "operationId": "list_playbooks_api_v1_books__book_id__ai_playbooks_get",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "book_id",
+      "required": true,
+      "schema": {
+       "title": "Book Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "title": "Response List Playbooks Api V1 Books  Book Id  Ai Playbooks Get",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "List Playbooks",
+    "tags": [
+     "ai"
+    ]
+   }
+  },
+  "/api/v1/books/{book_id}/ai/playbooks/{code}": {
+   "delete": {
+    "description": "Back to the built-in version (a book's own scenario is removed).",
+    "operationId": "reset_playbook_api_v1_books__book_id__ai_playbooks__code__delete",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "book_id",
+      "required": true,
+      "schema": {
+       "title": "Book Id",
+       "type": "string"
+      }
+     },
+     {
+      "in": "path",
+      "name": "code",
+      "required": true,
+      "schema": {
+       "title": "Code",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Reset Playbook",
+    "tags": [
+     "ai"
+    ]
+   },
+   "put": {
+    "description": "Change a built-in scenario or add one; its scopes are worked out from its tools.",
+    "operationId": "save_playbook_api_v1_books__book_id__ai_playbooks__code__put",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "book_id",
+      "required": true,
+      "schema": {
+       "title": "Book Id",
+       "type": "string"
+      }
+     },
+     {
+      "in": "path",
+      "name": "code",
+      "required": true,
+      "schema": {
+       "title": "Code",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/PlaybookIn"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Save Playbook",
     "tags": [
      "ai"
     ]

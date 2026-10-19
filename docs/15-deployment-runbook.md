@@ -80,9 +80,11 @@ docker compose run --rm -v /opt/bookkeeper/v1-final.db:/import/v1.db:ro \
 - **流水线与评估**：页面类型、按类型抽取、确定性检查、规范化、规则后 AI 建议、低把握待确认，见 19 号 §4；换模型前可用 `docker compose exec api bookkeeper ai-eval --gold <目录> --book <账套ID>` 在自己的金标准上比较（金标准放服务器本地，不进代码库）。
 - **成本**：截图按原分辨率识别，只有长边超过 2576 px 才缩到 2576 px（缩小会让数字变糊；整批截图原分辨率约 1 美元，读错金额的代价更大）；同一来源同一组文件重传直接返回已有批次，不会再调用 AI；`BK_AI_DAILY_FILES` 可限制每天的文件数。
 
-## 3.2 数据库迁移 0012–0016
+## 3.2 数据库迁移 0012–0017
 
 `0012_import_kinds`：导入来源类型增加 `redeem_page`、`ai_extract`，批次状态增加 `extracting`、`failed`（只改 CHECK 约束，不动数据）。随 `docker compose run --rm migrate` 执行，可回退（回退前须先撤销或删除用到这些值的来源与批次）。
+
+`0017_ai_playbooks`：账套改过或新增的场景（内置场景随代码发布），不动已有数据，可回退。
 
 `0016_ai_handbook`：识别规则手册的版本表 `ai_handbooks`，不动已有数据，可回退。账套第一次保存前用内置手册。
 

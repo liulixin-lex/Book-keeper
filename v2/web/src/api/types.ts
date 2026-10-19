@@ -604,3 +604,19 @@ export interface AiHandbook {
   default: string;
   versions: { version: number; note: string | null; threshold: number; created_at: string }[];
 }
+
+export interface Playbook {
+  code: string;
+  title: string;
+  when: string;
+  arguments: { name: string; description: string; required: boolean }[];
+  steps: string[];
+  tools: string[];
+  scopes: string[];
+  done: string;
+  built_in: boolean;
+  changed: boolean;
+  version: number;
+  /** Tiers an AI 助手 run could use it with, given your role. */
+  tiers: TokenTier[];
+}

@@ -27,7 +27,7 @@ from bookkeeper.db.models import McpCall
 from bookkeeper.domain import scopes as perms
 from bookkeeper.domain.errors import DomainError, FieldError
 from bookkeeper.domain.ids import new_id
-from bookkeeper.mcp_api import content
+from bookkeeper.mcp_api import content, hints
 from bookkeeper.mcp_api.tools import TOOLS, Output, Tool
 from bookkeeper.services import idempotency, identity, operations, ratelimit
 from bookkeeper.services.context import Actor, Channel, RequestContext
@@ -164,8 +164,9 @@ def tool_schema(tool: Tool) -> types.Tool:
     return types.Tool(
         name=tool.name,
         title=tool.title,
-        description=tool.description,
+        description=hints.describe(tool.name, tool.description),
         input_schema=schema,
+        meta={"bookkeeper/group": hints.GROUP_OF.get(tool.name, "其他")},
         annotations=types.ToolAnnotations(
             title=tool.title,
             read_only_hint=read,
@@ -461,8 +462,8 @@ def build(
         )
 
     async def list_resources(ctx: Any, params: Any) -> types.ListResourcesResult:
-        auth_of(ctx)
-        return types.ListResourcesResult(resources=content.resources())
+        auth = auth_of(ctx)
+        return types.ListResourcesResult(resources=content.resources(auth.actor.scopes))
 
     async def list_templates(ctx: Any, params: Any) -> types.ListResourceTemplatesResult:
         auth_of(ctx)
@@ -475,12 +476,14 @@ def build(
         return types.ReadResourceResult(contents=[types.TextResourceContents(uri=uri, mime_type=mime, text=text)])
 
     async def list_prompts(ctx: Any, params: Any) -> types.ListPromptsResult:
-        auth_of(ctx)
-        return types.ListPromptsResult(prompts=content.prompts())
+        auth = auth_of(ctx)
+        found = await anyio.to_thread.run_sync(content.prompts, executor, auth)
+        return types.ListPromptsResult(prompts=found)
 
     async def get_prompt(ctx: Any, params: types.GetPromptRequestParams) -> types.GetPromptResult:
-        auth_of(ctx)
-        return content.get_prompt(params.name, dict(params.arguments or {}))
+        auth = auth_of(ctx)
+        arguments = dict(params.arguments or {})
+        return await anyio.to_thread.run_sync(content.get_prompt, executor, auth, params.name, arguments)
 
     server: Server[Any] = Server(
         "bookkeeper",
