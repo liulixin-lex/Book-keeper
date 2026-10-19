@@ -6,7 +6,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router";
 import { clsx } from "clsx";
-import { ArrowCounterClockwise, CheckCircle, ChatCircleDots, Paperclip, ShieldWarning, Sparkle, Stop, X, XCircle } from "@phosphor-icons/react";
+import { ArrowCounterClockwise, CaretDown, CheckCircle, ChatCircleDots, Paperclip, ShieldWarning, Sparkle, Stop, X, XCircle } from "@phosphor-icons/react";
 import { api, ApiError } from "@/api/client";
 import { useBookMutation, useBookQuery, useLabel, useUndo } from "@/api/queries";
 import type { AgentRun, AgentRunDetail, AgentStatus, AgentStep, Playbook, TokenTier } from "@/api/types";
@@ -24,6 +24,7 @@ const STATUS: Record<AgentStatus, { label: string; tone: "neutral" | "pos" | "ne
   cancelled: { label: "已停止", tone: "neutral" },
 };
 const TIERS: TokenTier[] = ["user_read", "user_write", "admin_read", "admin_write"];
+const FOLD = 6; // a finished run with more steps than this shows them folded
 
 function errorText(e: unknown, fallback: string): string {
   return e instanceof ApiError ? e.detail : fallback;
@@ -251,6 +252,16 @@ function RunView({ runId }: { runId: string }) {
   const cancel = useBookMutation(async (_: void, b) => api.post(`/books/${b}/agent/runs/${runId}:cancel`, {}));
   const [reply, setReply] = useState("");
   const answer = useBookMutation(async (_: void, b) => api.post(`/books/${b}/agent/runs/${runId}:answer`, { answer: reply.trim() }));
+  const [showAll, setShowAll] = useState(false);
+  // The card is as tall as the screen at most; its middle scrolls. While the run works it follows the newest step,
+  // unless you scrolled up to read.
+  const body = useRef<HTMLDivElement>(null);
+  const following = useRef(true);
+  const live = !!run.data && ACTIVE.includes(run.data.data.status);
+  useEffect(() => {
+    const el = body.current;
+    if (el && live && following.current) el.scrollTop = el.scrollHeight;
+  }, [run.dataUpdatedAt, live]);
 
   if (run.error) return <ErrorNote error={run.error} onRetry={() => run.refetch()} />;
   if (!run.data) return <Skeleton className="h-72 w-full rounded-[20px]" />;
@@ -259,10 +270,11 @@ function RunView({ runId }: { runId: string }) {
   // The instruction is the header and the final answer has its own card: the timeline shows what happened between.
   const steps = r.steps.filter((s) => s.kind !== "instruction" && !(s.kind === "assistant" && (!s.text || (!s.calls && s.text === r.result))));
   const working = active && r.status !== "waiting";
+  const folded = !active && steps.length > FOLD && !showAll;
 
   return (
-    <Card className="p-6 max-sm:p-5">
-      <header className="grid gap-2">
+    <Card className="flex max-h-[calc(100dvh-8rem)] flex-col lg:sticky lg:top-5 lg:max-h-[calc(100dvh-6.5rem)]">
+      <header className="grid gap-2 px-6 pt-6 pb-4 max-sm:px-5 max-sm:pt-5">
         <p className="text-lg font-semibold whitespace-pre-wrap">{r.instruction}</p>
         <div className="flex flex-wrap items-center gap-2">
           <Badge tone={STATUS[r.status].tone}>{STATUS[r.status].label}</Badge>
@@ -272,52 +284,69 @@ function RunView({ runId }: { runId: string }) {
         </div>
       </header>
 
-      <ol className={clsx("grid gap-3", (steps.length > 0 || working) && "mt-5")} aria-live="polite" aria-label="步骤">
-        {steps.map((s) => (
-          <StepRow key={s.seq} step={s} />
-        ))}
-        {working && (
-          <li className="flex items-center gap-2.5 text-sm text-ink-3">
-            <span aria-hidden className="size-2 animate-pulse rounded-full bg-ink-3" />
-            {r.status === "queued" ? "排队中…" : "正在处理…"}
-          </li>
+      <div
+        ref={body}
+        tabIndex={0}
+        aria-label="运行过程"
+        onScroll={(e) => {
+          const el = e.currentTarget;
+          following.current = el.scrollHeight - el.scrollTop - el.clientHeight < 40;
+        }}
+        className="min-h-0 flex-1 overflow-y-auto overscroll-contain border-y border-line px-6 py-5 outline-none focus-visible:ring-2 focus-visible:ring-ink/20 max-sm:px-5"
+      >
+        {!active && steps.length > FOLD && (
+          <button type="button" aria-expanded={showAll} onClick={() => setShowAll(!showAll)} className="mb-3 flex items-center gap-1.5 rounded-full text-sm font-medium text-ink-2 hover:text-ink">
+            <CaretDown size={14} className={clsx("transition-transform duration-150", showAll && "rotate-180")} />
+            {showAll ? "收起步骤" : `${steps.length} 个步骤`}
+          </button>
         )}
-      </ol>
+        <ol className={clsx("grid gap-3", folded && "hidden")} aria-live="polite" aria-label="步骤">
+          {steps.map((s) => (
+            <StepRow key={s.seq} step={s} />
+          ))}
+          {working && (
+            <li className="flex items-center gap-2.5 text-sm text-ink-3">
+              <span aria-hidden className="size-2 animate-pulse rounded-full bg-ink-3" />
+              {r.status === "queued" ? "排队中…" : "正在处理…"}
+            </li>
+          )}
+        </ol>
 
-      {r.status === "waiting" && r.question && (
-        <form
-          className="mt-5 grid gap-3 rounded-field bg-warn-wash p-4"
-          onSubmit={async (e) => {
-            e.preventDefault();
-            try {
-              await answer.mutateAsync();
-              setReply("");
-              run.refetch();
-            } catch (err) {
-              toast({ tone: "error", text: errorText(err, "没能发送：请稍后重试。") });
-            }
-          }}
-        >
-          <label htmlFor="agent-reply" className="font-medium text-warn-text">
-            {r.question}
-          </label>
-          <div className="flex gap-2">
-            <Input id="agent-reply" value={reply} onChange={(e) => setReply(e.target.value)} className="flex-1" autoFocus />
-            <Button type="submit" variant="primary" disabled={!reply.trim()} loading={answer.isPending}>
-              回答
-            </Button>
+        {r.status === "waiting" && r.question && (
+          <form
+            className="mt-5 grid gap-3 rounded-field bg-warn-wash p-4 first:mt-0"
+            onSubmit={async (e) => {
+              e.preventDefault();
+              try {
+                await answer.mutateAsync();
+                setReply("");
+                run.refetch();
+              } catch (err) {
+                toast({ tone: "error", text: errorText(err, "没能发送：请稍后重试。") });
+              }
+            }}
+          >
+            <label htmlFor="agent-reply" className="font-medium text-warn-text">
+              {r.question}
+            </label>
+            <div className="flex gap-2">
+              <Input id="agent-reply" value={reply} onChange={(e) => setReply(e.target.value)} className="flex-1" autoFocus />
+              <Button type="submit" variant="primary" disabled={!reply.trim()} loading={answer.isPending}>
+                回答
+              </Button>
+            </div>
+          </form>
+        )}
+
+        {r.result && (
+          <div className={clsx("rounded-field bg-pos-wash px-4 py-3", !folded && "mt-5")}>
+            <p className="whitespace-pre-wrap">{r.result}</p>
           </div>
-        </form>
-      )}
+        )}
+        {r.error && <p className={clsx("rounded-field bg-well px-4 py-3 text-sm text-ink-2", !folded && "mt-5")}>{r.error}</p>}
+      </div>
 
-      {r.result && (
-        <div className="mt-5 rounded-field bg-pos-wash px-4 py-3">
-          <p className="whitespace-pre-wrap">{r.result}</p>
-        </div>
-      )}
-      {r.error && <p className="mt-5 rounded-field bg-well px-4 py-3 text-sm text-ink-2">{r.error}</p>}
-
-      <footer className="mt-5 flex flex-wrap items-center justify-between gap-3">
+      <footer className="flex flex-wrap items-center justify-between gap-3 px-6 pt-4 pb-6 max-sm:px-5 max-sm:pb-5">
         <span className="num text-sm text-ink-3">
           {r.turns} 轮 · {(r.input_tokens + r.output_tokens).toLocaleString()} token{r.cost_usd !== null && ` · ≈ $${r.cost_usd.toFixed(2)}`}
           {r.model && ` · ${r.model}`}
