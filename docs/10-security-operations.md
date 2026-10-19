@@ -28,6 +28,8 @@
 |---|---|
 | 兑换码、卡密、完整账号标识 | 解析时即只保留 SHA-256 与末 4 位 |
 | Webhook 密钥、TOTP 密钥 | 应用层加密（AES-GCM，主密钥 `BK_SECRET_KEY` 随该功能引入），不出现在 API 响应与日志中 |
+| AI 提供商密钥 | AES-256-GCM 加密存储，密钥由 `BK_MASTER_KEY`（≥ 32 字符，与数据库备份分开保存）经 HKDF 派生，密文绑定提供商与 Base URL；接口只返回末 4 位；审计只记“已设置 / 已更换”；改 Base URL 必须重填；只能在网页端修改（19 号 §1） |
+| AI 助手 | 权限 = 发起人 ∩ 所选档位；读过上传文件后只读取与暂存、没有 ledger:write；文件与工具结果作为不可信数据交给模型；一次运行一个变更集可整次撤销；有轮数、token、预算与每日上限（19 号 §3） |
 | 审计前后值 | 敏感字段写入前脱敏 |
 | 日志 | 不记录请求体中的金额以外的敏感字段、令牌、Cookie；MCP 参数记录脱敏版本与哈希 |
 | 备份 | 备份文件权限 600；异地副本可选用 age 加密 |
@@ -139,6 +141,7 @@ volumes: { pgdata: {}, data: {} }
 | `verify-audit [--scope]` | 校验审计哈希链 |
 | `export --book --format csv\|xlsx\|beancount\|json [--from --to] --output` | 导出账本 |
 | `legacy-migrate --source [--files-dir] [--apply]` | v1 数据迁移（见 11 号文档） |
+| `ai-eval --gold [--book --target --replay --record --json]` | 在金标准样本上逐字段评估 AI 识别（19 号 §4.4；金标准不进代码库） |
 | `healthcheck` | 容器健康检查 |
 
 备份与恢复演练为宿主机脚本：`deploy/scripts/backup.sh`、`deploy/scripts/restore-check.sh`（§3）。领域错误以 `代码: 说明` 输出到 stderr，退出码 2。
