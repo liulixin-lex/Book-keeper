@@ -6,7 +6,7 @@
 |---|---|
 | 传输 | `POST /mcp`（Streamable HTTP，官方 Python SDK 低层 Server，无状态 + JSON 响应）；同时支持握手协议（2024-11-05 … 2025-11-25）与无状态协议 2026-07-28；`GET /mcp` 返回 405 |
 | 认证 | `Authorization: Bearer bk_pat_…`，令牌须 `mcp_enabled = true`；令牌决定账套与权限；缺失 / 无效返回 401（带 `WWW-Authenticate`） |
-| OAuth 2.1（`BK_OAUTH_ENABLED`） | 供 claude.ai、Claude 桌面 / 手机、ChatGPT 等只能用 OAuth 的远程连接器：401 的 `WWW-Authenticate` 带 `resource_metadata` → `/.well-known/oauth-protected-resource/mcp`（RFC 9728）→ `/.well-known/oauth-authorization-server`（RFC 8414）→ 动态注册 `/oauth/register`（RFC 7591，回调须 https 或本机回环，每 IP 每小时 20 次）→ `/oauth/authorize`（PKCE S256 必须）→ 登录与授权页 `/oauth/login`（选择账套与访问级别：只读 / 记账 / 管理，不超过用户角色）→ 回调带 `code`、`state`、`iss`（RFC 9207）→ `/oauth/token` 换取普通 API 令牌（`mcp_enabled`，30 天）与刷新令牌（180 天，每次使用轮换，旧刷新令牌重放则整条授权链吊销）→ `/oauth/revoke`（RFC 7009）。客户端密钥、授权码、刷新令牌均只存哈希 |
+| OAuth 2.1（`BK_OAUTH_ENABLED`） | 供 claude.ai、Claude 桌面 / 手机、ChatGPT 等只能用 OAuth 的远程连接器：401 的 `WWW-Authenticate` 带 `resource_metadata` → `/.well-known/oauth-protected-resource/mcp`（RFC 9728）→ `/.well-known/oauth-authorization-server`（RFC 8414）→ 动态注册 `/oauth/register`（RFC 7591，回调须 https 或本机回环，每 IP 每小时 20 次）→ `/oauth/authorize`（PKCE S256 必须）→ 登录与授权页 `/oauth/login`（选择账套与权限档位：用户只读 / 用户读写 / 管理员只读 / 管理员读写，不超过用户角色可创建的档位（默认用户读写））→ 回调带 `code`、`state`、`iss`（RFC 9207）→ `/oauth/token` 换取普通 API 令牌（`mcp_enabled`，30 天）与刷新令牌（180 天，每次使用轮换，旧刷新令牌重放则整条授权链吊销）→ `/oauth/revoke`（RFC 7009）。客户端密钥、授权码、刷新令牌均只存哈希 |
 | 工具可见性 | 令牌 scope 覆盖工具所需 scope 才列出；`BK_MCP_WRITE_ENABLED=false` 时只列只读工具 |
 | 工具（35 个） | 只读 17：`get_context`、`search_accounts`、`search_counterparties`、`get_reference`、`search_transactions`、`get_transaction`、`get_balances`、`run_report`、`query_ledger`、`explain_posting`、`evaluate_fee`、`run_checks`、`get_audit_trail`、`list_pending_work`、`export_ledger`、`search_source_records`、`get_import_batch`；交易 6：`create_transaction`、`create_transactions`、`update_transaction`、`delete_transaction`、`restore_transaction`、`repost_transactions`；导入与规则 9：`manage_import_source`、`import_records`、`classify_records`、`resolve_match`、`commit_import`、`revert_import`、`apply_rules`、`manage_rule`、`manage_pairing_rule`；配置 2：`upsert_reference`、`manage_fee_rule`；撤销 1：`undo_change_set`。完整参数见 16 号文档 |
 | 写入选项 | 所有写工具支持 `dry_run`（执行后回滚，返回与真实写入相同的结果）与 `idempotency_key`（同键同参返回首次结果并标记 `idempotent_replayed`，同键异参 `IDEMPOTENCY_MISMATCH`） |
@@ -29,7 +29,7 @@
 | 原则 | 落实 |
 |---|---|
 | 与 REST 同源 | 工具只调用应用层服务，校验、审计、错误码与 REST 完全一致 |
-| 默认只读 | 令牌默认 `reader` 预设；全局 `BK_MCP_WRITE_ENABLED=false` 时不列出任何写工具 |
+| 默认只读 | 令牌默认用户只读档位；全局 `BK_MCP_WRITE_ENABLED=false` 时不列出任何写工具 |
 | 最小权限 | 有效权限 = 令牌 scope ∩ 用户角色；未授权的工具**不出现在工具列表中**，调用时再次校验 |
 | 领域任务工具 | 按记账任务设计（记账、修改、删除与恢复、导入、分类、匹配、规则、统计），不做 REST 1:1 映射，不提供“执行任意操作”类工具 |
 | 先试算再写入 | 所有写工具支持 `dry_run`；写入立即生效，可撤回 |
@@ -137,13 +137,18 @@ claude mcp add --transport http bookkeeper https://bill.example.com/mcp \
 
 每个写工具在代码中声明对应的 REST `operationId`（如 `create_transaction → transactions_create`），供漂移测试使用；读工具可组合多个服务调用，不要求一一对应。
 
-## 6. 预设（令牌决定可见工具）
+## 6. 档位（令牌决定可见工具）
 
-| 预设 | scope | 可见工具 |
-|---|---|---|
-| `reader` | ledger:read | 只读 17 个 |
-| `bookkeeper` | ledger:read、ledger:write、import:write、reference:write | 只读 + 交易 6 个 + 导入（不含 `manage_rule`、`manage_pairing_rule`）+ `upsert_reference` + `undo_change_set` |
-| `admin` | 角色允许的全部 | 全部 35 个 |
+`tools/list` 只列出当前令牌档位能用的工具（规范允许按授权变化，顺序固定）；调用不可用的工具一律返回 `FORBIDDEN_SCOPE`，结果里 `status: 403`，并附 `available` 列表。档位定义见 08 号 §3.3。
+
+| 档位 | 可见工具 |
+|---|---|
+| 用户只读 `user_read` | 只读 16 个（不含 `get_audit_trail`、`get_admin_info`） |
+| 用户读写 `user_write` | 只读 16 个 + 交易 6 个 + 导入（不含 `manage_rule`、`manage_pairing_rule`）+ `upsert_reference` + `undo_change_set` |
+| 管理员只读 `admin_read` | 只读 16 个 + `get_audit_trail` + `get_admin_info`（成员、令牌、规则、配对规则、手续费规则、AI 提供商与任务分配、账套设置；不含任何密钥），没有写工具 |
+| 管理员读写 `admin_write` | 全部 36 个 |
+
+AI 提供商与密钥没有 MCP 写工具，管理员读写也改不了；`get_reference kind=fee_rules` 需要管理员只读，算某笔手续费用 `evaluate_fee`（任何档位）。
 
 ## 7. 资源与提示词
 
@@ -206,9 +211,9 @@ claude mcp add --transport http bookkeeper https://bill.example.com/mcp \
 
 | 类别 | 内容 |
 |---|---|
-| 工具清单快照 | 每个预设的工具列表、输入 / 输出 schema 快照纳入版本库，变更需评审 |
+| 工具清单快照 | 工具列表、输入 / 输出 schema 快照纳入版本库，变更需评审 |
 | schema 严格性 | 未知参数、错误类型、浮点金额均被拒绝 |
-| 权限矩阵 | 预设 × 工具 × scope 组合：不可见工具调用返回 `FORBIDDEN_SCOPE`；写入总开关关闭时写工具不可见 |
+| 权限矩阵 | 四档 × 每个工具：`tools/list` 恰好列出可用工具，其余调用返回 `FORBIDDEN_SCOPE`（403）；写入总开关关闭时写工具不可见（`test_permission_matrix.py`） |
 | 功能测试 | 用 SDK 客户端对每个工具跑成功 / 失败路径，校验信封、警告、`next_action` |
 | 漂移测试 | 写工具与对应 REST `operationId` 的参数字段、错误码、结果一致 |
 | 撤回 | 各类变更集撤销后账本恢复（报表指纹回到撤销前的值，审计保留全过程） |

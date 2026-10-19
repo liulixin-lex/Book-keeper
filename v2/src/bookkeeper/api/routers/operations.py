@@ -70,7 +70,7 @@ def mcp_calls(
     since: datetime | None = None,
     limit: Annotated[int, Query(ge=1, le=500)] = 100,
 ) -> dict[str, Any]:
-    auth.ctx.require(Scope.ADMIN)
+    auth.ctx.require(Scope.ADMIN_READ)
 
     def load() -> list[dict[str, Any]]:
         stmt = select(McpCall).where(McpCall.book_id == book_id)

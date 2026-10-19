@@ -1,13 +1,12 @@
-import pytest
-
 from bookkeeper.domain.scopes import (
     ROLE_CAPS,
-    Preset,
+    ROLE_TIERS,
+    TIER_SCOPES,
     Role,
     Scope,
-    effective_scopes,
-    parse_scopes,
-    scopes_for_preset,
+    Tier,
+    tier_for_role,
+    tier_scopes,
 )
 
 
@@ -17,24 +16,24 @@ def test_role_caps_are_nested() -> None:
     assert Scope.ADMIN not in ROLE_CAPS[Role.ACCOUNTANT]
 
 
-def test_reader_is_read_only() -> None:
-    assert scopes_for_preset(Preset.READER, Role.OWNER) == {Scope.LEDGER_READ}
+def test_the_four_tiers() -> None:
+    user_read, user_write, admin_read, admin_write = (TIER_SCOPES[t] for t in Tier)
+    assert user_read == {Scope.LEDGER_READ, Scope.FILES_READ}
+    assert user_read < user_write and user_read < admin_read < admin_write and user_write < admin_write
+    assert not {s for s in admin_read if s.value.endswith("write") or s is Scope.ADMIN}  # admin_read writes nothing
+    assert admin_write == set(Scope)
+    assert {Scope.RULES_WRITE, Scope.CONFIG_WRITE, Scope.ADMIN, Scope.ADMIN_READ}.isdisjoint(user_write)
 
 
-def test_preset_capped_by_role() -> None:
-    granted = scopes_for_preset(Preset.BOOKKEEPER, Role.VIEWER)
-    assert granted == {Scope.LEDGER_READ}
+def test_ordinary_members_hand_out_only_user_tiers() -> None:
+    assert ROLE_TIERS[Role.ACCOUNTANT] == (Tier.USER_READ, Tier.USER_WRITE)
+    assert ROLE_TIERS[Role.VIEWER] == (Tier.USER_READ,)
+    assert set(ROLE_TIERS[Role.ADMIN]) == set(ROLE_TIERS[Role.OWNER]) == set(Tier)
 
 
-def test_effective_scopes_intersect_role() -> None:
-    assert effective_scopes({Scope.ADMIN, Scope.LEDGER_READ}, Role.ACCOUNTANT) == {Scope.LEDGER_READ}
-
-
-def test_parse_scopes_rejects_unknown() -> None:
-    with pytest.raises(ValueError, match="unknown scope"):
-        parse_scopes(["ledger:read", "root"])
-
-
-def test_custom_preset_requires_scopes() -> None:
-    with pytest.raises(ValueError, match="custom"):
-        scopes_for_preset(Preset.CUSTOM, Role.ADMIN)
+def test_a_lowered_role_lowers_the_tier() -> None:
+    assert tier_for_role(Tier.ADMIN_WRITE, Role.ACCOUNTANT) is Tier.USER_WRITE
+    assert tier_for_role(Tier.ADMIN_READ, Role.ACCOUNTANT) is Tier.USER_READ
+    assert tier_for_role(Tier.USER_WRITE, Role.VIEWER) is Tier.USER_READ
+    assert tier_for_role(Tier.ADMIN_WRITE, Role.OWNER) is Tier.ADMIN_WRITE
+    assert tier_scopes(Tier.ADMIN_WRITE, Role.VIEWER) == ROLE_CAPS[Role.VIEWER]

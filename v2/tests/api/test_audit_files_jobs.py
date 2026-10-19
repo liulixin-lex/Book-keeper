@@ -91,8 +91,8 @@ def test_file_rules(client, world) -> None:
         headers=write_headers(csrf),
     ).json()["data"]
     client.cookies.clear()
-    denied = client.get(f"{url}/{good['id']}/content", headers=bearer(reader))
-    assert denied.status_code == 403
+    own = client.get(f"{url}/{good['id']}/content", headers=bearer(reader))  # user_read reads its user's uploads
+    assert own.status_code == 200 and own.content == b"hello"
     assert client.get(f"{url}/{good['id']}", headers=bearer(reader)).status_code == 200
 
 

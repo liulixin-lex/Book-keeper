@@ -26,8 +26,14 @@ export interface Book {
   base_commodity: string;
   timezone: string;
   role: BookRef["role"];
+  /** What you may do here: your role's permissions. */
+  scopes: string[];
+  /** Token tiers you may hand out. */
+  token_tiers: TokenTier[];
   version: number;
 }
+
+export type TokenTier = "user_read" | "user_write" | "admin_read" | "admin_write";
 
 export type Enums = Record<string, Record<string, string>>;
 
@@ -435,7 +441,10 @@ export interface Token {
   id: string;
   name: string;
   token_prefix: string;
-  preset: string;
+  tier: TokenTier;
+  tier_label: string;
+  /** Present when the owner's role was lowered: the tier the token acts with now (null = none). */
+  effective_tier?: TokenTier | null;
   scopes: string[];
   mcp_enabled: boolean;
   expires_at: string | null;

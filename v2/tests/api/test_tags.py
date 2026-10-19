@@ -67,7 +67,7 @@ def test_rule_adds_tags_on_import(client, world) -> None:
     from tests.api.test_mcp import mcp_for
 
     csrf = login(client, world.admin_email)
-    ai = mcp_for(client, world, csrf, preset="admin")
+    ai = mcp_for(client, world, csrf, tier="admin_write")
     assert ai.call(
         "manage_import_source",
         action="create",

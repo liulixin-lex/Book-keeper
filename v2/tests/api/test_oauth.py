@@ -93,7 +93,7 @@ def start(client: TestClient, client_id: str, challenge: str, state: str = "st-1
     return hidden(page.text)
 
 
-def sign_in_and_approve(client: TestClient, fields: dict[str, str], preset: str = "bookkeeper") -> str:
+def sign_in_and_approve(client: TestClient, fields: dict[str, str], tier: str = "user_write") -> str:
     signed = client.post(
         "/oauth/login",
         data=fields | {"action": "signin", "email": "owner@example.com", "password": PASSWORD},
@@ -101,12 +101,12 @@ def sign_in_and_approve(client: TestClient, fields: dict[str, str], preset: str 
     )
     assert signed.status_code == 303, signed.text
     consent = client.get(signed.headers["location"])
-    assert "访问级别" in consent.text
+    assert "权限档位" in consent.text
     book = re.search(r'<option value="([^"]+)"', consent.text)
     assert book
     approved = client.post(
         "/oauth/login",
-        data=hidden(consent.text) | {"action": "approve", "book": book.group(1), "preset": preset},
+        data=hidden(consent.text) | {"action": "approve", "book": book.group(1), "tier": tier},
         follow_redirects=False,
     )
     assert approved.status_code == 303, approved.text
@@ -161,12 +161,14 @@ def test_full_oauth_flow(oauth_client) -> None:  # type: ignore[no-untyped-def]
     assert signed.status_code == 303 and "bk_oauth" in signed.headers["set-cookie"]
     saved = dict(client.cookies)
     client.cookies.clear()
-    hijack = client.post("/oauth/login", data=fields | {"action": "approve", "book": _world.book_id, "preset": "admin"})
+    hijack = client.post(
+        "/oauth/login", data=fields | {"action": "approve", "book": _world.book_id, "tier": "admin_write"}
+    )
     assert hijack.status_code == 400 and "登录状态已失效" in hijack.text
     client.cookies.update(saved)
     approved = client.post(
         "/oauth/login",
-        data=fields | {"action": "approve", "book": _world.book_id, "preset": "bookkeeper"},
+        data=fields | {"action": "approve", "book": _world.book_id, "tier": "user_write"},
         follow_redirects=False,
     )
     assert approved.status_code == 303
@@ -233,7 +235,7 @@ def test_deny_revoke_and_role_cap(oauth_client) -> None:  # type: ignore[no-unty
     assert again.status_code == 400  # a finished request cannot be reused
 
     verifier, challenge = pkce()
-    location = sign_in_and_approve(client, start(client, client_id, challenge), preset="admin")
+    location = sign_in_and_approve(client, start(client, client_id, challenge), tier="admin_write")
     code = parse_qs(urlsplit(location).query)["code"][0]
     issued = token(
         client,
@@ -270,9 +272,10 @@ def test_deny_revoke_and_role_cap(oauth_client) -> None:  # type: ignore[no-unty
         follow_redirects=False,
     )
     consent = client.get(f"/oauth/login?request={fields['request']}")
-    assert 'value="admin"' not in consent.text and 'value="reader"' in consent.text
+    assert 'value="admin_write"' not in consent.text and 'value="user_write"' not in consent.text
+    assert 'value="user_read"' in consent.text
     refused = client.post(
-        "/oauth/login", data=hidden(consent.text) | {"action": "approve", "book": world.book_id, "preset": "admin"}
+        "/oauth/login", data=hidden(consent.text) | {"action": "approve", "book": world.book_id, "tier": "admin_write"}
     )
     assert refused.status_code == 403 and "超过" in refused.text
 
@@ -355,7 +358,7 @@ def test_official_sdk_oauth_client(oauth_client) -> None:  # type: ignore[no-unt
                 assert book
                 done = await browser.post(
                     "/oauth/login",
-                    data=hidden(consent.text) | {"action": "approve", "book": book.group(1), "preset": "reader"},
+                    data=hidden(consent.text) | {"action": "approve", "book": book.group(1), "tier": "user_read"},
                 )
                 query = parse_qs(urlsplit(done.headers["location"]).query)
                 redirect.update({k: v[0] for k, v in query.items()})
@@ -412,7 +415,7 @@ def test_revoking_the_api_token_ends_the_grant(oauth_client) -> None:  # type: i
     csrf = login(client, world.admin_email)
     listed = client.get(f"/api/v1/books/{world.book_id}/tokens").json()["data"]
     [oauth_token] = [t for t in listed if t["name"].startswith("OAuth · Claude")]
-    assert oauth_token["mcp_enabled"] and oauth_token["preset"] == "bookkeeper"
+    assert oauth_token["mcp_enabled"] and oauth_token["tier"] == "user_write"
     revoked = client.post(
         f"/api/v1/books/{world.book_id}/tokens/{oauth_token['id']}:revoke", headers=write_headers(csrf)
     )

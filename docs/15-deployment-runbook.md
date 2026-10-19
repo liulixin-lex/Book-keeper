@@ -53,7 +53,7 @@ docker compose run --rm -v /opt/bookkeeper/v1-final.db:/import/v1.db:ro \
 ```
 
    任何核对不通过都不会提交（整体回滚），按报告处理后重跑。报告开头列出新账套 ID。
-4. 创建令牌：`docker compose exec api bookkeeper create-token --book <账套ID> --user-email <邮箱> --name claude --preset bookkeeper --mcp`（AI 用，明文令牌只输出一次），按需另建 admin 令牌。
+4. 创建令牌：`docker compose exec api bookkeeper create-token --book <账套ID> --user-email <邮箱> --name claude --tier user_write --mcp`（AI 用，明文令牌只输出一次），按需另建 `--tier admin_write` 令牌。档位见 08 号 §3.3。
 5. 运行检查：`POST /api/v1/books/{id}/checks:run` 或 MCP `run_checks`，全部通过。
 
 ## 3.1 AI 识别（可选）
@@ -79,9 +79,11 @@ docker compose run --rm -v /opt/bookkeeper/v1-final.db:/import/v1.db:ro \
 - **超时**：nginx 的 `/api/` 设 `proxy_read_timeout 300s`，覆盖多文件上传与大文件解析；AI 识别本身不占这个请求。
 - **成本**：截图按原分辨率识别，只有长边超过 2576 px 才缩到 2576 px（缩小会让数字变糊；整批截图原分辨率约 1 美元，读错金额的代价更大）；同一来源同一组文件重传直接返回已有批次，不会再调用 AI；`BK_AI_DAILY_FILES` 可限制每天的文件数。
 
-## 3.2 数据库迁移 0012–0013
+## 3.2 数据库迁移 0012–0014
 
 `0012_import_kinds`：导入来源类型增加 `redeem_page`、`ai_extract`，批次状态增加 `extracting`、`failed`（只改 CHECK 约束，不动数据）。随 `docker compose run --rm migrate` 执行，可回退（回退前须先撤销或删除用到这些值的来源与批次）。
+
+`0014_token_tiers`：令牌改为四个档位（08 号 §3.3）。reader → 用户只读，bookkeeper → 用户读写，admin → 管理员读写；自定义令牌映射到其作用域覆盖的最高一档，没有 `ledger:read` 的直接吊销。迁移在输出里打印各档数量与每个自定义令牌的去向，**生产迁移时保存这段输出**。OAuth 授权码与刷新令牌一起换算。可回退（管理员只读回退为自定义）。
 
 `0013_ai_providers`：新增 `ai_providers`（提供商，密钥为密文）与 `ai_usage`（每次调用的 token 与费用估算）两张表，不动已有数据，可回退。
 
@@ -93,7 +95,7 @@ docker compose run --rm -v /opt/bookkeeper/v1-final.db:/import/v1.db:ro \
 claude mcp add --transport http bookkeeper https://<v2 入口>/mcp --header "Authorization: Bearer $BK_TOKEN"
 ```
 
-- 只支持 OAuth 的远程连接器（claude.ai 网页 / 桌面 / 手机的“自定义连接器”、ChatGPT 连接器）：`.env` 设 `BK_OAUTH_ENABLED=true`（默认开启于 `.env.example`），nginx 加上 OAuth 两段 location，然后在客户端添加连接器 URL `https://<v2 入口>/mcp`，按提示登录 bookkeeper、选择账套与访问级别（建议“记账”）。授权生成的令牌显示在令牌管理中（名称“OAuth · 客户端名”），吊销即断开。
+- 只支持 OAuth 的远程连接器（claude.ai 网页 / 桌面 / 手机的“自定义连接器”、ChatGPT 连接器）：`.env` 设 `BK_OAUTH_ENABLED=true`（默认开启于 `.env.example`），nginx 加上 OAuth 两段 location，然后在客户端添加连接器 URL `https://<v2 入口>/mcp`，按提示登录 bookkeeper、选择账套与权限档位（建议“用户读写”）。授权生成的令牌显示在令牌管理中（名称“OAuth · 客户端名”），吊销即断开。
 
 写入立即生效（2026-10-19 起没有“预览 → 确认”）；AI 写错时用 `undo_change_set` 撤回整次写入，或 `restore_transaction` 恢复删除的交易。
 

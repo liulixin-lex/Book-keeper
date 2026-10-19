@@ -14,7 +14,7 @@ from bookkeeper.db.models import ApiToken, BookMember, User, UserSession
 from bookkeeper.db.session import rowcount
 from bookkeeper.domain.errors import DomainError, not_found
 from bookkeeper.domain.ids import new_id
-from bookkeeper.domain.scopes import ROLE_CAPS, Role, effective_scopes, parse_scopes
+from bookkeeper.domain.scopes import ROLE_CAPS, Role, Tier, tier_scopes
 from bookkeeper.security import passwords
 from bookkeeper.security.secrets import (
     looks_like_api_token,
@@ -313,7 +313,7 @@ def authenticate_token(
         user_id=user.id,
         token_id=token.id,
         role=role,
-        scopes=effective_scopes(parse_scopes(token.scopes), role),
+        scopes=tier_scopes(Tier(token.tier), role),  # a lowered role lowers the tier with it
         is_superadmin=False,
         mcp_client=mcp_client,
     )

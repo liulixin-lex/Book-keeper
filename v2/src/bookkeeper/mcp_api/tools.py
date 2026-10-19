@@ -22,15 +22,21 @@ from bookkeeper.domain.money import AmountError, to_minor
 from bookkeeper.domain.scopes import Scope
 from bookkeeper.services import (
     accounts,
+    ai_providers,
     analytics,
+    books,
     business,
     checks,
     exports,
     fees,
+    identity,
+    matching,
     operations,
     reference,
     reports,
+    rules,
     tags,
+    tokens,
     transactions,
     work,
 )
@@ -269,6 +275,7 @@ def _get_reference(session: Session, ctx: RequestContext, args: ReferenceArgs) -
                 for t in catalogue
             ]
     elif args.kind == "fee_rules":
+        ctx.require(Scope.ADMIN_READ)
         data = [fees.view(r) for r in fees.list_rules(session, book_id)]
     elif args.kind == "channels":
         data = [
@@ -299,7 +306,7 @@ tool(
         "get_reference",
         "基础资料",
         "交易类型（transaction_type 返回输入 JSON Schema、默认科目与示例）、"
-        "手续费规则、渠道、币种、汇率、标签、报表目录。",
+        "手续费规则（需要管理员只读档位；算某笔的手续费用 evaluate_fee）、渠道、币种、汇率、标签、报表目录。",
         ReferenceArgs,
         "read",
         (Scope.LEDGER_READ,),
@@ -718,12 +725,62 @@ tool(
     Tool(
         "get_audit_trail",
         "审计记录",
-        "按实体、变更集、渠道（如 mcp）、时间查询审计事件或变更集，用于追溯与撤销。",
+        "按实体、变更集、渠道（如 mcp）、时间查询审计事件或变更集，用于追溯与撤销。需要管理员只读档位。",
         AuditArgs,
         "read",
-        (Scope.LEDGER_READ,),
+        (Scope.ADMIN_READ,),
         _audit,
         rest="audit_events_list",
+    )
+)
+
+
+class AdminInfoArgs(Args):
+    kind: Literal["members", "tokens", "rules", "pairing_rules", "fee_rules", "ai", "book"] = Field(
+        description="members 成员与角色；tokens 令牌（不含密钥）；rules 分类规则；pairing_rules 配对规则；"
+        "fee_rules 手续费规则；ai AI 提供商与任务分配（不含密钥）；book 账套设置"
+    )
+
+
+def _admin_info(session: Session, ctx: RequestContext, args: AdminInfoArgs) -> Output:
+    book_id = ctx.require_book()
+    data: Any
+    if args.kind == "members":
+        data = [
+            {"user": identity.user_view(user), "role": member.role, "since": member.created_at.isoformat()}
+            for member, user in books.list_members(session, ctx)
+        ]
+    elif args.kind == "tokens":
+        data = tokens.list_views(session, ctx)
+    elif args.kind == "rules":
+        data = [rules.view(r) for r in rules.list_rules(session, book_id)]
+    elif args.kind == "pairing_rules":
+        data = [matching.pairing_view(r) for r in matching.list_pairing_rules(session, book_id)]
+    elif args.kind == "fee_rules":
+        data = [fees.view(r) for r in fees.list_rules(session, book_id)]
+    elif args.kind == "ai":
+        data = {
+            "providers": [ai_providers.view(p) for p in ai_providers.list_providers(session, book_id)],
+            "routes": ai_providers.get_routes(session, book_id),
+            "note": "密钥不出现在任何接口里；修改只能在网页端 设置 → AI 模型。",
+        }
+    else:
+        data = books.book_view(_book(session, ctx))
+    count = len(data) if isinstance(data, list) else 1
+    return Output(data, f"{args.kind}：{count} 项")
+
+
+tool(
+    Tool(
+        "get_admin_info",
+        "管理信息",
+        "只读查看成员、令牌、分类规则、配对规则、手续费规则、AI 提供商与任务分配、账套设置；不含任何密钥。"
+        "需要管理员只读档位。",
+        AdminInfoArgs,
+        "read",
+        (Scope.ADMIN_READ,),
+        _admin_info,
+        rest="members_list",
     )
 )
 

@@ -127,7 +127,7 @@ def cmd_create_token(args: argparse.Namespace) -> int:
 
     from bookkeeper.db.models import User
     from bookkeeper.db.session import session_scope
-    from bookkeeper.domain.scopes import ROLE_CAPS, Preset
+    from bookkeeper.domain.scopes import ROLE_CAPS, Tier
     from bookkeeper.services import identity, tokens
     from bookkeeper.services.context import Actor, RequestContext
 
@@ -145,7 +145,7 @@ def cmd_create_token(args: argparse.Namespace) -> int:
             session,
             ctx,
             name=args.name,
-            preset=Preset(args.preset),
+            tier=Tier(args.tier),
             mcp_enabled=args.mcp,
             expires_in_days=args.days,
         )
@@ -340,7 +340,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--book", required=True)
     p.add_argument("--user-email", required=True)
     p.add_argument("--name", required=True)
-    p.add_argument("--preset", default="reader", choices=["reader", "bookkeeper", "admin"])
+    p.add_argument("--tier", default="user_read", choices=["user_read", "user_write", "admin_read", "admin_write"])
     p.add_argument("--mcp", action="store_true")
     p.add_argument("--days", type=int, default=None)
     p.set_defaults(fn=cmd_create_token)

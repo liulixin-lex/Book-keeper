@@ -14,6 +14,7 @@ import {
   useBook,
   useBookMutation,
   useBookQuery,
+  useCan,
   useCategories,
   useChannels,
   useCommodities,
@@ -459,7 +460,8 @@ function Split({
   attempted: boolean;
   base: string;
 }) {
-  const rules = useBookQuery<FeeRule[]>("/fee-rules", undefined, { staleTime: 5 * 60_000 }).data?.data;
+  const seesRules = useCan("admin:read"); // fee rules are management info; without it the split shows without the rule name
+  const rules = useBookQuery<FeeRule[]>("/fee-rules", undefined, { staleTime: 5 * 60_000, enabled: seesRules }).data?.data;
   const c = preview?.computed;
   const commodity = c?.commodity ?? "CNY";
   const m = (minor: number | undefined) => (minor === undefined ? null : formatMoney({ minor, commodity }));

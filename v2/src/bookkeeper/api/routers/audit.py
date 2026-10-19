@@ -69,7 +69,7 @@ def list_events(
     cursor: str | None = None,
     limit: Annotated[int, Query(ge=1, le=200)] = 50,
 ) -> dict[str, Any]:
-    auth.ctx.require(Scope.LEDGER_READ)
+    auth.ctx.require(Scope.ADMIN_READ)
     position = decode_cursor(cursor)
     query = select(AuditEvent).where(AuditEvent.scope == book_id)
     for column, value in (
@@ -101,7 +101,7 @@ def list_events(
 
 @router.get("/audit-events/verify")
 def verify(book_id: str, auth: AuthDep, db: DbDep) -> dict[str, Any]:
-    auth.ctx.require(Scope.LEDGER_READ)
+    auth.ctx.require(Scope.ADMIN_READ)
     return run_read(db, lambda: service.verify_chain(db, book_id).__dict__, auth.ctx)
 
 

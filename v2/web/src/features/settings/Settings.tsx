@@ -6,7 +6,6 @@ import { Navigate, NavLink, useParams } from "react-router";
 import { clsx } from "clsx";
 import { ArrowLeft, CaretRight, ClockCounterClockwise, CurrencyCircleDollar, Funnel, Percent, Plug, Sparkle, Storefront, Tag, Tray, UserCircle, UsersThree, type Icon } from "@phosphor-icons/react";
 import { useBook } from "@/api/queries";
-import type { BookRef } from "@/api/types";
 import { Card } from "@/components/ui";
 import { Categories, Channels, Counterparties, Currencies } from "./business";
 import { FeeRules, Rules, Sources } from "./rules";
@@ -19,8 +18,8 @@ interface Section {
   hint: string;
   icon: Icon;
   render: () => React.ReactNode;
-  /** Who sees it; everyone when absent. */
-  roles?: BookRef["role"][];
+  /** The permission needed to see it; everyone when absent. */
+  scope?: string;
 }
 
 const GROUPS: { title: string; sections: Section[] }[] = [
@@ -30,8 +29,8 @@ const GROUPS: { title: string; sections: Section[] }[] = [
       { key: "counterparties", label: "往来方", hint: "上游站点、服务商与平台", icon: UsersThree, render: () => <Counterparties /> },
       { key: "channels", label: "渠道", hint: "链动、云猫、Stripe…", icon: Storefront, render: () => <Channels /> },
       { key: "categories", label: "收支分类", hint: "成本与费用的分类", icon: Tag, render: () => <Categories /> },
-      { key: "fee-rules", label: "手续费规则", hint: "按渠道和往来方计算手续费", icon: Percent, render: () => <FeeRules /> },
-      { key: "rules", label: "分类规则", hint: "导入时自动分类", icon: Funnel, render: () => <Rules /> },
+      { key: "fee-rules", label: "手续费规则", hint: "按渠道和往来方计算手续费", icon: Percent, render: () => <FeeRules />, scope: "admin:read" },
+      { key: "rules", label: "分类规则", hint: "导入时自动分类", icon: Funnel, render: () => <Rules />, scope: "admin:read" },
       { key: "sources", label: "导入来源", hint: "账单格式与默认分类", icon: Tray, render: () => <Sources /> },
       { key: "currencies", label: "币种与汇率", hint: "CNY、USD、GBP、额度单位", icon: CurrencyCircleDollar, render: () => <Currencies /> },
     ],
@@ -40,7 +39,7 @@ const GROUPS: { title: string; sections: Section[] }[] = [
     title: "接入与账户",
     sections: [
       { key: "ai", label: "AI 接入", hint: "MCP 地址与 API 令牌", icon: Plug, render: () => <AiAccess /> },
-      { key: "ai-models", label: "AI 模型", hint: "提供商、任务分配与用量", icon: Sparkle, render: () => <AiModels />, roles: ["owner", "admin", "accountant"] },
+      { key: "ai-models", label: "AI 模型", hint: "提供商、任务分配与用量", icon: Sparkle, render: () => <AiModels />, scope: "admin:read" },
       { key: "activity", label: "操作记录", hint: "每次写入，可整次撤销", icon: ClockCounterClockwise, render: () => <Activity /> },
       { key: "data", label: "账户与数据", hint: "外观、导出、数据检查、密码", icon: UserCircle, render: () => <Account /> },
     ],
@@ -50,10 +49,10 @@ const GROUPS: { title: string; sections: Section[] }[] = [
 export default function Settings() {
   const { section } = useParams();
   const book = useBook();
-  const role = book.data?.role;
-  // Sections depend on the role, so wait for it: a deep link to /settings/ai-models must not bounce to the first section.
+  const scopes = book.data?.scopes ?? [];
+  // Sections depend on permissions, so wait for them: a deep link to /settings/ai-models must not bounce to the first section.
   if (book.isPending) return null;
-  const groups = GROUPS.map((g) => ({ ...g, sections: g.sections.filter((s) => !s.roles || (role && s.roles.includes(role))) }));
+  const groups = GROUPS.map((g) => ({ ...g, sections: g.sections.filter((s) => !s.scope || scopes.includes(s.scope)) }));
   const ALL = groups.flatMap((g) => g.sections);
   const current = ALL.find((s) => s.key === section);
   // Desktop shows list and content side by side, so it always opens on a section; phones start from the list.

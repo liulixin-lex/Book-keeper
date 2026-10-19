@@ -2059,16 +2059,6 @@
     "title": "PasswordIn",
     "type": "object"
    },
-   "Preset": {
-    "enum": [
-     "reader",
-     "bookkeeper",
-     "admin",
-     "custom"
-    ],
-    "title": "Preset",
-    "type": "string"
-   },
    "Price": {
     "additionalProperties": false,
     "properties": {
@@ -2971,6 +2961,16 @@
     "title": "TemplateIn",
     "type": "object"
    },
+   "Tier": {
+    "enum": [
+     "user_read",
+     "user_write",
+     "admin_read",
+     "admin_write"
+    ],
+    "title": "Tier",
+    "type": "string"
+   },
    "TokenCreate": {
     "additionalProperties": false,
     "properties": {
@@ -3017,23 +3017,9 @@
       "title": "Never Expires",
       "type": "boolean"
      },
-     "preset": {
-      "$ref": "#/components/schemas/Preset",
-      "default": "reader"
-     },
-     "scopes": {
-      "anyOf": [
-       {
-        "items": {
-         "type": "string"
-        },
-        "type": "array"
-       },
-       {
-        "type": "null"
-       }
-      ],
-      "title": "Scopes"
+     "tier": {
+      "$ref": "#/components/schemas/Tier",
+      "default": "user_read"
      }
     },
     "required": [
@@ -3701,6 +3687,7 @@
   },
   "/api/v1/books/{book_id}": {
    "get": {
+    "description": "The book, your role and permissions, and the token tiers you may hand out (ordinary members: user tiers).",
     "operationId": "get_book_api_v1_books__book_id__get",
     "parameters": [
      {

@@ -1,4 +1,4 @@
-"""API tokens (docs/08-rest-api.md §3.3, docs/10-security-operations.md §1.2)."""
+"""API tokens (docs/08-rest-api.md §3.3, docs/19 §2): each holds one of four tiers, capped by its owner's role."""
 
 from __future__ import annotations
 
@@ -10,10 +10,10 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from bookkeeper.db.models import ApiToken
+from bookkeeper.db.models import ApiToken, BookMember
 from bookkeeper.domain.errors import DomainError, not_found
 from bookkeeper.domain.ids import new_id
-from bookkeeper.domain.scopes import ROLE_CAPS, Preset, Scope, parse_scopes, scopes_for_preset
+from bookkeeper.domain.scopes import ROLE_TIERS, TIER_SCOPES, TIER_TEXT, Role, Scope, Tier, tier_for_role
 from bookkeeper.security.secrets import new_api_token, token_display_prefix, token_hash
 from bookkeeper.services import audit
 from bookkeeper.services.context import RequestContext
@@ -26,8 +26,9 @@ def token_view(token: ApiToken) -> dict[str, Any]:
         "user_id": token.user_id,
         "name": token.name,
         "token_prefix": token.token_prefix,
-        "scopes": sorted(token.scopes),
-        "preset": token.preset,
+        "tier": token.tier,
+        "tier_label": TIER_TEXT[Tier(token.tier)][0],
+        "scopes": sorted(TIER_SCOPES[Tier(token.tier)]),
         "mcp_enabled": token.mcp_enabled,
         "ip_allowlist": token.ip_allowlist,
         "rate_limit_per_min": token.rate_limit_per_min,
@@ -50,41 +51,21 @@ def create_token(
     ctx: RequestContext,
     *,
     name: str,
-    preset: Preset = Preset.READER,
-    scopes: Sequence[str] | None = None,
+    tier: Tier = Tier.USER_READ,
     mcp_enabled: bool = False,
     expires_in_days: int | None = None,
     never_expires: bool = False,
     ip_allowlist: Sequence[str] | None = None,
     default_days: int = 90,
 ) -> IssuedToken:
-    """Create a token for the calling user, capped by the user's role in this book."""
+    """Create a token for the calling user. Ordinary members may hand out the user tiers, admins all four."""
     book_id = ctx.require_book()
     role = ctx.actor.role
     if ctx.actor.user_id is None or role is None:
         raise DomainError("FORBIDDEN_SCOPE", "只有账套成员可以创建令牌。")
     if ctx.actor.type == "token" and Scope.ADMIN not in ctx.actor.scopes:
-        raise DomainError("FORBIDDEN_SCOPE", "用令牌创建令牌需要 admin 权限。")
-    if preset is Preset.CUSTOM:
-        if not scopes:
-            raise DomainError("VALIDATION_FAILED", "自定义预设必须给出 scopes。")
-        try:
-            requested = parse_scopes(scopes)
-        except ValueError as exc:
-            raise DomainError("VALIDATION_FAILED", str(exc)) from exc
-        excess = requested - ROLE_CAPS[role]
-        if excess:
-            raise DomainError(
-                "FORBIDDEN_SCOPE",
-                f"令牌权限不能超过你的角色：{', '.join(sorted(s.value for s in excess))}。",
-            )
-        granted = requested
-    else:
-        if scopes:
-            raise DomainError("VALIDATION_FAILED", "使用预设时不要同时给出 scopes。")
-        granted = scopes_for_preset(preset, role)
-    if ctx.actor.type == "token":
-        granted = granted & ctx.actor.scopes
+        raise DomainError("FORBIDDEN_SCOPE", "用令牌创建令牌需要管理员读写档位。")
+    check_tier(tier, role)
     if never_expires and Scope.ADMIN not in ctx.actor.scopes:
         raise DomainError("FORBIDDEN_SCOPE", "永不过期的令牌需要 admin 权限。")
     if never_expires:
@@ -102,8 +83,7 @@ def create_token(
         name=name.strip(),
         token_hash=token_hash(plaintext),
         token_prefix=token_display_prefix(plaintext),
-        scopes=sorted(s.value for s in granted),
-        preset=preset.value,
+        tier=tier.value,
         mcp_enabled=mcp_enabled,
         ip_allowlist=list(ip_allowlist) if ip_allowlist else None,
         expires_at=expires_at,
@@ -115,9 +95,37 @@ def create_token(
     return IssuedToken(token, plaintext)
 
 
+def check_tier(tier: Tier, role: Role) -> None:
+    if tier not in ROLE_TIERS[role]:
+        allowed = "、".join(TIER_TEXT[t][0] for t in ROLE_TIERS[role])
+        raise DomainError("FORBIDDEN_SCOPE", f"你在这个账套里只能选：{allowed}。")
+
+
+def effective_tier(token: ApiToken, role: Role) -> Tier | None:
+    return tier_for_role(Tier(token.tier), role)
+
+
+def list_views(session: Session, ctx: RequestContext) -> list[dict[str, Any]]:
+    """Tokens with ``effective_tier`` when the owner's role has since been lowered below the token's tier."""
+    roles = dict(
+        session.execute(
+            select(BookMember.user_id, BookMember.role).where(BookMember.book_id == ctx.require_book())
+        ).all()
+    )
+    out = []
+    for token in list_tokens(session, ctx):
+        view = token_view(token)
+        role = roles.get(token.user_id)
+        effective = effective_tier(token, Role(role)) if role else None
+        if effective is None or effective.value != token.tier:
+            view["effective_tier"] = effective.value if effective else None
+        out.append(view)
+    return out
+
+
 def list_tokens(session: Session, ctx: RequestContext) -> list[ApiToken]:
     query = select(ApiToken).where(ApiToken.book_id == ctx.require_book())
-    if Scope.ADMIN not in ctx.actor.scopes:
+    if Scope.ADMIN_READ not in ctx.actor.scopes:
         query = query.where(ApiToken.user_id == ctx.actor.user_id)
     return list(session.execute(query.order_by(ApiToken.created_at)).scalars())
 
@@ -160,8 +168,7 @@ def rotate_token(session: Session, ctx: RequestContext, token_id: str) -> Issued
         name=old.name,
         token_hash=token_hash(plaintext),
         token_prefix=token_display_prefix(plaintext),
-        scopes=list(old.scopes),
-        preset=old.preset,
+        tier=old.tier,
         mcp_enabled=old.mcp_enabled,
         ip_allowlist=old.ip_allowlist,
         rate_limit_per_min=old.rate_limit_per_min,

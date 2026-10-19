@@ -13,9 +13,9 @@
 
 ### 1.2 API 令牌与 OAuth
 - 令牌格式 `bk_pat_<base62 40 位>`，熵 ≥ 238 位；只存 SHA-256；创建时明文显示一次；
-- 每个令牌：账套、用户、scope、预设、是否允许 MCP、两段式要求、过期时间（默认 90 天，可设永不过期但需 admin）、IP 白名单、限流；
+- 每个令牌：账套、用户、权限档位（四档，08 号 §3.3）、是否允许 MCP、两段式要求、过期时间（默认 90 天，可设永不过期但需 admin）、IP 白名单、限流；
 - 令牌有效权限永远不超过其所属用户的当前角色（用户降级或停用后立即生效）；
-- OAuth 2.1（P2）：仅授权码 + PKCE（S256）；授权页显示客户端名称、请求的预设与 scope，用户可降级为只读；访问令牌 1 小时、刷新令牌 30 天并轮换；令牌受众绑定 MCP 资源 URL；支持吊销端点。
+- OAuth 2.1（P2）：仅授权码 + PKCE（S256）；授权页显示客户端名称，用户选择权限档位（不超过角色可创建的档位）；访问令牌 1 小时、刷新令牌 30 天并轮换；令牌受众绑定 MCP 资源 URL；支持吊销端点。
 
 ### 1.3 传输与边界
 - 全站 HTTPS（nginx + Let's Encrypt），HSTS；应用只监听 `127.0.0.1:8000`；数据库不对外暴露端口；
@@ -134,7 +134,7 @@ volumes: { pgdata: {}, data: {} }
 | `create-user --email --name [--superadmin]` | 创建用户（密码取自 `BK_NEW_PASSWORD` 或交互输入） |
 | `reset-password --email` | 重置密码、解除锁定、吊销全部会话 |
 | `create-book --name --owner-email [--base --timezone]` | 创建账套（默认科目表） |
-| `create-token --book --user-email --name [--preset --mcp --days]` | 创建令牌（明文只输出一次） |
+| `create-token --book --user-email --name [--tier --mcp --days]` | 创建令牌（明文只输出一次） |
 | `run-checks [--book] [--codes]` | 运行检查，任一 error 级失败时退出码 1 |
 | `verify-audit [--scope]` | 校验审计哈希链 |
 | `export --book --format csv\|xlsx\|beancount\|json [--from --to] --output` | 导出账本 |

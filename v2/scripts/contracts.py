@@ -17,6 +17,7 @@ from typing import Any
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "src"))
 
+from bookkeeper.api.permissions import ROUTES  # noqa: E402
 from bookkeeper.config import Settings  # noqa: E402
 from bookkeeper.main import create_app  # noqa: E402
 from bookkeeper.mcp_api.server import tool_schema  # noqa: E402
@@ -66,6 +67,18 @@ def _first_line(text: str | None) -> str:
     return (text or "").strip().split("\n")[0].strip()
 
 
+def _needs(method: str, path: str) -> str:
+    """What the route needs, from the permission table (api/permissions.py); '—' outside a book."""
+    if not path.startswith(PREFIX):
+        return "—"
+    rule = ROUTES[(method, path[len(PREFIX) :])]
+    parts = list(rule.scopes) + ([" 或 ".join(rule.any_of)] if rule.any_of else [])
+    text = "、".join(parts)
+    if rule.as_token:
+        text += f"（令牌另需 {'、'.join(rule.as_token)}）"
+    return text + ("，仅网页端" if rule.web_only else "")
+
+
 def index(schema: dict[str, Any], tools: list[dict[str, Any]]) -> str:
     lines = [
         "# 16 接口索引（由代码生成）",
@@ -77,18 +90,18 @@ def index(schema: dict[str, Any], tools: list[dict[str, Any]]) -> str:
         "## REST",
         "",
     ]
-    by_tag: dict[str, list[tuple[str, str, str]]] = {}
+    by_tag: dict[str, list[tuple[str, str, str, str]]] = {}
     for path, ops in schema["paths"].items():
         for method, op in ops.items():
             tag = (op.get("tags") or ["other"])[0]
             short = "…" + path[len(PREFIX) :] if path.startswith(PREFIX) else path
             text = _first_line(op.get("description")) or op.get("summary", "")
-            by_tag.setdefault(tag, []).append((method.upper(), short, text))
+            by_tag.setdefault(tag, []).append((method.upper(), short, _needs(method.upper(), path), text))
     total = 0
     for tag in sorted(by_tag):
-        lines += [f"### {tag}", "", "| 方法 | 路径 | 说明 |", "|---|---|---|"]
-        for method, path, text in sorted(by_tag[tag], key=lambda r: (r[1], r[0])):
-            lines.append(f"| {method} | `{path}` | {text.replace('|', '/')} |")
+        lines += [f"### {tag}", "", "| 方法 | 路径 | 权限 | 说明 |", "|---|---|---|---|"]
+        for method, path, needs, text in sorted(by_tag[tag], key=lambda r: (r[1], r[0])):
+            lines.append(f"| {method} | `{path}` | {needs} | {text.replace('|', '/')} |")
             total += 1
         lines.append("")
     lines += [f"共 {total} 个 REST 操作。", "", "## MCP 工具", ""]

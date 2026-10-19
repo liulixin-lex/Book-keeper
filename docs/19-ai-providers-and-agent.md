@@ -37,3 +37,11 @@
 | POST | `/books/{b}/ai/providers/{id}:test` | 测试连接 |
 | GET / PUT | `/books/{b}/ai/routes` | 任务分配：`{extract: [{provider_id, model}], agent: [...]}` |
 | GET | `/books/{b}/ai/usage?days=30` | 用量与费用估算 |
+
+## 2. 权限档位
+
+令牌（API、MCP、OAuth）只有四个档位：用户只读、用户读写、管理员只读、管理员读写。定义、创建上限、角色降级与迁移见 08 号 §3.3；各 MCP 工具在每档的可见性见 09 号 §6。要点：
+
+- 档位到作用域的映射只在 `domain/scopes.py` 的 `TIER_SCOPES`，REST、MCP 与站内 AI 助手共用；每个 REST 接口所需权限在 `api/permissions.py` 一张表里，在校验请求体之前检查。
+- 管理员只读能经 REST（`GET /ai/providers`、`/ai/routes`）与 MCP（`get_admin_info kind=ai`）查看提供商配置，不含密钥；提供商与密钥只能在网页端修改。
+- 站内 AI 助手同样从四档里选（默认用户读写），实际权限 = 发起人在该账套的权限 ∩ 所选档位。

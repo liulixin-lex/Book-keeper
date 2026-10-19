@@ -46,6 +46,11 @@ export function useBook() {
   return useQuery({ queryKey: keys.book(b), queryFn: async () => (await api.get<Book>(`/books/${b}`)).data, ...STATIC });
 }
 
+/** Whether you hold a permission in the current book (false while the book loads). */
+export function useCan(scope: string): boolean {
+  return useBook().data?.scopes.includes(scope) ?? false;
+}
+
 export function useBookQuery<T>(
   path: string,
   query?: Record<string, unknown>,

@@ -133,7 +133,7 @@ def test_import_uses_counterparty_defaults(client, world) -> None:
     from tests.api.test_mcp import mcp_for
 
     csrf = login(client, world.admin_email)
-    ai = mcp_for(client, world, csrf, preset="admin")
+    ai = mcp_for(client, world, csrf, tier="admin_write")
     assert ai.call(
         "upsert_reference",
         kind="counterparty",

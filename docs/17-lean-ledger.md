@@ -44,11 +44,7 @@
 
 `ledger:draft`、`ledger:post`、`ledger:correct` 合并为 `ledger:write`；`periods:manage`、`reconcile:write` 取消。现有令牌在迁移时自动换算。
 
-| 预设 | 作用域 |
-|---|---|
-| reader | `ledger:read` |
-| bookkeeper | `ledger:read`、`ledger:write`、`import:write`、`reference:write` |
-| admin | 角色允许的全部（另含 `rules:write`、`config:write`、`admin`、`files:read`） |
+2026-10-19 后令牌预设改为四个档位（用户只读 / 用户读写 / 管理员只读 / 管理员读写），见 08 号 §3.3 与迁移 0014。
 
 ## 5. 统计口径
 

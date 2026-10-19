@@ -9,7 +9,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field
 
 from bookkeeper.api.deps import AuthDep, DbDep, SettingsDep, run_read, run_write
-from bookkeeper.domain.scopes import Preset
+from bookkeeper.domain.scopes import Tier
 from bookkeeper.services import tokens as service
 
 router = APIRouter(prefix="/books/{book_id}/tokens", tags=["tokens"])
@@ -18,8 +18,7 @@ router = APIRouter(prefix="/books/{book_id}/tokens", tags=["tokens"])
 class TokenCreate(BaseModel):
     model_config = ConfigDict(extra="forbid")
     name: str = Field(min_length=1, max_length=80)
-    preset: Preset = Preset.READER
-    scopes: list[str] | None = None
+    tier: Tier = Tier.USER_READ
     mcp_enabled: bool = False
     expires_in_days: int | None = Field(default=None, ge=1, le=3650)
     never_expires: bool = False
@@ -28,7 +27,7 @@ class TokenCreate(BaseModel):
 
 @router.get("")
 def list_tokens(book_id: str, auth: AuthDep, db: DbDep) -> dict[str, Any]:
-    return run_read(db, lambda: [service.token_view(t) for t in service.list_tokens(db, auth.ctx)], auth.ctx)
+    return run_read(db, lambda: service.list_views(db, auth.ctx), auth.ctx)
 
 
 @router.post("", status_code=201)
@@ -45,8 +44,7 @@ def create_token(
             db,
             auth.ctx,
             name=body.name,
-            preset=body.preset,
-            scopes=body.scopes,
+            tier=body.tier,
             mcp_enabled=body.mcp_enabled,
             expires_in_days=body.expires_in_days,
             never_expires=body.never_expires,

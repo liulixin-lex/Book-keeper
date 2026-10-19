@@ -557,21 +557,7 @@ def apply_rules(
 
 @router.get("/pairing-rules")
 def list_pairing(book_id: str, auth: AuthDep, db: DbDep) -> dict[str, Any]:
-    auth.ctx.require(Scope.LEDGER_READ)
-    from sqlalchemy import select
-
-    from bookkeeper.db.models import PairingRule
-
-    return run_read(
-        db,
-        lambda: [
-            matching.pairing_view(r)
-            for r in db.execute(
-                select(PairingRule).where(PairingRule.book_id == book_id).order_by(PairingRule.code)
-            ).scalars()
-        ],
-        auth.ctx,
-    )
+    return run_read(db, lambda: [matching.pairing_view(r) for r in matching.list_pairing_rules(db, book_id)], auth.ctx)
 
 
 @router.post("/pairing-rules", status_code=201)

@@ -120,7 +120,7 @@ def update_book(session: Session, ctx: RequestContext, expected_version: int, ch
 
 
 def list_members(session: Session, ctx: RequestContext) -> list[tuple[BookMember, User]]:
-    ctx.require(Scope.LEDGER_READ)
+    ctx.require(Scope.ADMIN_READ)
     rows = session.execute(
         select(BookMember, User)
         .join(User, User.id == BookMember.user_id)

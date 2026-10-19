@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from bookkeeper.domain.scopes import TIER_TEXT
+
 ENUM_LABELS: dict[str, dict[str, str]] = {
     "transaction_status": {"posted": "已入账", "reversed": "已删除"},
     "entry_kind": {
@@ -44,12 +46,8 @@ ENUM_LABELS: dict[str, dict[str, str]] = {
         "cli": "命令行",
     },
     "role": {"viewer": "只读", "accountant": "记账员", "admin": "管理员", "owner": "所有者"},
-    "token_preset": {
-        "reader": "只读",
-        "bookkeeper": "记账员",
-        "admin": "管理员",
-        "custom": "自定义",
-    },
+    "token_tier": {tier.value: text[0] for tier, text in TIER_TEXT.items()},
+    "token_tier_hint": {tier.value: text[1] for tier, text in TIER_TEXT.items()},
     "line_role": {
         "manual": "手工",
         "gross": "毛额",

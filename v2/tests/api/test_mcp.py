@@ -63,7 +63,7 @@ def sale_args(**extra: Any) -> dict[str, Any]:
 
 def test_initialize_and_tool_visibility(client, world) -> None:
     csrf = login(client, world.admin_email)
-    admin = mcp_for(client, world, csrf, preset="admin")
+    admin = mcp_for(client, world, csrf, tier="admin_write")
     init = admin.rpc(
         "initialize",
         {"protocolVersion": PV, "capabilities": {}, "clientInfo": {"name": "pytest", "version": "1"}},
@@ -71,15 +71,18 @@ def test_initialize_and_tool_visibility(client, world) -> None:
     assert init["serverInfo"]["name"] == "bookkeeper" and "get_context" in init["instructions"]
     assert set(init["capabilities"]) >= {"tools", "resources", "prompts"}
     all_tools = admin.tools()
-    assert len(all_tools) == len(TOOLS) == 35
+    assert len(all_tools) == len(TOOLS) == 36
     assert {"create_transaction", "update_transaction", "delete_transaction", "undo_change_set"} <= set(all_tools)
     schema = next(t for t in admin.rpc("tools/list")["tools"] if t["name"] == "create_transaction")
     assert schema["inputSchema"]["additionalProperties"] is False
     assert schema["annotations"]["readOnlyHint"] is False and schema["annotations"]["destructiveHint"] is False
 
-    reader = mcp_for(client, world, csrf, preset="reader")
-    assert len(reader.tools()) == 17 and "create_transaction" not in reader.tools()
-    keeper = set(mcp_for(client, world, csrf, preset="bookkeeper").tools())
+    reader = mcp_for(client, world, csrf, tier="user_read")
+    assert len(reader.tools()) == 16 and "create_transaction" not in reader.tools()
+    assert not {"get_audit_trail", "get_admin_info"} & set(reader.tools())
+    overseer = set(mcp_for(client, world, csrf, tier="admin_read").tools())
+    assert overseer == set(reader.tools()) | {"get_audit_trail", "get_admin_info"}
+    keeper = set(mcp_for(client, world, csrf, tier="user_write").tools())
     assert {"create_transaction", "update_transaction", "delete_transaction", "upsert_reference"} <= keeper
     assert not keeper & {"manage_fee_rule", "manage_rule", "manage_pairing_rule"}
     assert {"import_records", "commit_import"} <= keeper
@@ -89,7 +92,7 @@ def test_initialize_and_tool_visibility(client, world) -> None:
     forbidden = reader.call("create_transaction", **sale_args())
     assert forbidden["code"] == "FORBIDDEN_SCOPE" and "get_context" in forbidden["details"]["available"]
 
-    plain = create_token(client, world.book_id, csrf, preset="admin")["token"]
+    plain = create_token(client, world.book_id, csrf, tier="admin_write")["token"]
     denied = client.post(
         "/mcp", headers=Mcp(client, plain).headers, json={"jsonrpc": "2.0", "id": 1, "method": "tools/list"}
     )
@@ -102,7 +105,7 @@ def test_initialize_and_tool_visibility(client, world) -> None:
 def test_record_purchase_dry_run_then_write(client, world) -> None:
     csrf = login(client, world.admin_email)
     counterparty(client, world.book_id, csrf, "relay-a.example", domains=["api.relay-a.example"])
-    ai = mcp_for(client, world, csrf, preset="admin")
+    ai = mcp_for(client, world, csrf, tier="admin_write")
     context = ai.call("get_context")
     assert "ledger:write" in context["data"]["caller"]["scopes"] and "writes" in context["data"]["conventions"]
     found = ai.call("search_counterparties", query="https://api.relay-a.example/v1")
@@ -132,7 +135,7 @@ def test_record_purchase_dry_run_then_write(client, world) -> None:
 
 def test_validation_errors_are_actionable(client, world) -> None:
     csrf = login(client, world.admin_email)
-    ai = mcp_for(client, world, csrf, preset="admin")
+    ai = mcp_for(client, world, csrf, tier="admin_write")
     unknown = ai.call("create_transaction", colour="red", **sale_args())
     assert unknown["code"] == "VALIDATION_FAILED" and unknown["errors"][0]["path"] == "colour"
     floaty = ai.call("create_transaction", **sale_args(inputs={"gross": {"amount": 1.5}, "channel": "liandong"}))
@@ -145,7 +148,7 @@ def test_validation_errors_are_actionable(client, world) -> None:
 
 def test_idempotent_retry_writes_once(client, world) -> None:
     csrf = login(client, world.admin_email)
-    ai = mcp_for(client, world, csrf, preset="admin")
+    ai = mcp_for(client, world, csrf, tier="admin_write")
     first = ai.call("create_transaction", idempotency_key="order-LD-1", **sale_args())
     second = ai.call("create_transaction", idempotency_key="order-LD-1", **sale_args())
     assert first["data"]["number"] == second["data"]["number"]
@@ -158,7 +161,7 @@ def test_idempotent_retry_writes_once(client, world) -> None:
 
 def test_batch_edit_delete_and_restore(client, world) -> None:
     csrf = login(client, world.admin_email)
-    ai = mcp_for(client, world, csrf, preset="admin")
+    ai = mcp_for(client, world, csrf, tier="admin_write")
     batch = ai.call(
         "create_transactions",
         items=[sale_args(), sale_args(inputs={"gross": money("20"), "fee": money("0.60"), "channel": "yunmao"})],
@@ -187,7 +190,7 @@ def test_batch_edit_delete_and_restore(client, world) -> None:
 
 def test_undo_change_set_and_audit(client, world) -> None:
     csrf = login(client, world.admin_email)
-    ai = mcp_for(client, world, csrf, preset="admin")
+    ai = mcp_for(client, world, csrf, tier="admin_write")
     first = ai.call("create_transaction", **sale_args())
     second = ai.call("create_transaction", **sale_args())
     change_sets = ai.call("get_audit_trail", view="change_sets", channel="mcp")
@@ -210,7 +213,7 @@ def test_undo_change_set_and_audit(client, world) -> None:
 
 def test_reports_queries_explain_and_resources(client, world) -> None:
     csrf = login(client, world.admin_email)
-    ai = mcp_for(client, world, csrf, preset="admin")
+    ai = mcp_for(client, world, csrf, tier="admin_write")
     ai.call("create_transaction", **sale_args())
     summary = ai.call("run_report", report="summary", date_from="2026-10-01", date_to="2026-10-31")
     assert summary["data"]["profit"]["revenue"]["minor"] == 10000
@@ -267,7 +270,7 @@ def test_reports_queries_explain_and_resources(client, world) -> None:
 
 def test_calls_are_logged_and_rate_limited(client, world, app) -> None:
     csrf = login(client, world.admin_email)
-    issued = create_token(client, world.book_id, csrf, preset="admin", mcp_enabled=True)
+    issued = create_token(client, world.book_id, csrf, tier="admin_write", mcp_enabled=True)
     ai = Mcp(client, issued["token"])
     ai.call("get_context")
     ai.call("get_transaction", ref="T2026-000404")
@@ -286,7 +289,7 @@ def test_calls_are_logged_and_rate_limited(client, world, app) -> None:
 
 def test_rest_token_writes_directly_and_undo(client, world) -> None:
     csrf = login(client, world.admin_email)
-    token = create_token(client, world.book_id, csrf, preset="admin")["token"]
+    token = create_token(client, world.book_id, csrf, tier="admin_write")["token"]
     headers = bearer(token, **{"Idempotency-Key": "sale-1"})
     created = client.post(f"/api/v1/books/{world.book_id}/transactions", headers=headers, json=sale_args())
     assert created.status_code == 201, created.text
@@ -308,14 +311,14 @@ def test_official_sdk_client_round_trip(app, world) -> None:
     from mcp.client.session import ClientSession
     from mcp.client.streamable_http import streamable_http_client
 
-    from bookkeeper.domain.scopes import ROLE_CAPS, Preset, Role
+    from bookkeeper.domain.scopes import ROLE_CAPS, Role, Tier
     from bookkeeper.services import tokens
     from bookkeeper.services.context import Actor, RequestContext
 
     actor = Actor(type="user", user_id=world.admin_id, role=Role.OWNER, scopes=ROLE_CAPS[Role.OWNER])
     with app.state.sessionmaker() as s, s.begin():
         ctx = RequestContext(actor=actor, channel="api", book_id=world.book_id)
-        token = tokens.create_token(s, ctx, name="sdk", preset=Preset.READER, mcp_enabled=True).plaintext
+        token = tokens.create_token(s, ctx, name="sdk", tier=Tier.USER_READ, mcp_enabled=True).plaintext
 
     async def main() -> tuple[list[str], dict[str, Any]]:
         async with app.state.mcp_manager.run():
@@ -341,14 +344,14 @@ def test_official_client_modern_protocol(app, world) -> None:
     from mcp.client.client import Client
     from mcp.client.streamable_http import streamable_http_client
 
-    from bookkeeper.domain.scopes import ROLE_CAPS, Preset, Role
+    from bookkeeper.domain.scopes import ROLE_CAPS, Role, Tier
     from bookkeeper.services import tokens
     from bookkeeper.services.context import Actor, RequestContext
 
     actor = Actor(type="user", user_id=world.admin_id, role=Role.OWNER, scopes=ROLE_CAPS[Role.OWNER])
     with app.state.sessionmaker() as s, s.begin():
         ctx = RequestContext(actor=actor, channel="api", book_id=world.book_id)
-        token = tokens.create_token(s, ctx, name="sdk2", preset=Preset.ADMIN, mcp_enabled=True).plaintext
+        token = tokens.create_token(s, ctx, name="sdk2", tier=Tier.ADMIN_WRITE, mcp_enabled=True).plaintext
 
     async def main() -> tuple[str, list[str], dict[str, Any], dict[str, Any]]:
         async with app.state.mcp_manager.run():
@@ -377,7 +380,7 @@ def test_import_via_mcp(client, world) -> None:
     import base64
 
     csrf = login(client, world.admin_email)
-    ai = mcp_for(client, world, csrf, preset="admin")
+    ai = mcp_for(client, world, csrf, tier="admin_write")
     created = ai.call(
         "manage_import_source",
         action="create",

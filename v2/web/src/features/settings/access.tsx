@@ -4,8 +4,8 @@ import { useNavigate } from "react-router";
 import { clsx } from "clsx";
 import { CheckCircle, Copy, DownloadSimple, Key, Plus, ShieldCheck, WarningCircle } from "@phosphor-icons/react";
 import { api, ApiError } from "@/api/client";
-import { useBook, useBookMutation, useBookQuery, useLabel, useUndo } from "@/api/queries";
-import type { ChangeSet, Token } from "@/api/types";
+import { useBook, useBookMutation, useBookQuery, useCan, useLabel, useUndo } from "@/api/queries";
+import type { ChangeSet, Token, TokenTier } from "@/api/types";
 import { useBookId } from "@/app/book";
 import { signOut, ThemeSwitch } from "@/app/Shell";
 import { Badge, Button, Card, Empty, ErrorNote, Field, Input, Row, Segmented, Sheet, Skeleton, Switch } from "@/components/ui";
@@ -47,11 +47,7 @@ function TwoStep({ label, confirm, onConfirm, loading }: { label: string; confir
 
 /* ---------- AI 接入 ---------- */
 
-const PRESETS = [
-  { value: "reader", label: "只读" },
-  { value: "bookkeeper", label: "记账" },
-  { value: "admin", label: "管理" },
-] as const;
+const TIERS: TokenTier[] = ["user_read", "user_write", "admin_read", "admin_write"];
 
 export function AiAccess() {
   const bookId = useBookId();
@@ -119,7 +115,8 @@ export function AiAccess() {
                   <span className="min-w-0 flex-1">
                     <span className="flex items-center gap-2">
                       <span className="truncate font-medium">{t.name}</span>
-                      <Badge>{label("token_preset", t.preset)}</Badge>
+                      <Badge>{label("token_tier", t.tier)}</Badge>
+                      {t.effective_tier !== undefined && <Badge tone="warn">{t.effective_tier ? `角色已降低，现按${label("token_tier", t.effective_tier)}` : "已失效"}</Badge>}
                       {t.mcp_enabled && <Badge tone="pos">MCP</Badge>}
                     </span>
                     <span className="num mt-0.5 block truncate text-sm text-ink-3">
@@ -187,13 +184,15 @@ export function AiAccess() {
 }
 
 function CreateToken({ onIssued }: { onIssued: (t: Token) => void }) {
+  const label = useLabel();
+  const allowed = useBook().data?.token_tiers ?? [];
   const [name, setName] = useState("");
-  const [preset, setPreset] = useState<(typeof PRESETS)[number]["value"]>("bookkeeper");
+  const [tier, setTier] = useState<TokenTier>(allowed.includes("user_write") ? "user_write" : "user_read");
   const [mcp, setMcp] = useState(true);
   const [days, setDays] = useState<"30" | "90" | "365" | "never">("90");
   const create = useBookMutation(
     async (_: void, b) =>
-      (await api.post<Token>(`/books/${b}/tokens`, { name: name.trim(), preset, mcp_enabled: mcp, ...(days === "never" ? { never_expires: true } : { expires_in_days: Number(days) }) })).data,
+      (await api.post<Token>(`/books/${b}/tokens`, { name: name.trim(), tier, mcp_enabled: mcp, ...(days === "never" ? { never_expires: true } : { expires_in_days: Number(days) }) })).data,
   );
   return (
     <form
@@ -210,11 +209,32 @@ function CreateToken({ onIssued }: { onIssued: (t: Token) => void }) {
       <Field label="名称" hint="写清是哪个 AI 或脚本，如 Claude 桌面版" required>
         {(id, note) => <Input id={id} aria-describedby={note} value={name} onChange={(e) => setName(e.target.value)} autoFocus />}
       </Field>
-      <div className="grid gap-2">
-        <p className="text-sm font-medium text-ink-2">权限</p>
-        <Segmented label="令牌权限" value={preset} onChange={setPreset} options={[...PRESETS]} className="w-full" />
-        <p className="text-sm text-ink-3">{preset === "reader" ? "只能查看账本和统计" : preset === "bookkeeper" ? "可以记账、修改、删除、导入，所有写入都能撤销" : "另外还能改规则、设置和令牌"}</p>
-      </div>
+      <fieldset className="grid gap-2">
+        <legend className="mb-2 text-sm font-medium text-ink-2">权限档位</legend>
+        <div role="radiogroup" aria-label="权限档位" className="grid gap-2">
+          {TIERS.map((t) => {
+            const may = allowed.includes(t);
+            return (
+              <button
+                key={t}
+                type="button"
+                role="radio"
+                aria-checked={tier === t}
+                disabled={!may}
+                onClick={() => setTier(t)}
+                className={clsx(
+                  "grid gap-0.5 rounded-field border px-4 py-3 text-left transition-colors duration-150",
+                  tier === t ? "border-ink bg-card shadow-lift" : "border-line enabled:hover:bg-well",
+                  !may && "opacity-55",
+                )}
+              >
+                <span className="font-medium">{label("token_tier", t)}</span>
+                <span className="text-sm text-ink-2">{may ? label("token_tier_hint", t) : "需要管理员角色"}</span>
+              </button>
+            );
+          })}
+        </div>
+      </fieldset>
       <div className="grid gap-2">
         <p className="text-sm font-medium text-ink-2">有效期</p>
         <Segmented
@@ -295,15 +315,18 @@ export function Activity() {
   const toast = useToast();
   const undo = useUndo();
   const sets = useBookQuery<ChangeSet[]>("/change-sets", { limit: 60 });
-  const verify = useBookQuery<{ ok: boolean }>("/audit-events/verify", undefined, { staleTime: 5 * 60_000 });
+  const audits = useCan("admin:read");
+  const verify = useBookQuery<{ ok: boolean }>("/audit-events/verify", undefined, { staleTime: 5 * 60_000, enabled: audits });
   const list = (sets.data?.data ?? []).filter((s) => s.operation !== "checks.run");
 
   return (
     <div className="grid gap-4">
-      <p className="flex items-center gap-2 text-sm text-ink-2">
-        {verify.data?.data.ok ? <ShieldCheck size={18} weight="fill" className="shrink-0 text-pos" /> : <ShieldCheck size={18} className="shrink-0 text-ink-3" />}
-        {verify.data ? (verify.data.data.ok ? "所有写入都留有记录，审计链完整，没有被改动过" : "审计链校验没通过，请在「账户与数据」里运行数据检查") : "正在校验审计记录…"}
-      </p>
+      {audits && (
+        <p className="flex items-center gap-2 text-sm text-ink-2">
+          {verify.data?.data.ok ? <ShieldCheck size={18} weight="fill" className="shrink-0 text-pos" /> : <ShieldCheck size={18} className="shrink-0 text-ink-3" />}
+          {verify.data ? (verify.data.data.ok ? "所有写入都留有记录，审计链完整，没有被改动过" : "审计链校验没通过，请在「账户与数据」里运行数据检查") : "正在校验审计记录…"}
+        </p>
+      )}
       {sets.error ? (
         <ErrorNote error={sets.error} onRetry={() => sets.refetch()} />
       ) : !sets.data ? (

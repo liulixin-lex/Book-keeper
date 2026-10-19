@@ -9,7 +9,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field
 
 from bookkeeper.api.deps import AuthDep, DbDep, SettingsDep, run_read, run_write
-from bookkeeper.domain.scopes import Role, Scope
+from bookkeeper.domain.scopes import ROLE_TIERS, Role, Scope
 from bookkeeper.services import books as service
 from bookkeeper.services.identity import user_view
 
@@ -46,7 +46,7 @@ class MemberSet(BaseModel):
 def list_books(auth: AuthDep, db: DbDep) -> dict[str, Any]:
     def load() -> list[dict[str, Any]]:
         return [
-            service.book_view(book) | {"role": role}
+            _visible(service.book_view(book), frozenset()) | {"role": role}
             for book, role in service.list_books_for_user(db, auth.auth.user.id)
         ]
 
@@ -69,12 +69,26 @@ def create_book(body: BookCreate, request: Request, auth: AuthDep, db: DbDep, se
     return run_write(request, db, auth.ctx, settings, "books.create", body.model_dump(), apply, status_code=201)
 
 
+def _visible(view: dict[str, Any], scopes: frozenset[Scope]) -> dict[str, Any]:
+    """Book settings are management info (admin:read); everything else any member reads."""
+    return view if Scope.ADMIN_READ in scopes else {k: v for k, v in view.items() if k != "settings"}
+
+
 @router.get("/books/{book_id}")
 def get_book(book_id: str, auth: AuthDep, db: DbDep) -> dict[str, Any]:
+    """The book, your role and permissions, and the token tiers you may hand out (ordinary members: user tiers)."""
     auth.ctx.require(Scope.LEDGER_READ)
+    role = auth.ctx.actor.role
     return run_read(
         db,
-        lambda: service.book_view(service.get_book(db, book_id)) | {"role": auth.ctx.actor.role},
+        lambda: (
+            _visible(service.book_view(service.get_book(db, book_id)), auth.ctx.actor.scopes)
+            | {
+                "role": role,
+                "scopes": sorted(auth.ctx.actor.scopes),
+                "token_tiers": [t.value for t in ROLE_TIERS[role]] if role else [],
+            }
+        ),
         auth.ctx,
     )
 

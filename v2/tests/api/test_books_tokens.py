@@ -37,9 +37,10 @@ def test_book_update_requires_matching_version(client, world) -> None:
 
 def test_token_plaintext_once_hash_stored(client, world, app) -> None:
     csrf = login(client, world.admin_email)
-    data = create_token(client, world.book_id, csrf, preset="bookkeeper", mcp_enabled=True)
+    data = create_token(client, world.book_id, csrf, tier="user_write", mcp_enabled=True)
     assert data["token"].startswith("bk_pat_")
-    assert data["scopes"] == ["import:write", "ledger:read", "ledger:write", "reference:write"]
+    assert data["tier"] == "user_write" and data["tier_label"] == "用户读写"
+    assert data["scopes"] == ["files:read", "import:write", "ledger:read", "ledger:write", "reference:write"]
     with app.state.sessionmaker() as session:
         row = session.get(ApiToken, data["id"])
         assert row.token_hash != data["token"]
@@ -107,17 +108,17 @@ def test_custom_scopes_cannot_exceed_role(client, world, app) -> None:
     csrf = login(client, "v@example.com", "viewer long password")
     response = client.post(
         f"/api/v1/books/{world.book_id}/tokens",
-        json={"name": "x", "preset": "custom", "scopes": ["ledger:read", "ledger:write"]},
+        json={"name": "x", "tier": "user_write"},
         headers=write_headers(csrf),
     )
     assert response.status_code == 403
-    assert "ledger:write" in response.json()["detail"]
+    assert "只能选：用户只读" in response.json()["detail"]
     retired = client.post(
         f"/api/v1/books/{world.book_id}/tokens",
-        json={"name": "x", "preset": "custom", "scopes": ["ledger:read", "ledger:post"]},
+        json={"name": "x", "preset": "custom", "scopes": ["ledger:read"]},
         headers=write_headers(csrf),
     )
-    assert retired.status_code == 422 and "unknown scope" in retired.json()["detail"]
+    assert retired.status_code == 422  # scopes are no longer picked one by one
 
 
 def test_last_owner_cannot_be_removed(client, world) -> None:

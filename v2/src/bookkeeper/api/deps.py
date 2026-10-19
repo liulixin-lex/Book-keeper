@@ -10,6 +10,7 @@ from fastapi import Depends, Request
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
+from bookkeeper.api import permissions
 from bookkeeper.api.envelope import envelope
 from bookkeeper.config import Settings
 from bookkeeper.domain.errors import DomainError
@@ -96,6 +97,7 @@ def authenticate(request: Request, db: DbDep, settings: SettingsDep) -> Auth:
         idempotency_key=request.headers.get("idempotency-key") or None,
         dry_run=request.query_params.get("dry_run", "").lower() in {"1", "true", "yes"},
     )
+    permissions.check(request.method, request.url.path, ctx)
     return Auth(ctx=ctx, auth=result, session_token=raw_session if channel == "ui" else None)
 
 

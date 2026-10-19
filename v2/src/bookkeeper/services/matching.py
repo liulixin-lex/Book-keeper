@@ -468,6 +468,12 @@ PAIRING_DEFAULTS: dict[str, Any] = {
 }
 
 
+def list_pairing_rules(session: Session, book_id: str) -> list[PairingRule]:
+    return list(
+        session.execute(select(PairingRule).where(PairingRule.book_id == book_id).order_by(PairingRule.code)).scalars()
+    )
+
+
 def pairing_view(rule: PairingRule) -> dict[str, Any]:
     return {
         "id": rule.id,

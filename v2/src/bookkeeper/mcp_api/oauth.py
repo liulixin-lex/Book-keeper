@@ -42,6 +42,7 @@ from starlette.types import ASGIApp
 from bookkeeper.config import Settings
 from bookkeeper.db.models import OAuthRefreshToken
 from bookkeeper.domain.errors import DomainError
+from bookkeeper.domain.scopes import ROLE_TIERS, TIER_TEXT, Tier
 from bookkeeper.security.secrets import random_base62, token_hash
 from bookkeeper.services import oauth, ratelimit
 
@@ -301,19 +302,19 @@ def _consent_form(request_id: str, csrf: str, books: list[tuple[Any, Any]], days
         f'<option value="{html.escape(book.id)}">{html.escape(book.name)}（{html.escape(role.value)}）</option>'
         for book, role in books
     )
-    best_role = max((role for _b, role in books), key=lambda r: len(oauth.PRESETS_BY_ROLE[r]))
-    allowed = oauth.PRESETS_BY_ROLE[best_role]
-    default = "bookkeeper" if any(p.value == "bookkeeper" for p in allowed) else allowed[0].value
-    presets = "".join(
-        f'<label class="opt"><input type="radio" name="preset" value="{p.value}"'
-        f"{' checked' if p.value == default else ''}>"
-        f"<span>{html.escape(oauth.PRESET_LABELS[p])}</span></label>"
-        for p in allowed
+    best_role = max((role for _b, role in books), key=lambda r: len(ROLE_TIERS[r]))
+    allowed = ROLE_TIERS[best_role]
+    default = Tier.USER_WRITE if Tier.USER_WRITE in allowed else allowed[0]
+    tiers = "".join(
+        f'<label class="opt"><input type="radio" name="tier" value="{t.value}"'
+        f"{' checked' if t is default else ''}>"
+        f"<span>{html.escape(TIER_TEXT[t][0])}：{html.escape(TIER_TEXT[t][1])}</span></label>"
+        for t in allowed
     )
     return f"""{message}<form method="post" action="/oauth/login">
 {_hidden(request_id, csrf)}
 <label>账套</label><select name="book">{options}</select>
-<label>访问级别</label>{presets}
+<label>权限档位</label>{tiers}
 <p class="meta">访问令牌有效 {days} 天，到期自动续期；可随时在令牌管理中吊销。</p>
 <div class="row"><button class="secondary" name="action" value="deny">拒绝</button>
 <button class="primary" name="action" value="approve">授权</button></div></form>"""
@@ -394,7 +395,7 @@ class LoginPage:
                 req = oauth.pending_request(session, request_id, csrf)
                 if binding is None or req.params.get("binding") != token_hash(binding):
                     raise DomainError("UNAUTHENTICATED", "登录状态已失效，请在本页重新登录。")
-                return oauth.approve(session, req, fields.get("book", ""), fields.get("preset", ""), ip, self.iss)
+                return oauth.approve(session, req, fields.get("book", ""), fields.get("tier", ""), ip, self.iss)
 
             try:
                 url = await self.db.run(approve)

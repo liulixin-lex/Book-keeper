@@ -103,14 +103,14 @@ def test_without_a_master_key_nothing_is_stored(client, world) -> None:
 def test_tokens_cannot_change_providers_even_as_admin(client, world, master) -> None:
     csrf = login(client, world.admin_email)
     b = world.book_id
-    token = create_token(client, b, csrf, preset="admin")["token"]
+    token = create_token(client, b, csrf, tier="admin_write")["token"]
     body = {"name": "x", "kind": "anthropic", "api_key": KEY, "models": ["m"]}
     refused = client.post(f"/api/v1/books/{b}/ai/providers", json=body, headers=bearer(token, **write_headers()))
     assert refused.status_code == 403 and "网页端" in refused.json()["detail"]
     created = provider(client, b, csrf)
     readable = client.get(f"/api/v1/books/{b}/ai/providers", headers=bearer(token))
     assert readable.status_code == 200 and KEY not in readable.text
-    reader = create_token(client, b, csrf, preset="reader")["token"]
+    reader = create_token(client, b, csrf, tier="user_read")["token"]
     assert client.get(f"/api/v1/books/{b}/ai/providers", headers=bearer(reader)).status_code == 403
     assert client.get(f"/api/v1/books/{b}/ai/status", headers=bearer(reader)).status_code == 200
     test = client.post(f"/api/v1/books/{b}/ai/providers/{created['id']}:test", headers=bearer(token, **write_headers()))

@@ -106,6 +106,9 @@ class BookMember(Base):
     __table_args__ = (CheckConstraint("role IN ('viewer','accountant','admin','owner')", name="role"),)
 
 
+TIER_CHECK = "tier IN ('user_read','user_write','admin_read','admin_write')"
+
+
 class ApiToken(Base, Versioned):
     __tablename__ = "api_tokens"
     id: Mapped[str] = mapped_column(Text, primary_key=True)
@@ -114,8 +117,7 @@ class ApiToken(Base, Versioned):
     name: Mapped[str] = mapped_column(Text, nullable=False)
     token_hash: Mapped[str] = mapped_column(String(64), nullable=False, unique=True)
     token_prefix: Mapped[str] = mapped_column(Text, nullable=False)
-    scopes: Mapped[list[str]] = mapped_column(ARRAY(Text), nullable=False)
-    preset: Mapped[str] = mapped_column(Text, nullable=False)
+    tier: Mapped[str] = mapped_column(Text, nullable=False)  # its scopes: domain.scopes.TIER_SCOPES
     mcp_enabled: Mapped[bool] = mapped_column(Boolean, server_default=text("false"), nullable=False)
     ip_allowlist: Mapped[list[str] | None] = mapped_column(ARRAY(Text))
     rate_limit_per_min: Mapped[int] = mapped_column(Integer, server_default="120", nullable=False)
@@ -125,7 +127,7 @@ class ApiToken(Base, Versioned):
     revoked_at: Mapped[datetime | None] = mapped_column(TZ)
     created_by: Mapped[str] = mapped_column(ForeignKey("users.id"), nullable=False)
     created_at: Mapped[datetime] = mapped_column(TZ, server_default=func.now(), nullable=False)
-    __table_args__ = (CheckConstraint("preset IN ('reader','bookkeeper','admin','custom')", name="preset"),)
+    __table_args__ = (CheckConstraint(TIER_CHECK, name="tier"),)
 
 
 class AuditHead(Base):
@@ -1083,7 +1085,7 @@ class OAuthCode(Base):
     client_id: Mapped[str] = mapped_column(ForeignKey("oauth_clients.client_id"), nullable=False)
     user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), nullable=False)
     book_id: Mapped[str] = mapped_column(ForeignKey("books.id"), nullable=False)
-    preset: Mapped[str] = mapped_column(Text, nullable=False)
+    tier: Mapped[str] = mapped_column(Text, nullable=False)
     redirect_uri: Mapped[str] = mapped_column(Text, nullable=False)
     redirect_uri_provided_explicitly: Mapped[bool] = mapped_column(Boolean, nullable=False)
     code_challenge: Mapped[str] = mapped_column(Text, nullable=False)
@@ -1091,7 +1093,7 @@ class OAuthCode(Base):
     expires_at: Mapped[datetime] = mapped_column(TZ, nullable=False)
     used_at: Mapped[datetime | None] = mapped_column(TZ)
     created_at: Mapped[datetime] = mapped_column(TZ, server_default=func.now(), nullable=False)
-    __table_args__ = (CheckConstraint("preset IN ('reader','bookkeeper','admin')", name="preset"),)
+    __table_args__ = (CheckConstraint(TIER_CHECK, name="tier"),)
 
 
 class OAuthRefreshToken(Base):
@@ -1103,14 +1105,14 @@ class OAuthRefreshToken(Base):
     client_id: Mapped[str] = mapped_column(ForeignKey("oauth_clients.client_id"), nullable=False)
     user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), nullable=False)
     book_id: Mapped[str] = mapped_column(ForeignKey("books.id"), nullable=False)
-    preset: Mapped[str] = mapped_column(Text, nullable=False)
+    tier: Mapped[str] = mapped_column(Text, nullable=False)
     resource: Mapped[str | None] = mapped_column(Text)
     api_token_id: Mapped[str] = mapped_column(ForeignKey("api_tokens.id"), nullable=False, index=True)
     expires_at: Mapped[datetime] = mapped_column(TZ, nullable=False)
     used_at: Mapped[datetime | None] = mapped_column(TZ)
     revoked_at: Mapped[datetime | None] = mapped_column(TZ)
     created_at: Mapped[datetime] = mapped_column(TZ, server_default=func.now(), nullable=False)
-    __table_args__ = (CheckConstraint("preset IN ('reader','bookkeeper','admin')", name="preset"),)
+    __table_args__ = (CheckConstraint(TIER_CHECK, name="tier"),)
 
 
 # ------------------------------------------------------------------ tags

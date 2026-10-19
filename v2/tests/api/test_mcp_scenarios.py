@@ -27,7 +27,7 @@ def test_mcp_scenarios_a_to_d(client, world) -> None:
         "valid_from": "2026-01-01",
     }
     assert client.post(f"/api/v1/books/{book}/fee-rules", headers=write_headers(csrf), json=rule).status_code == 201
-    ai = mcp_for(client, world, csrf, preset="admin")
+    ai = mcp_for(client, world, csrf, tier="admin_write")
 
     # A. record a purchase from natural language: context → counterparty → schema → dry run → record
     context = ai.call("get_context")

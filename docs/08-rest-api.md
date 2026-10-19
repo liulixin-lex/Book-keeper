@@ -37,6 +37,7 @@
 | `reference:write` | 往来方、别名、子账户、维度值、标签 |
 | `config:write` | 科目、交易类型、手续费规则、商品、价格规则、手工汇率、来源 |
 | `admin` | 成员、令牌、备份、账套设置 |
+| `admin:read` | 只读查看管理信息：成员、令牌列表（不含密钥）、审计日志、MCP 调用记录、规则与手续费规则、AI 提供商与任务分配（不含密钥）、账套设置（2026-10-19 新增） |
 
 2026-10-19 起 `ledger:draft` / `ledger:post` / `ledger:correct` 合并为 `ledger:write`，`periods:manage`、`reconcile:write` 取消（17 号文档）。
 
@@ -45,19 +46,29 @@
 | 角色 | 作用域上限 |
 |---|---|
 | viewer | ledger:read, files:read |
-| accountant | viewer + ledger:write, import:write, rules:write, reference:write |
+| accountant | viewer + ledger:write, import:write, rules:write, reference:write, admin:read |
 | admin | accountant + config:write, admin |
 | owner | admin + 账套转移 / 归档 |
 
-请求的有效权限 = 路由要求的 scope ⊆（令牌 scope ∩ 用户角色上限）。会话请求的令牌 scope 视为角色上限。
+网页登录会话的权限 = 角色上限。令牌（API、MCP、OAuth）与站内 AI 助手用下面的四个档位。
 
-### 3.3 令牌预设
+### 3.3 令牌权限：四个档位
 
-| 预设 | scope | 说明 |
-|---|---|---|
-| `reader`（默认） | ledger:read | 只读分析 |
-| `bookkeeper` | ledger:read, ledger:write, import:write, reference:write | 日常记账、修改与删除、导入 |
-| `admin` | 用户角色上限内全部 | 另含规则、手续费与账套配置 |
+2026-10-19 起令牌只有四个档位，不再逐项勾选作用域。档位到作用域的映射只写在 `domain/scopes.py` 的 `TIER_SCOPES`，REST、MCP 与站内 AI 助手共用。
+
+| 档位 | 代码 | 能做什么 | 作用域 |
+|---|---|---|---|
+| 用户只读 | `user_read`（默认） | 查看账本、统计、导入批次与记录、自己用户上传的文件 | ledger:read, files:read |
+| 用户读写 | `user_write` | 另可记账、修改、删除、恢复、导入、匹配决策、往来方 / 渠道等基础资料；所有写入可撤销 | + ledger:write, import:write, reference:write |
+| 管理员只读 | `admin_read` | 另可查看管理信息（见 `admin:read`）；不能写 | user_read + admin:read |
+| 管理员读写 | `admin_write` | 全部权限 | 全部 |
+
+- **创建上限**：viewer 只能创建用户只读；accountant 可创建用户只读、用户读写；admin / owner 四档都能创建。`GET /books/{id}` 的 `token_tiers` 列出调用者可选的档位，`scopes` 是调用者在该账套的权限。用令牌创建、吊销、轮换令牌需要管理员读写档位。
+- **角色降级**：令牌按“当前角色允许的、不超过原档位的最高一档”生效（如管理员读写 → 记账员角色下按用户读写）。列表里的 `effective_tier` 显示降级后的档位。
+- **文件**：用户档位的令牌只能读自己用户上传的文件（含自己导出的文件）；管理员档位可读账套全部文件。
+- **AI 提供商与密钥**：只能在网页端修改，任何档位的令牌（含 MCP）都返回 403；管理员只读可以查看（不含密钥）。
+- **检查顺序**：每个账套接口所需的作用域登记在 `api/permissions.py` 的一张表里（16 号文档的“权限”列由它生成，以它为准），认证后、校验请求体之前检查，缺权限一律 403（不会先返回 422）；表里没有登记的账套接口直接拒绝。`tests/api/test_permission_matrix.py` 对四档 × 每个 REST 接口、每个 MCP 工具逐一断言（允许 / 403），并核对表与实际路由一致。
+- **旧令牌**（迁移 0014）：reader → 用户只读，bookkeeper → 用户读写，admin → 管理员读写；自定义令牌映射到其作用域覆盖的最高一档（没有 ledger:read 的直接吊销），迁移时打印报告。
 
 ## 4. 写入语义
 
@@ -253,7 +264,7 @@
 | 错误码 | HTTP | 可重试 | 说明 |
 |---|---|---|---|
 | `UNAUTHENTICATED` / `TOKEN_EXPIRED` / `TOKEN_REVOKED` | 401 | 否 | |
-| `FORBIDDEN_SCOPE` | 403 | 否 | `detail` 指明缺少的 scope |
+| `FORBIDDEN_SCOPE` | 403 | 否 | `detail` 指明缺少的 scope（或“只能在网页端修改”） |
 | `NOT_FOUND` | 404 | 否 | |
 | `VALIDATION_FAILED` | 422 | 否 | 请求结构错误，`errors[]` 给字段路径 |
 | `AMBIGUOUS_REFERENCE` | 422 | 否 | 名称解析有多个候选，`candidates[]` |

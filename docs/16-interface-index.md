@@ -7,222 +7,222 @@
 
 ### accounts
 
-| 方法 | 路径 | 说明 |
-|---|---|---|
-| GET | `…/accounts` | List Accounts |
-| POST | `…/accounts` | Create Account |
-| GET | `…/accounts/{account_ref}` | Get Account |
-| PATCH | `…/accounts/{account_ref}` | Update Account |
-| POST | `…/accounts:apply-template` | Apply Template |
+| 方法 | 路径 | 权限 | 说明 |
+|---|---|---|---|
+| GET | `…/accounts` | ledger:read | List Accounts |
+| POST | `…/accounts` | config:write | Create Account |
+| GET | `…/accounts/{account_ref}` | ledger:read | Get Account |
+| PATCH | `…/accounts/{account_ref}` | config:write | Update Account |
+| POST | `…/accounts:apply-template` | config:write | Apply Template |
 
 ### ai
 
-| 方法 | 路径 | 说明 |
-|---|---|---|
-| GET | `…/ai/providers` | Providers without keys (only the last 4 characters). |
-| POST | `…/ai/providers` | Add a provider; the key is sealed with BK_MASTER_KEY. Web app only. |
-| DELETE | `…/ai/providers/{provider_id}` | Remove a provider and drop it from task routing. Web app only. |
-| PATCH | `…/ai/providers/{provider_id}` | Change a provider; a new Base URL needs the key again. Web app only. |
-| POST | `…/ai/providers/{provider_id}:test` | A tiny request to the provider: does it answer, which models does it list. |
-| GET | `…/ai/routes` | Provider + model per task (识别, AI 助手), in fallback order. |
-| PUT | `…/ai/routes` | Set the provider + model order per task. Web app only. |
-| GET | `…/ai/status` | Whether each AI task can run (a provider is routed, or BK_AI_* is set). No configuration details. |
-| GET | `…/ai/usage` | Calls, tokens and estimated cost per provider, model and task. |
+| 方法 | 路径 | 权限 | 说明 |
+|---|---|---|---|
+| GET | `…/ai/providers` | admin:read | Providers without keys (only the last 4 characters). |
+| POST | `…/ai/providers` | config:write，仅网页端 | Add a provider; the key is sealed with BK_MASTER_KEY. Web app only. |
+| DELETE | `…/ai/providers/{provider_id}` | config:write，仅网页端 | Remove a provider and drop it from task routing. Web app only. |
+| PATCH | `…/ai/providers/{provider_id}` | config:write，仅网页端 | Change a provider; a new Base URL needs the key again. Web app only. |
+| POST | `…/ai/providers/{provider_id}:test` | config:write，仅网页端 | A tiny request to the provider: does it answer, which models does it list. |
+| GET | `…/ai/routes` | admin:read | Provider + model per task (识别, AI 助手), in fallback order. |
+| PUT | `…/ai/routes` | config:write，仅网页端 | Set the provider + model order per task. Web app only. |
+| GET | `…/ai/status` | ledger:read | Whether each AI task can run (a provider is routed, or BK_AI_* is set). No configuration details. |
+| GET | `…/ai/usage` | admin:read | Calls, tokens and estimated cost per provider, model and task. |
 
 ### audit
 
-| 方法 | 路径 | 说明 |
-|---|---|---|
-| GET | `…/audit-events` | List Events |
-| GET | `…/audit-events/verify` | Verify |
-| GET | `…/change-sets` | List Change Sets |
-| GET | `…/change-sets/{change_set_id}` | Get Change Set |
+| 方法 | 路径 | 权限 | 说明 |
+|---|---|---|---|
+| GET | `…/audit-events` | admin:read | List Events |
+| GET | `…/audit-events/verify` | admin:read | Verify |
+| GET | `…/change-sets` | ledger:read | List Change Sets |
+| GET | `…/change-sets/{change_set_id}` | ledger:read | Get Change Set |
 
 ### auth
 
-| 方法 | 路径 | 说明 |
-|---|---|---|
-| POST | `/api/v1/auth/login` | Login |
-| POST | `/api/v1/auth/logout` | Logout |
-| GET | `/api/v1/auth/me` | Me |
-| POST | `/api/v1/auth/password` | Change Password |
+| 方法 | 路径 | 权限 | 说明 |
+|---|---|---|---|
+| POST | `/api/v1/auth/login` | — | Login |
+| POST | `/api/v1/auth/logout` | — | Logout |
+| GET | `/api/v1/auth/me` | — | Me |
+| POST | `/api/v1/auth/password` | — | Change Password |
 
 ### books
 
-| 方法 | 路径 | 说明 |
-|---|---|---|
-| GET | `/api/v1/books` | List Books |
-| POST | `/api/v1/books` | Create Book |
-| GET | `…` | Get Book |
-| PATCH | `…` | Update Book |
-| GET | `…/members` | List Members |
-| DELETE | `…/members/{user_id}` | Remove Member |
-| PUT | `…/members/{user_id}` | Set Member |
+| 方法 | 路径 | 权限 | 说明 |
+|---|---|---|---|
+| GET | `/api/v1/books` | — | List Books |
+| POST | `/api/v1/books` | — | Create Book |
+| GET | `…` | ledger:read | The book, your role and permissions, and the token tiers you may hand out (ordinary members: user tiers). |
+| PATCH | `…` | admin | Update Book |
+| GET | `…/members` | admin:read | List Members |
+| DELETE | `…/members/{user_id}` | admin | Remove Member |
+| PUT | `…/members/{user_id}` | admin | Set Member |
 
 ### business
 
-| 方法 | 路径 | 说明 |
-|---|---|---|
-| GET | `…/fee-rules` | List Fee Rules |
-| POST | `…/fee-rules` | Create a rule or a new version (same code, later valid_from). Existing postings keep their |
-| POST | `…/fee-rules/{code}:retire` | Retire Fee Rule |
-| GET | `…/fee-rules:evaluate` | Which rule applies and the fee it gives — the same selection used when posting. |
-| GET | `…/transaction-types` | How to enter each type: input schema, an example request and the default accounts. |
+| 方法 | 路径 | 权限 | 说明 |
+|---|---|---|---|
+| GET | `…/fee-rules` | admin:read | List Fee Rules |
+| POST | `…/fee-rules` | config:write | Create a rule or a new version (same code, later valid_from). Existing postings keep their |
+| POST | `…/fee-rules/{code}:retire` | config:write | Retire Fee Rule |
+| GET | `…/fee-rules:evaluate` | ledger:read | Which rule applies and the fee it gives — the same selection used when posting. |
+| GET | `…/transaction-types` | ledger:read | How to enter each type: input schema, an example request and the default accounts. |
 
 ### exports
 
-| 方法 | 路径 | 说明 |
-|---|---|---|
-| GET | `…/exports/{fmt}` | Journal lines of the range (all when omitted) in entry order; the Beancount file passes bean-check. |
+| 方法 | 路径 | 权限 | 说明 |
+|---|---|---|---|
+| GET | `…/exports/{fmt}` | ledger:read | Journal lines of the range (all when omitted) in entry order; the Beancount file passes bean-check. |
 
 ### files
 
-| 方法 | 路径 | 说明 |
-|---|---|---|
-| POST | `…/attachments` | Create Attachment |
-| POST | `…/files` | Upload File |
-| GET | `…/files/{file_id}` | Get File |
-| GET | `…/files/{file_id}/content` | Download File |
+| 方法 | 路径 | 权限 | 说明 |
+|---|---|---|---|
+| POST | `…/attachments` | ledger:write | Create Attachment |
+| POST | `…/files` | ledger:write 或 import:write | Upload File |
+| GET | `…/files/{file_id}` | files:read | Get File |
+| GET | `…/files/{file_id}/content` | files:read | Download File |
 
 ### health
 
-| 方法 | 路径 | 说明 |
-|---|---|---|
-| GET | `/healthz` | Healthz |
-| GET | `/readyz` | Readyz |
+| 方法 | 路径 | 权限 | 说明 |
+|---|---|---|---|
+| GET | `/healthz` | — | Healthz |
+| GET | `/readyz` | — | Readyz |
 
 ### imports
 
-| 方法 | 路径 | 说明 |
-|---|---|---|
-| GET | `…/import-batches` | 批次列表，新的在前。每批带 `open_records`：尚未入账的记录数（待补全的，以及已补全、等完成导入的）。 |
-| POST | `…/import-batches` | Structured records (e.g. read by an AI from screenshots) or an uploaded file_id → staged batch. |
-| GET | `…/import-batches/{batch_id}` | Get Batch |
-| POST | `…/import-batches/{batch_id}:commit` | Commit Batch |
-| POST | `…/import-batches/{batch_id}:decide-matches` | Answer all of a batch's "may already be booked" questions at once. |
-| POST | `…/import-batches/{batch_id}:retry` | Read a batch whose AI read failed again, with the same files. |
-| POST | `…/import-batches/{batch_id}:revert` | Revert Batch |
-| POST | `…/import-batches:upload` | Upload a statement and stage it as a batch. An AI 识别 source returns at once with a batch 识别中 that the |
-| GET | `…/import-sources` | List Sources |
-| POST | `…/import-sources` | Create Source |
-| PATCH | `…/import-sources/{ref}` | Update Source |
-| POST | `…/import-sources:preview` | Try a source setup on a sample file before saving it: the file's top rows, the records it would read |
-| GET | `…/match-suggestions` | Pending suggestions (oldest first); ``batch_id`` narrows them to one import. |
-| POST | `…/match-suggestions/{suggestion_id}:accept` | Accept |
-| POST | `…/match-suggestions/{suggestion_id}:reject` | Reject |
-| GET | `…/pairing-rules` | List Pairing |
-| POST | `…/pairing-rules` | Save Pairing |
-| GET | `…/rules` | List Rules |
-| POST | `…/rules` | Save Rule |
-| POST | `…/rules/{ref}:disable` | Disable Rule |
-| POST | `…/rules/{ref}:enable` | Enable Rule |
-| POST | `…/rules:apply` | Apply Rules |
-| POST | `…/rules:test` | Test Rule |
-| GET | `…/source-records` | Search Records |
-| PATCH | `…/source-records/{record_id}` | Classify |
-| POST | `…/source-records/{record_id}:link` | Link |
-| POST | `…/source-records:ignore` | Ignore |
+| 方法 | 路径 | 权限 | 说明 |
+|---|---|---|---|
+| GET | `…/import-batches` | ledger:read | 批次列表，新的在前。每批带 `open_records`：尚未入账的记录数（待补全的，以及已补全、等完成导入的）。 |
+| POST | `…/import-batches` | import:write | Structured records (e.g. read by an AI from screenshots) or an uploaded file_id → staged batch. |
+| GET | `…/import-batches/{batch_id}` | ledger:read | Get Batch |
+| POST | `…/import-batches/{batch_id}:commit` | import:write | Commit Batch |
+| POST | `…/import-batches/{batch_id}:decide-matches` | import:write | Answer all of a batch's "may already be booked" questions at once. |
+| POST | `…/import-batches/{batch_id}:retry` | import:write | Read a batch whose AI read failed again, with the same files. |
+| POST | `…/import-batches/{batch_id}:revert` | import:write | Revert Batch |
+| POST | `…/import-batches:upload` | import:write | Upload a statement and stage it as a batch. An AI 识别 source returns at once with a batch 识别中 that the |
+| GET | `…/import-sources` | ledger:read | List Sources |
+| POST | `…/import-sources` | import:write | Create Source |
+| PATCH | `…/import-sources/{ref}` | import:write | Update Source |
+| POST | `…/import-sources:preview` | import:write | Try a source setup on a sample file before saving it: the file's top rows, the records it would read |
+| GET | `…/match-suggestions` | ledger:read | Pending suggestions (oldest first); ``batch_id`` narrows them to one import. |
+| POST | `…/match-suggestions/{suggestion_id}:accept` | import:write | Accept |
+| POST | `…/match-suggestions/{suggestion_id}:reject` | import:write | Reject |
+| GET | `…/pairing-rules` | admin:read | List Pairing |
+| POST | `…/pairing-rules` | rules:write | Save Pairing |
+| GET | `…/rules` | admin:read | List Rules |
+| POST | `…/rules` | rules:write | Save Rule |
+| POST | `…/rules/{ref}:disable` | rules:write | Disable Rule |
+| POST | `…/rules/{ref}:enable` | rules:write | Enable Rule |
+| POST | `…/rules:apply` | import:write | Apply Rules |
+| POST | `…/rules:test` | ledger:read | Test Rule |
+| GET | `…/source-records` | ledger:read | Search Records |
+| PATCH | `…/source-records/{record_id}` | import:write | Classify |
+| POST | `…/source-records/{record_id}:link` | import:write | Link |
+| POST | `…/source-records:ignore` | import:write | Ignore |
 
 ### jobs
 
-| 方法 | 路径 | 说明 |
-|---|---|---|
-| GET | `…/jobs/{job_id}` | Get Job |
+| 方法 | 路径 | 权限 | 说明 |
+|---|---|---|---|
+| GET | `…/jobs/{job_id}` | ledger:read | Get Job |
 
 ### ledger
 
-| 方法 | 路径 | 说明 |
-|---|---|---|
-| GET | `…/balances` | Get Balances |
-| GET | `…/check-runs` | List Check Runs |
-| GET | `…/check-runs/{run_id}` | Get Check Run |
-| POST | `…/checks:run` | Run Checks |
-| GET | `…/journal-entries` | List Entries |
-| GET | `…/journal-entries/{ref}` | Get Entry |
-| GET | `…/reports/trial-balance` | Trial Balance |
+| 方法 | 路径 | 权限 | 说明 |
+|---|---|---|---|
+| GET | `…/balances` | ledger:read | Get Balances |
+| GET | `…/check-runs` | ledger:read | List Check Runs |
+| GET | `…/check-runs/{run_id}` | ledger:read | Get Check Run |
+| POST | `…/checks:run` | ledger:read | Run Checks |
+| GET | `…/journal-entries` | ledger:read | List Entries |
+| GET | `…/journal-entries/{ref}` | ledger:read | Get Entry |
+| GET | `…/reports/trial-balance` | ledger:read | Trial Balance |
 
 ### meta
 
-| 方法 | 路径 | 说明 |
-|---|---|---|
-| GET | `/api/v1/meta/capabilities` | Capabilities |
-| GET | `/api/v1/meta/enums` | Enums |
+| 方法 | 路径 | 权限 | 说明 |
+|---|---|---|---|
+| GET | `/api/v1/meta/capabilities` | — | Capabilities |
+| GET | `/api/v1/meta/enums` | — | Enums |
 
 ### operations
 
-| 方法 | 路径 | 说明 |
-|---|---|---|
-| POST | `…/change-sets/{change_set_id}:undo` | Revert every write of one request by appending: delete what it created, restore what it deleted, |
-| GET | `…/mcp-calls` | Mcp Calls |
-| GET | `…/work-items` | Work Items |
-| GET | `…/work-items/summary` | Work Summary |
+| 方法 | 路径 | 权限 | 说明 |
+|---|---|---|---|
+| POST | `…/change-sets/{change_set_id}:undo` | ledger:write | Revert every write of one request by appending: delete what it created, restore what it deleted, |
+| GET | `…/mcp-calls` | admin:read | Mcp Calls |
+| GET | `…/work-items` | ledger:read | Work Items |
+| GET | `…/work-items/summary` | ledger:read | Work Summary |
 
 ### reference
 
-| 方法 | 路径 | 说明 |
-|---|---|---|
-| GET | `…/commodities` | List Commodities |
-| POST | `…/commodities` | Add a currency or unit; it is shared by all books. |
-| PATCH | `…/commodities/{code}` | Update Commodity |
-| GET | `…/commodity-price-rules` | List Price Rules |
-| POST | `…/commodity-price-rules` | Create Price Rule |
-| GET | `…/counterparties` | List Counterparties |
-| POST | `…/counterparties` | Create Counterparty |
-| GET | `…/counterparties/{counterparty_id}` | Get Counterparty |
-| PATCH | `…/counterparties/{counterparty_id}` | Update Counterparty |
-| POST | `…/counterparties/{counterparty_id}/accounts` | Add Counterparty Account |
-| POST | `…/counterparties/{counterparty_id}/aliases` | Add Alias |
-| GET | `…/counterparties:resolve` | Resolve Counterparty |
-| POST | `…/dimension-types` | Create Dimension Type |
-| POST | `…/dimension-types/{type_code}/values` | Create Dimension Value |
-| PATCH | `…/dimension-values/{value_id}` | Update Dimension Value |
-| GET | `…/dimensions` | List Dimensions |
-| GET | `…/fx-rates` | List Fx Rates |
-| POST | `…/fx-rates` | Add Fx Rate |
-| GET | `…/tags` | Tags in use with their transaction counts (set them on transactions via create / PATCH ``tags``). |
+| 方法 | 路径 | 权限 | 说明 |
+|---|---|---|---|
+| GET | `…/commodities` | ledger:read | List Commodities |
+| POST | `…/commodities` | config:write | Add a currency or unit; it is shared by all books. |
+| PATCH | `…/commodities/{code}` | config:write | Update Commodity |
+| GET | `…/commodity-price-rules` | ledger:read | List Price Rules |
+| POST | `…/commodity-price-rules` | config:write | Create Price Rule |
+| GET | `…/counterparties` | ledger:read | List Counterparties |
+| POST | `…/counterparties` | reference:write | Create Counterparty |
+| GET | `…/counterparties/{counterparty_id}` | ledger:read | Get Counterparty |
+| PATCH | `…/counterparties/{counterparty_id}` | reference:write | Update Counterparty |
+| POST | `…/counterparties/{counterparty_id}/accounts` | reference:write | Add Counterparty Account |
+| POST | `…/counterparties/{counterparty_id}/aliases` | reference:write | Add Alias |
+| GET | `…/counterparties:resolve` | ledger:read | Resolve Counterparty |
+| POST | `…/dimension-types` | config:write | Create Dimension Type |
+| POST | `…/dimension-types/{type_code}/values` | reference:write | Create Dimension Value |
+| PATCH | `…/dimension-values/{value_id}` | reference:write | Update Dimension Value |
+| GET | `…/dimensions` | ledger:read | List Dimensions |
+| GET | `…/fx-rates` | ledger:read | List Fx Rates |
+| POST | `…/fx-rates` | config:write | Add Fx Rate |
+| GET | `…/tags` | ledger:read | Tags in use with their transaction counts (set them on transactions via create / PATCH ``tags``). |
 
 ### reports
 
-| 方法 | 路径 | 说明 |
-|---|---|---|
-| GET | `…/reports` | Available reports with their parameters; every report row carries a ``drilldown``. |
-| GET | `…/reports/credit-purchases` | Credit Purchases |
-| GET | `…/reports/fees` | Fees |
-| GET | `…/reports/income-statement` | Income Statement |
-| GET | `…/reports/operations` | Operations |
-| GET | `…/reports/query` | Query |
-| GET | `…/reports/sales` | Sales |
-| GET | `…/reports/summary` | Summary |
+| 方法 | 路径 | 权限 | 说明 |
+|---|---|---|---|
+| GET | `…/reports` | ledger:read | Available reports with their parameters; every report row carries a ``drilldown``. |
+| GET | `…/reports/credit-purchases` | ledger:read | Credit Purchases |
+| GET | `…/reports/fees` | ledger:read | Fees |
+| GET | `…/reports/income-statement` | ledger:read | Income Statement |
+| GET | `…/reports/operations` | ledger:read | Operations |
+| GET | `…/reports/query` | ledger:read | Query |
+| GET | `…/reports/sales` | ledger:read | Sales |
+| GET | `…/reports/summary` | ledger:read | Summary |
 
 ### tokens
 
-| 方法 | 路径 | 说明 |
-|---|---|---|
-| GET | `…/tokens` | List Tokens |
-| POST | `…/tokens` | Create Token |
-| POST | `…/tokens/{token_id}:revoke` | Revoke Token |
-| POST | `…/tokens/{token_id}:rotate` | Rotate Token |
+| 方法 | 路径 | 权限 | 说明 |
+|---|---|---|---|
+| GET | `…/tokens` | ledger:read | List Tokens |
+| POST | `…/tokens` | ledger:read（令牌另需 admin） | Create Token |
+| POST | `…/tokens/{token_id}:revoke` | ledger:read（令牌另需 admin） | Revoke Token |
+| POST | `…/tokens/{token_id}:rotate` | ledger:read（令牌另需 admin） | Rotate Token |
 
 ### transactions
 
-| 方法 | 路径 | 说明 |
-|---|---|---|
-| GET | `…/transactions` | List Transactions |
-| POST | `…/transactions` | Create Transaction |
-| DELETE | `…/transactions/{ref}` | Delete (the entry is reversed; history stays). ``:restore`` or undoing the change set brings it back. |
-| GET | `…/transactions/{ref}` | Get Transaction |
-| PATCH | `…/transactions/{ref}` | Change any field; ``inputs`` only needs the changed keys. Affects the books → re-posted in place. |
-| GET | `…/transactions/{ref}/explain` | How the inputs became journal lines: resolved inputs, fee rule candidates and reasons, lines, links. |
-| POST | `…/transactions/{ref}:restore` | Bring back a deleted transaction with the lines it had. |
-| POST | `…/transactions:batch` | Record up to 200 transactions in one call. Results keep input order. |
-| POST | `…/transactions:repost` | Re-run fee rules and rates on sales / credit purchases; append ?dry_run=true to see the effect first. |
+| 方法 | 路径 | 权限 | 说明 |
+|---|---|---|---|
+| GET | `…/transactions` | ledger:read | List Transactions |
+| POST | `…/transactions` | ledger:write | Create Transaction |
+| DELETE | `…/transactions/{ref}` | ledger:write | Delete (the entry is reversed; history stays). ``:restore`` or undoing the change set brings it back. |
+| GET | `…/transactions/{ref}` | ledger:read | Get Transaction |
+| PATCH | `…/transactions/{ref}` | ledger:write | Change any field; ``inputs`` only needs the changed keys. Affects the books → re-posted in place. |
+| GET | `…/transactions/{ref}/explain` | ledger:read | How the inputs became journal lines: resolved inputs, fee rule candidates and reasons, lines, links. |
+| POST | `…/transactions/{ref}:restore` | ledger:write | Bring back a deleted transaction with the lines it had. |
+| POST | `…/transactions:batch` | ledger:write | Record up to 200 transactions in one call. Results keep input order. |
+| POST | `…/transactions:repost` | ledger:write | Re-run fee rules and rates on sales / credit purchases; append ?dry_run=true to see the effect first. |
 
 ### users
 
-| 方法 | 路径 | 说明 |
-|---|---|---|
-| GET | `/api/v1/users` | List Users |
-| POST | `/api/v1/users` | Create User |
+| 方法 | 路径 | 权限 | 说明 |
+|---|---|---|---|
+| GET | `/api/v1/users` | — | List Users |
+| POST | `/api/v1/users` | — | Create User |
 
 共 124 个 REST 操作。
 
@@ -239,7 +239,8 @@
 | `evaluate_fee` | 试算手续费 | 只读 | ledger:read | fee_rules_evaluate |
 | `explain_posting` | 解释分录 | 只读 | ledger:read | transactions_explain |
 | `export_ledger` | 导出账本 | 只读 | ledger:read | exports_get |
-| `get_audit_trail` | 审计记录 | 只读 | ledger:read | audit_events_list |
+| `get_admin_info` | 管理信息 | 只读 | admin:read | members_list |
+| `get_audit_trail` | 审计记录 | 只读 | admin:read | audit_events_list |
 | `get_balances` | 科目余额 | 只读 | ledger:read | balances_get |
 | `get_context` | 账套上下文 | 只读 | ledger:read | meta_capabilities |
 | `get_import_batch` | 导入批次 | 只读 | ledger:read | import_batches_get |
@@ -266,4 +267,4 @@
 | `update_transaction` | 修改交易 | 写 | ledger:write | transactions.edit |
 | `upsert_reference` | 维护基础资料 | 写 | reference:write | counterparties_create |
 
-共 35 个工具；写工具另有 `dry_run` 与 `idempotency_key` 参数。
+共 36 个工具；写工具另有 `dry_run` 与 `idempotency_key` 参数。

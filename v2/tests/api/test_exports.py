@@ -127,12 +127,12 @@ def test_mcp_export_and_download(client, world) -> None:
 
     csrf = login(client, world.admin_email)
     setup_october(client, world.book_id, csrf)
-    reader = mcp_for(client, world, csrf, preset="reader")
+    reader = mcp_for(client, world, csrf, tier="user_read")
     assert "export_ledger" in reader.tools()
     result = reader.call("export_ledger", format="beancount", date_from="2026-10-01", date_to="2026-10-31")
     assert result["ok"], result
     auth = {"Authorization": reader.headers["Authorization"]}
-    assert client.get(result["data"]["download"], headers=auth).status_code == 403  # reader preset lacks files:read
+    assert client.get(result["data"]["download"], headers=auth).status_code == 200  # its own export file
     download = client.get(result["data"]["export_url"], headers=auth)
     assert download.status_code == 200
     _entries, errors, _ = loader.load_string(download.text)

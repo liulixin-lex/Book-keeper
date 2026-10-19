@@ -188,6 +188,37 @@ await toast(`已删除 ${relay}`);
 expect(!(await api("/ai/routes")).extract.some((r) => r.provider_name === relay), "the deleted provider is still routed");
 step("added, routed and deleted a provider");
 
+step("设置 → AI 接入: a 管理员只读 token reads management info and cannot write");
+await page.goto(`${base}/settings/ai`);
+await page.waitForLoadState("networkidle");
+await page.getByRole("button", { name: "新令牌" }).click();
+const tokenSheet = page.locator("dialog[open]");
+await tokenSheet.getByLabel(/^名称/).fill(`E2E 只读 ${stamp}`);
+await tokenSheet.getByRole("radio", { name: /^管理员只读/ }).click();
+await tokenSheet.getByRole("button", { name: "生成令牌" }).click();
+const secret = (await page.locator("dialog[open] code").textContent())?.trim() ?? "";
+expect(secret.startsWith("bk_pat_"), "the new token was not shown");
+const probe = await page.evaluate(async (t) => {
+  const b = `/api/v1/books/${localStorage.getItem("bk.book")}`;
+  const h = { Authorization: `Bearer ${t}` };
+  const w = { ...h, "Content-Type": "application/json", "Idempotency-Key": crypto.randomUUID() };
+  return [(await fetch(`${b}/members`, { headers: h, credentials: "omit" })).status, (await fetch(`${b}/transactions`, { method: "POST", headers: w, body: "{}", credentials: "omit" })).status];
+}, secret);
+expect(probe[0] === 200 && probe[1] === 403, `admin_read token gave members ${probe[0]}, write ${probe[1]}`);
+const made = (await api("/tokens")).find((t) => t.name === `E2E 只读 ${stamp}`);
+expect(made?.tier === "admin_read", "the token list lacks the new tier");
+const revoked = await page.evaluate(async (id) => {
+  const csrf = (await (await fetch("/api/v1/auth/me")).json()).data.csrf_token;
+  const r = await fetch(`/api/v1/books/${localStorage.getItem("bk.book")}/tokens/${id}:revoke`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-CSRF-Token": csrf, "Idempotency-Key": crypto.randomUUID() },
+    body: "{}",
+  });
+  return r.status;
+}, made.id);
+expect(revoked === 200, `revoking gave ${revoked}`);
+step("made, checked and revoked an admin_read token");
+
 if (errors.length) {
   console.error(errors.join("\n"));
   process.exitCode = 1;

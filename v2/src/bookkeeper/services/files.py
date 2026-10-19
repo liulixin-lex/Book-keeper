@@ -103,6 +103,8 @@ def get_file(session: Session, ctx: RequestContext, file_id: str) -> StoredFile:
     item = session.get(StoredFile, file_id)
     if item is None or item.book_id != ctx.require_book():
         raise not_found("文件", file_id)
+    if ctx.actor.type == "token" and not ctx.has(Scope.ADMIN_READ) and item.uploaded_by != ctx.actor.user_id:
+        raise not_found("文件", file_id)  # the user tiers read the files their own user uploaded
     return item
 
 

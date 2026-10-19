@@ -1345,6 +1345,41 @@
   "input_schema": {
    "additionalProperties": false,
    "properties": {
+    "kind": {
+     "description": "members 成员与角色；tokens 令牌（不含密钥）；rules 分类规则；pairing_rules 配对规则；fee_rules 手续费规则；ai AI 提供商与任务分配（不含密钥）；book 账套设置",
+     "enum": [
+      "members",
+      "tokens",
+      "rules",
+      "pairing_rules",
+      "fee_rules",
+      "ai",
+      "book"
+     ],
+     "title": "Kind",
+     "type": "string"
+    }
+   },
+   "required": [
+    "kind"
+   ],
+   "title": "AdminInfoArgs",
+   "type": "object"
+  },
+  "kind": "read",
+  "name": "get_admin_info",
+  "operation": null,
+  "rest": "members_list",
+  "scopes": [
+   "admin:read"
+  ],
+  "title": "管理信息"
+ },
+ {
+  "any_of": [],
+  "input_schema": {
+   "additionalProperties": false,
+   "properties": {
     "change_set_id": {
      "anyOf": [
       {
@@ -1429,7 +1464,7 @@
   "operation": null,
   "rest": "audit_events_list",
   "scopes": [
-   "ledger:read"
+   "admin:read"
   ],
   "title": "审计记录"
  },

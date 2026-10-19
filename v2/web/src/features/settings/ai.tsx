@@ -7,7 +7,7 @@ import { useState } from "react";
 import { clsx } from "clsx";
 import { ArrowDown, ArrowUp, Lightning, Plus, Trash, X } from "@phosphor-icons/react";
 import { api, ApiError } from "@/api/client";
-import { useBook, useBookMutation, useBookQuery } from "@/api/queries";
+import { useBookMutation, useBookQuery, useCan } from "@/api/queries";
 import type { AiCapabilities, AiKind, AiProbe, AiProvider, AiRoute, AiRoutes, AiTask, AiUsageItem } from "@/api/types";
 import { Badge, Button, Card, Chip, Empty, ErrorNote, Field, Input, Segmented, Select, Sheet, Skeleton, Switch } from "@/components/ui";
 import { useToast } from "@/components/toast";
@@ -32,13 +32,8 @@ function errorText(e: unknown, fallback: string): string {
   return e instanceof ApiError ? e.detail : fallback;
 }
 
-function useCanEdit(): boolean {
-  const role = useBook().data?.role;
-  return role === "admin" || role === "owner";
-}
-
 export function AiModels() {
-  const canEdit = useCanEdit();
+  const canEdit = useCan("config:write");
   const providers = useBookQuery<AiProvider[]>("/ai/providers");
   const [open, setOpen] = useState<AiProvider | "new" | null>(null);
   const list = providers.data?.data ?? [];

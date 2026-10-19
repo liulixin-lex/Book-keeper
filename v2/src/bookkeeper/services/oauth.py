@@ -3,7 +3,7 @@
 Flow: dynamic client registration → /oauth/authorize (validated by the MCP SDK) stores a pending
 request → the user signs in and picks a book and an access level on our page → a single-use code
 bound to the client, redirect URI and PKCE challenge → /oauth/token exchanges it for an ordinary
-API token (``mcp_enabled``, preset scopes capped by the user's role) plus a
+API token (``mcp_enabled``, the chosen tier capped by the user's role) plus a
 refresh token. Refresh tokens rotate on every use; presenting a used one revokes the whole family.
 All secrets (client secrets, codes, refresh tokens, API tokens) are stored as SHA-256 hashes.
 """
@@ -33,24 +33,13 @@ from bookkeeper.db.models import (
 from bookkeeper.db.session import rowcount
 from bookkeeper.domain.errors import DomainError
 from bookkeeper.domain.ids import new_id
-from bookkeeper.domain.scopes import ROLE_CAPS, Preset, Role, scopes_for_preset
+from bookkeeper.domain.scopes import ROLE_CAPS, ROLE_TIERS, Role, Tier, tier_for_role, tier_scopes
 from bookkeeper.security.secrets import constant_time_equals, random_base62, token_hash
 from bookkeeper.services import audit, identity, tokens
 from bookkeeper.services.context import Actor, RequestContext
 
 REQUEST_TTL = timedelta(minutes=10)
 CODE_TTL = timedelta(minutes=5)
-PRESETS_BY_ROLE: dict[Role, tuple[Preset, ...]] = {
-    Role.VIEWER: (Preset.READER,),
-    Role.ACCOUNTANT: (Preset.READER, Preset.BOOKKEEPER),
-    Role.ADMIN: (Preset.READER, Preset.BOOKKEEPER, Preset.ADMIN),
-    Role.OWNER: (Preset.READER, Preset.BOOKKEEPER, Preset.ADMIN),
-}
-PRESET_LABELS = {
-    Preset.READER: "只读：查询账目与报表",
-    Preset.BOOKKEEPER: "记账：记账、修改与删除交易、导入账单",
-    Preset.ADMIN: "管理：另含规则、手续费与账套配置",
-}
 
 
 class OAuthError(Exception):
@@ -193,17 +182,17 @@ def _redirect(base: str, **params: str | None) -> str:
     return urlunsplit(parts._replace(query=urlencode(query)))
 
 
-def approve(session: Session, request: OAuthRequest, book_id: str, preset: str, ip: str | None, issuer: str) -> str:
+def approve(session: Session, request: OAuthRequest, book_id: str, tier: str, ip: str | None, issuer: str) -> str:
     if request.user_id is None:
         raise DomainError("UNAUTHENTICATED", "请先登录。")
     role = identity.member_role(session, book_id, request.user_id)
     if role is None:
         raise DomainError("FORBIDDEN_SCOPE", "你不是该账套的成员。")
     try:
-        chosen = Preset(preset)
+        chosen = Tier(tier)
     except ValueError as exc:
         raise DomainError("VALIDATION_FAILED", "未知的访问级别。") from exc
-    if chosen not in PRESETS_BY_ROLE[role]:
+    if chosen not in ROLE_TIERS[role]:
         raise DomainError("FORBIDDEN_SCOPE", "所选访问级别超过你在该账套的角色。")
     code = random_base62(43)
     params = request.params
@@ -213,7 +202,7 @@ def approve(session: Session, request: OAuthRequest, book_id: str, preset: str, 
             client_id=request.client_id,
             user_id=request.user_id,
             book_id=book_id,
-            preset=chosen.value,
+            tier=chosen.value,
             redirect_uri=params["redirect_uri"],
             redirect_uri_provided_explicitly=bool(params["redirect_uri_provided_explicitly"]),
             code_challenge=params["code_challenge"],
@@ -228,7 +217,7 @@ def approve(session: Session, request: OAuthRequest, book_id: str, preset: str, 
         "oauth.consent",
         "oauth_client",
         request.client_id,
-        after={"user_id": request.user_id, "book_id": book_id, "preset": chosen.value},
+        after={"user_id": request.user_id, "book_id": book_id, "tier": chosen.value},
         scope="global",
         in_change_set=False,
     )
@@ -264,7 +253,7 @@ def _issue(
     client_id: str,
     user_id: str,
     book_id: str,
-    preset: str,
+    tier: str,
     resource: str | None,
     family_id: str,
 ) -> IssuedTokens:
@@ -272,9 +261,7 @@ def _issue(
     role = identity.member_role(session, book_id, user_id)
     if user is None or not user.is_active or role is None:
         raise OAuthError("invalid_grant", "授权用户已停用或不再是账套成员。")
-    chosen = Preset(preset)
-    if chosen not in PRESETS_BY_ROLE[role]:  # the role may have been lowered since consent
-        chosen = PRESETS_BY_ROLE[role][-1]
+    chosen = tier_for_role(Tier(tier), role) or Tier.USER_READ  # the role may have been lowered since consent
     ctx = RequestContext(
         actor=Actor(type="user", user_id=user_id, role=role, scopes=ROLE_CAPS[role]),
         channel="api",
@@ -284,7 +271,7 @@ def _issue(
         session,
         ctx,
         name=f"OAuth · {client_name(session, client_id)}"[:100],
-        preset=chosen,
+        tier=chosen,
         mcp_enabled=True,
         expires_in_days=settings.oauth_access_days,
     )
@@ -296,7 +283,7 @@ def _issue(
             client_id=client_id,
             user_id=user_id,
             book_id=book_id,
-            preset=chosen.value,
+            tier=chosen.value,
             resource=resource,
             api_token_id=issued.token.id,
             expires_at=_now() + timedelta(days=settings.oauth_refresh_days),
@@ -310,7 +297,7 @@ def _issue(
         access_token=issued.plaintext,
         expires_in=settings.oauth_access_days * 86400,
         refresh_token=refresh,
-        scope=" ".join(sorted(s.value for s in scopes_for_preset(chosen, role))),
+        scope=" ".join(sorted(s.value for s in tier_scopes(chosen, role))),
     )
 
 
@@ -329,7 +316,7 @@ def exchange_code(session: Session, settings: Settings, client_id: str, code: st
         client_id=client_id,
         user_id=row.user_id,
         book_id=row.book_id,
-        preset=row.preset,
+        tier=row.tier,
         resource=row.resource,
         family_id=new_id("ogr"),
     )
@@ -366,7 +353,7 @@ def exchange_refresh(session: Session, settings: Settings, client_id: str, refre
         client_id=client_id,
         user_id=row.user_id,
         book_id=row.book_id,
-        preset=row.preset,
+        tier=row.tier,
         resource=row.resource,
         family_id=row.family_id,
     )

@@ -177,6 +177,7 @@ def _envelope(
         "meta": meta,
     }
     if error is not None:
+        body["status"] = error.status  # the HTTP status REST would give, e.g. 403 for a missing permission
         body["retryable"] = error.retryable
         body["errors"] = [e.__dict__ for e in error.errors]
         body["candidates"] = error.candidates
