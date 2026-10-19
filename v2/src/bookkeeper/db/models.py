@@ -1263,3 +1263,21 @@ class AgentFile(Base, Timestamps, Versioned):
     run_id: Mapped[str | None] = mapped_column(ForeignKey("agent_runs.id", ondelete="SET NULL"))
     created_by: Mapped[str | None] = mapped_column(ForeignKey("users.id"))
     __table_args__ = (UniqueConstraint("book_id", "path"),)
+
+
+class AiHandbook(Base):
+    """One version of the book's 识别规则手册 (services/handbook.py); the newest is in force."""
+
+    __tablename__ = "ai_handbooks"
+    id: Mapped[str] = mapped_column(Text, primary_key=True)
+    book_id: Mapped[str] = mapped_column(ForeignKey("books.id"), nullable=False)
+    version: Mapped[int] = mapped_column(Integer, nullable=False)
+    content: Mapped[str] = mapped_column(Text, nullable=False)
+    threshold: Mapped[Decimal] = mapped_column(Numeric(3, 2), nullable=False)
+    note: Mapped[str | None] = mapped_column(Text)
+    created_by: Mapped[str | None] = mapped_column(ForeignKey("users.id"))
+    created_at: Mapped[datetime] = mapped_column(TZ, server_default=func.now(), nullable=False)
+    __table_args__ = (
+        UniqueConstraint("book_id", "version"),
+        CheckConstraint("threshold BETWEEN 0.5 AND 1", name="threshold"),
+    )

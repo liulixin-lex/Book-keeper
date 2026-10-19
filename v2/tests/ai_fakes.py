@@ -11,21 +11,34 @@ from bookkeeper.ai.adapters import Request, Response, Target, ToolCall, Usage
 
 
 class FileBackend:
-    """For 识别: ``answer(file_name, mime, prompt_text)`` returns the model's JSON (it may carry ``_usage`` and
-    ``_model``) or raises a DomainError like a failing provider."""
+    """For 识别: ``answer(file_name, mime, prompt_text)`` returns the model's page (``page_type`` defaults to
+    "other"; ``_usage`` and ``_model`` are taken out) or raises a DomainError like a failing provider. A request
+    without a file is the classification step; ``suggest(prompt_text)`` answers it (no suggestions by default)."""
 
-    def __init__(self, answer: Callable[[str, str, str], dict[str, Any]]) -> None:
+    def __init__(
+        self,
+        answer: Callable[[str, str, str], dict[str, Any]],
+        suggest: Callable[[str], list[dict[str, Any]]] | None = None,
+    ) -> None:
         self.answer = answer
+        self.suggest = suggest
         self.requests: list[tuple[Target, Request, bool]] = []
 
     def complete(self, target: Target, request: Request, *, json_mode: bool) -> Response:
         self.requests.append((target, request, json_mode))
-        part = next(p for m in request.messages for p in m.parts if p.kind in ("image", "pdf"))
         text = " ".join(p.text for m in request.messages for p in m.parts if p.kind == "text")
+        part = next((p for m in request.messages for p in m.parts if p.kind in ("image", "pdf")), None)
+        if part is None:
+            found = self.suggest(text) if self.suggest else []
+            return Response(
+                json.dumps({"suggestions": found}, ensure_ascii=False), [], "end", Usage(50, 10), target.model
+            )
         result = dict(self.answer(part.name, part.mime, text))
         usage = result.pop("_usage", {"input_tokens": 0, "output_tokens": 0})
         model = result.pop("_model", target.model)
-        return Response(json.dumps(result, ensure_ascii=False), [], "end", Usage(**usage), model)
+        result.pop("page_kind", None)
+        page = {"page_type": "other"} | result
+        return Response(json.dumps({"page": page}, ensure_ascii=False), [], "end", Usage(**usage), model)
 
     def list_models(self, target: Target) -> list[str]:
         return [target.model]

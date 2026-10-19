@@ -1,0 +1,36 @@
+{
+  "page_type": "wallet_bill",
+  "site": null,
+  "records": [
+    {
+      "occurred_at": "2026-10-07 18:20:00",
+      "amount": "12.00",
+      "currency": "CNY",
+      "order_no": null,
+      "status": null,
+      "description": null,
+      "direction": "out",
+      "counterparty": "Example Cloud",
+      "method": null,
+      "fee": null
+    },
+    {
+      "occurred_at": "2026-10-08 08:00:00",
+      "amount": "50.00",
+      "currency": "CNY",
+      "order_no": null,
+      "status": null,
+      "description": null,
+      "direction": "in",
+      "counterparty": "Shop sale",
+      "method": null,
+      "fee": null
+    }
+  ],
+  "totals": [],
+  "unreadable": [],
+  "_usage": {
+    "input_tokens": 1400,
+    "output_tokens": 250
+  }
+}

@@ -9,8 +9,15 @@ import os
 import sys
 import urllib.request
 from collections.abc import Sequence
+from typing import TYPE_CHECKING
 
 from bookkeeper import __version__
+
+if TYPE_CHECKING:
+    from sqlalchemy.orm import Session
+
+    from bookkeeper.ai.adapters import Target
+    from bookkeeper.config import Settings
 
 
 def _cli_context(book_id: str | None = None):  # type: ignore[no-untyped-def]
@@ -151,6 +158,77 @@ def cmd_create_token(args: argparse.Namespace) -> int:
         )
         print(json.dumps(tokens.token_view(issued.token) | {"token": issued.plaintext}, ensure_ascii=False))
     return 0
+
+
+def cmd_ai_eval(args: argparse.Namespace) -> int:
+    """Score AI 识别 on a gold set, per provider / model and field (bookkeeper.ai.evaluate)."""
+    from datetime import UTC, datetime
+    from datetime import date as day
+    from pathlib import Path
+
+    from bookkeeper.ai import evaluate
+    from bookkeeper.ai.adapters import Target
+    from bookkeeper.config import get_settings
+    from bookkeeper.services import ai_providers, handbook
+
+    settings = get_settings()
+    samples = evaluate.load_gold(Path(args.gold))
+    if not samples:
+        raise SystemExit(f"{args.gold} 里没有带 .gold.json 的文件")
+    rules_text = handbook.DEFAULT
+    targets: list[Target] = []
+    if args.replay:
+        folders = sorted(p for p in Path(args.replay).iterdir() if p.is_dir())
+        names = args.target or [f.name for f in folders]
+        targets = [Target(None, name, "anthropic", name, "") for name in names]
+    if args.book:
+        from bookkeeper.db.session import session_scope
+
+        with session_scope() as session:
+            rules_text, _threshold, _version = handbook.text_and_threshold(session, args.book)
+            if not args.replay:
+                targets = _eval_targets(session, args.book, args.target, settings)
+    elif not args.replay:
+        env = ai_providers.env_target(settings)
+        if env is None:
+            raise SystemExit("没有可用的模型：给 --book（用账套的识别分配），或设置 BK_AI_API_KEY，或用 --replay")
+        targets = [env]
+    replay = Path(args.replay) if args.replay else None
+    scores = evaluate.evaluate(
+        targets,
+        samples,
+        handbook=rules_text,
+        today=day.fromisoformat(args.today) if args.today else datetime.now(UTC).date(),
+        backend_for=(lambda t: evaluate.Replay(replay / evaluate._slug(t.provider_name)))
+        if replay
+        else (lambda t: None),
+        record=Path(args.record) if args.record else None,
+    )
+    print(evaluate.table(scores))
+    if args.json:
+        Path(args.json).write_text(json.dumps([s.as_dict() for s in scores], ensure_ascii=False, indent=2))
+    return 0
+
+
+def _eval_targets(session: Session, book_id: str, wanted: list[str], settings: Settings) -> list[Target]:
+    from bookkeeper.services import ai_providers
+
+    if not wanted:
+        return ai_providers.targets(session, book_id, "extract", settings)
+    out = []
+    providers = {p.name: p for p in ai_providers.list_providers(session, book_id)}
+    for item in wanted:
+        if item == "env":
+            env = ai_providers.env_target(settings)
+            if env is None:
+                raise SystemExit("BK_AI_API_KEY 没有设置")
+            out.append(env)
+            continue
+        name, _, model = item.partition(":")
+        if name not in providers:
+            raise SystemExit(f"账套里没有提供商 {name}；有：{'、'.join(providers) or '无'}")
+        out.append(ai_providers._target(providers[name], model, settings))
+    return out
 
 
 def cmd_reset_password(args: argparse.Namespace) -> int:
@@ -382,6 +460,16 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--apply", action="store_true", help="正式迁移（核对全部通过才提交）")
     p.add_argument("--report-dir", default="migration-report", help="报告输出目录")
     p.set_defaults(fn=cmd_legacy_migrate)
+
+    p = sub.add_parser("ai-eval", help="评估 AI 识别：各提供商 / 模型在金标准样本上的逐字段准确率")
+    p.add_argument("--gold", default=".local/ai-gold", help="金标准目录：文件 + <文件>.gold.json（不要放进代码库）")
+    p.add_argument("--book", help="用这个账套的识别分配与规则手册；不给则用 BK_AI_* 与内置手册")
+    p.add_argument("--target", action="append", default=[], help="提供商名:模型，可重复；env = BK_AI_*")
+    p.add_argument("--replay", help="用录下的回答（<目录>/<目标>/<文件>.json），不调用 API")
+    p.add_argument("--record", help="把回答录到这个目录，之后可用 --replay 重算")
+    p.add_argument("--today", help="推断年份的基准日期，默认今天")
+    p.add_argument("--json", help="另存一份 JSON 结果")
+    p.set_defaults(fn=cmd_ai_eval)
 
     p = sub.add_parser("healthcheck", help="容器健康检查")
     p.add_argument("--url", default="http://127.0.0.1:8000/healthz")

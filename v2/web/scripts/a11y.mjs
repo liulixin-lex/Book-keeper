@@ -22,6 +22,7 @@ const paths = [
   "/settings/sources",
   "/settings/ai",
   "/settings/ai-models",
+  "/settings/ai-rules",
   "/settings/activity",
   "/settings/data",
   "/more",

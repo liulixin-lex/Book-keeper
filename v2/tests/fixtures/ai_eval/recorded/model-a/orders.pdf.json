@@ -1,0 +1,42 @@
+{
+  "page_type": "order_list",
+  "site": null,
+  "records": [
+    {
+      "occurred_at": "--10-05 12:00:00",
+      "amount": "8.00",
+      "currency": "CNY",
+      "order_no": "A1",
+      "status": "已完成",
+      "description": "Plus account",
+      "direction": "out",
+      "counterparty": null,
+      "channel": null,
+      "quantity": null,
+      "fee": null,
+      "face": null
+    },
+    {
+      "occurred_at": "--10-06 09:30:00",
+      "amount": "103.00",
+      "currency": "CNY",
+      "order_no": "A2",
+      "status": "已完成",
+      "description": "API credit 100R",
+      "direction": "out",
+      "counterparty": null,
+      "channel": null,
+      "quantity": null,
+      "fee": null,
+      "face": "100"
+    }
+  ],
+  "totals": [
+    "Total: 2 orders"
+  ],
+  "unreadable": [],
+  "_usage": {
+    "input_tokens": 1500,
+    "output_tokens": 300
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "page_type": "wallet_bill",
+  "site": null,
+  "records": [
+    {
+      "occurred_at": "2026-10-07 18:20:00",
+      "amount": "12.00",
+      "currency": "CNY",
+      "order_no": null,
+      "status": null,
+      "description": null,
+      "direction": "out",
+      "counterparty": "example cloud",
+      "method": null,
+      "fee": null
+    }
+  ],
+  "totals": [],
+  "unreadable": [
+    "第二行看不清"
+  ],
+  "_usage": {
+    "input_tokens": 800,
+    "output_tokens": 120
+  }
+}

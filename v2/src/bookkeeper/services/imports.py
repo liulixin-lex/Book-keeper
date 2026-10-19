@@ -746,9 +746,18 @@ def facts_for(session: Session, src: ImportSource, rec: SourceRecord) -> dict[st
         top = found[0] if found else None
         if top and top.get("score", 0) >= 0.9 and (len(found) == 1 or found[1].get("score", 0) < top["score"]):
             resolved = top["name"]
+    channel: str | None = None
+    channel_text = (rec.extracted or {}).get("channel_text")
+    if channel_text:  # a platform named on the page: only an exact name, code or alias counts
+        try:
+            dim = reference.get_dimension_type(session, src.book_id, "channel")
+            channel = reference.find_dimension_value(session, dim, str(channel_text)).code
+        except DomainError:
+            channel = None
     return {
         "source": src.code,
         "source_kind": src.kind,
+        "channel": channel,
         "direction": rec.direction,
         "amount": from_minor(rec.amount_minor, scale),
         "commodity": rec.commodity,
@@ -885,6 +894,7 @@ def classify_record(
         return
     facts = facts_for(session, src, rec)
     locked = list(rec.locked_fields)
+    suggestion = rec.classification.get("ai") if not locked else None  # a person's choice outranks the model
     base = default_classification(src, facts)
     kept = {k: v for k, v in rec.classification.items() if k in locked or f"inputs.{k}" in locked}
     if rec.classification.get("inputs"):
@@ -902,19 +912,53 @@ def classify_record(
             c.setdefault("inputs", {}).update(value)
         else:
             c[key] = value
+    if facts.get("channel") and c.get("type") in business.CHANNEL_TYPES:
+        c.setdefault("inputs", {}).setdefault("channel", facts["channel"])
+    used = _apply_suggestion(c, suggestion) if suggestion and not outcome.ignored else False
     c = fill_amounts(c, facts, src)
     rec.rule_trace = outcome.trace
     if hits is not None:
         hits.update(outcome.matched_rules)
-    if outcome.ignored or (base.get("ignore") and not c.get("type")):
-        rec.status, rec.ignore_reason = "ignored", outcome.ignored or str(base["ignore"])
-        rec.classification = {}
+    # Not a real payment (failed, zero, a gift): the model may say so when no rule spoke about the record.
+    ai_ignore = bool(suggestion and suggestion.get("ignore") and suggestion.get("auto") and not outcome.matched_rules)
+    if outcome.ignored or ai_ignore or (base.get("ignore") and not c.get("type")):
+        reason = outcome.ignored or (f"AI：{suggestion['ignore']}" if ai_ignore and suggestion else str(base["ignore"]))
+        rec.status, rec.ignore_reason = "ignored", reason
+        rec.classification = {"ai": suggestion} if ai_ignore else {}
         return
     c["missing"] = missing_fields(c)
+    review = [] if locked else _review_reasons(rec, suggestion, used)
+    if review:
+        c["review"] = review
+    if suggestion:
+        c["ai"] = suggestion | {"used": used}
     rec.classification = json.loads(json.dumps(c, default=str))
     if rec.status in ("new", "classified", "ignored"):
-        rec.status = "classified" if not c["missing"] else "new"
+        rec.status = "classified" if not c["missing"] and not review else "new"
         rec.ignore_reason = None
+
+
+def _apply_suggestion(c: dict[str, Any], suggestion: dict[str, Any]) -> bool:
+    """Rules first: the model's suggestion only fills what the rules and defaults left empty."""
+    used = False
+    if suggestion.get("type") and not c.get("type"):
+        c["type"], used = suggestion["type"], True
+    if suggestion.get("counterparty") and not c.get("counterparty"):
+        c["counterparty"], used = suggestion["counterparty"], True
+    inputs = c.setdefault("inputs", {})
+    if suggestion.get("category") and c.get("type") == "expense" and not inputs.get("category"):
+        inputs["category"], used = suggestion["category"], True
+    if suggestion.get("channel") and c.get("type") in business.CHANNEL_TYPES and not inputs.get("channel"):
+        inputs["channel"], used = suggestion["channel"], True
+    return used
+
+
+def _review_reasons(rec: SourceRecord, suggestion: dict[str, Any] | None, used: bool) -> list[str]:
+    """Why a complete record still waits in 待确认 instead of being booked on 完成导入."""
+    reasons = []
+    if suggestion and (used or suggestion.get("ignore")) and not suggestion.get("auto"):
+        reasons.append("ai_low_confidence")
+    return reasons
 
 
 def classify_batch(
@@ -1082,7 +1126,7 @@ def set_classification(session: Session, ctx: RequestContext, record_id: str, ch
         )
     src = session.get(ImportSource, rec.source_id)
     assert src is not None
-    c = dict(rec.classification)
+    c = {k: v for k, v in rec.classification.items() if k not in ("ai", "review")}  # a person decided
     locked = set(rec.locked_fields)
     for key in ("type", "counterparty", "description"):
         if key in changes:

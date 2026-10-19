@@ -349,14 +349,17 @@ function BatchView() {
   // One list feeds the tab counts and the rows, so they never disagree.
   const records = useBatchRecords(batchId, b?.status);
   const all = records.data ?? [];
-  // A record that may already be in the books waits in 待确认 until someone says "same" or "not the same".
-  const bucket = (r: SourceRecord) => (r.match?.status === "pending" ? "review" : r.status);
+  // 待确认: a record that may already be in the books (same / not the same), or one the AI classified without being
+  // sure enough to book it on 完成导入 (confirm or correct it).
+  const bucket = (r: SourceRecord) => (r.match?.status === "pending" || (r.status === "new" && (r.classification?.review?.length ?? 0) > 0) ? "review" : r.status);
   const by = all.reduce<Record<string, number>>((m, r) => ((m[bucket(r)] = (m[bucket(r)] ?? 0) + 1), m), {});
   const done = b?.status === "committed" || b?.status === "reverted";
   const active = tab ?? (by.review ? "review" : by.new ? "new" : done && by.booked ? "booked" : (RECORD_TABS.find((s) => by[s]) ?? "new"));
   const rows = all.filter((r) => bucket(r) === active);
   const open = by.new ?? 0;
   const review = by.review ?? 0;
+  const maybeBooked = rows.filter((r) => r.match?.status === "pending");
+  const unsure = rows.filter((r) => r.match?.status !== "pending");
   const toBook = by.classified ?? 0; // new transactions on 完成导入
   const linked = by.matched ?? 0; // already in the books: kept as evidence
   const ready = toBook + linked;
@@ -558,7 +561,7 @@ function BatchView() {
                 }))}
               />
             </div>
-            {active === "review" && review > 0 && editable && (
+            {active === "review" && maybeBooked.length > 0 && editable && (
               <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-field border border-line px-4 py-3">
                 <p className="text-sm text-ink-2">这些记录和账本里同一天、同一往来方的交易对不上金额，可能是同一笔（手续费算法不同、隔天兑换）。按交易分组，每组确认一次。</p>
                 <Button
@@ -579,7 +582,7 @@ function BatchView() {
                     }
                   }}
                 >
-                  这 {review} 条都是已记过的
+                  这 {maybeBooked.length} 条都是已记过的
                 </Button>
               </div>
             )}
@@ -599,7 +602,19 @@ function BatchView() {
                   {active === "new" && b?.status === "parsed" ? "全部记录都已分类、匹配或忽略，可以完成导入了。" : undefined}
                 </Empty>
               ) : active === "review" ? (
-                <ReviewGroups batchId={batchId!} records={rows} editable={!!editable} />
+                <>
+                  {maybeBooked.length > 0 && <ReviewGroups batchId={batchId!} records={maybeBooked} editable={!!editable} />}
+                  {unsure.length > 0 && (
+                    <>
+                      <p className="mt-4 text-sm text-ink-2">AI 给这些记录建议了分类，但把握不够，完成导入时不会入账。展开核对后保存即可；改对了可以顺手存为规则。</p>
+                      <ul className="divide-y divide-line">
+                        {unsure.map((r) => (
+                          <RecordRow key={r.id} record={r} editable={!!editable} committed={b?.status === "committed"} />
+                        ))}
+                      </ul>
+                    </>
+                  )}
+                </>
               ) : (
                 <ul className="divide-y divide-line">
                   {rows.map((r) => (

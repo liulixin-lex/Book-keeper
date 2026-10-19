@@ -360,7 +360,16 @@ export interface SourceRecord {
   description: string | null;
   order_no: string | null;
   status_text: string | null;
-  classification: { type?: string; inputs?: Record<string, unknown>; missing?: string[]; counterparty?: string } | null;
+  classification: {
+    type?: string;
+    inputs?: Record<string, unknown>;
+    missing?: string[];
+    counterparty?: string;
+    /** Why a complete record still waits in 待确认. */
+    review?: ("ai_low_confidence" | "future_date")[];
+    /** The model's suggestion for what the rules left open (识别 step 5). */
+    ai?: { type?: string; counterparty?: string; category?: string; channel?: string; ignore?: string; confidence: number; reason: string; auto: boolean; used?: boolean; model?: string };
+  } | null;
   ignore_reason: string | null;
   transaction_id: string | null;
   /** Why booking this record failed last time (kept on the record until it books). */
@@ -583,4 +592,15 @@ export interface AgentStep {
 export interface AgentRunDetail extends AgentRun {
   change_set_status: "applied" | "reverted" | "partially_reverted" | null;
   steps: AgentStep[];
+}
+
+export interface AiHandbook {
+  version: number;
+  content: string;
+  threshold: number;
+  note?: string | null;
+  created_at?: string | null;
+  is_default: boolean;
+  default: string;
+  versions: { version: number; note: string | null; threshold: number; created_at: string }[];
 }

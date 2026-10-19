@@ -3345,6 +3345,52 @@
   "input_schema": {
    "additionalProperties": false,
    "properties": {
+    "dry_run": {
+     "default": false,
+     "description": "只计算并返回结果，不保存",
+     "title": "Dry Run",
+     "type": "boolean"
+    },
+    "idempotency_key": {
+     "anyOf": [
+      {
+       "maxLength": 128,
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "description": "重试同一写入时传相同的键，避免重复入账",
+     "title": "Idempotency Key"
+    },
+    "record_id": {
+     "description": "已改好分类的来源记录（src_…）",
+     "title": "Record Id",
+     "type": "string"
+    }
+   },
+   "required": [
+    "record_id"
+   ],
+   "title": "SaveRuleArgsWithOptions",
+   "type": "object"
+  },
+  "kind": "write",
+  "name": "save_rule_from_record",
+  "operation": null,
+  "rest": "source_records_save_rule",
+  "scopes": [
+   "rules:write"
+  ],
+  "title": "存为规则"
+ },
+ {
+  "any_of": [],
+  "input_schema": {
+   "additionalProperties": false,
+   "properties": {
     "classification": {
      "anyOf": [
       {

@@ -8,8 +8,8 @@ import { clsx } from "clsx";
 import { ArrowDown, ArrowUp, Lightning, Plus, Trash, X } from "@phosphor-icons/react";
 import { api, ApiError } from "@/api/client";
 import { useBookMutation, useBookQuery, useCan } from "@/api/queries";
-import type { AiCapabilities, AiKind, AiProbe, AiProvider, AiRoute, AiRoutes, AiTask, AiUsageItem } from "@/api/types";
-import { Badge, Button, Card, Chip, Empty, ErrorNote, Field, Input, Segmented, Select, Sheet, Skeleton, Switch } from "@/components/ui";
+import type { AiCapabilities, AiHandbook, AiKind, AiProbe, AiProvider, AiRoute, AiRoutes, AiTask, AiUsageItem } from "@/api/types";
+import { Badge, Button, Card, Chip, Empty, ErrorNote, Field, Input, Segmented, Select, Sheet, Skeleton, Switch, Textarea } from "@/components/ui";
 import { useToast } from "@/components/toast";
 
 const KINDS: { value: AiKind; label: string }[] = [
@@ -506,5 +506,126 @@ function Usage() {
         </Card>
       )}
     </section>
+  );
+}
+
+/* ---------- 设置 → AI 规则 ---------- */
+
+/**
+ * The 识别规则手册: plain text the AI reads before each recognition, versioned. Sites, channels, aliases, fee rules
+ * and ignore rules are not written here — they come from the book's own settings at run time.
+ */
+export function AiRules() {
+  const toast = useToast();
+  const canEdit = useCan("rules:write");
+  const book = useBookQuery<AiHandbook>("/ai/handbook");
+  const [draft, setDraft] = useState<{ content: string; threshold: string; note: string } | null>(null);
+  const save = useBookMutation(async (body: { content: string; threshold: number; note: string | null; expected_version: number }, b) => api.put<AiHandbook>(`/books/${b}/ai/handbook`, body));
+  const restore = useBookMutation(async (body: { version: number; expected_version: number }, b) => api.post<AiHandbook>(`/books/${b}/ai/handbook:restore`, body));
+
+  if (book.error) return <ErrorNote error={book.error} onRetry={() => book.refetch()} />;
+  if (!book.data) return <Skeleton className="h-96 w-full" />;
+  const h = book.data.data;
+  const f = draft ?? { content: h.content, threshold: String(h.threshold), note: "" };
+  const changed = draft !== null && (draft.content !== h.content || Number(draft.threshold) !== h.threshold);
+  const threshold = Number(f.threshold);
+
+  return (
+    <div className="grid gap-6">
+      <p className="text-sm text-ink-2">AI 识别截图和 PDF、给导入记录建议分类时都按这本手册来。只写通用规则：站点、渠道、别名、手续费规则、忽略规则和收支分类在各自的设置里维护，识别时自动带上。</p>
+      <Card className="grid gap-4 p-6 max-sm:p-5">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 className="font-semibold">{h.is_default ? "内置手册" : `版本 ${h.version}`}</h2>
+          {h.is_default ? <Badge>还没改过</Badge> : h.created_at && <span className="text-sm text-ink-3">{h.created_at.slice(0, 10)} 保存</span>}
+        </div>
+        <Textarea
+          aria-label="识别规则手册"
+          value={f.content}
+          readOnly={!canEdit}
+          onChange={(e) => setDraft({ ...f, content: e.target.value })}
+          rows={18}
+          className="num resize-y text-sm leading-relaxed"
+        />
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Field label="把握程度门槛" hint={`AI 的分类建议把握不低于 ${Number.isFinite(threshold) ? Math.round(threshold * 100) : "—"}% 才直接参与完成导入，低于它放进“待确认”`}>
+            {(id, note) => (
+              <Input id={id} aria-describedby={note} inputMode="decimal" className="num" value={f.threshold} readOnly={!canEdit} onChange={(e) => setDraft({ ...f, threshold: e.target.value })} />
+            )}
+          </Field>
+          {canEdit && <Field label="这次改了什么（可选）">{(id) => <Input id={id} value={f.note} onChange={(e) => setDraft({ ...f, note: e.target.value })} />}</Field>}
+        </div>
+        {(save.error || restore.error) && <p className="text-sm text-neg">{errorText(save.error ?? restore.error, "保存失败：请稍后重试。")}</p>}
+        {canEdit && (
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="primary"
+              disabled={!changed || !f.content.trim() || !(threshold >= 0.5 && threshold <= 1)}
+              loading={save.isPending}
+              onClick={async () => {
+                try {
+                  const res = await save.mutateAsync({ content: f.content, threshold, note: f.note.trim() || null, expected_version: h.version });
+                  setDraft(null);
+                  toast({ tone: "ok", text: `已保存为版本 ${res.data.version}，下次识别起生效` });
+                } catch {
+                  /* inline */
+                }
+              }}
+            >
+              保存为新版本
+            </Button>
+            {draft && (
+              <Button variant="ghost" onClick={() => setDraft(null)}>
+                放弃修改
+              </Button>
+            )}
+            {!h.is_default && f.content !== h.default && (
+              <Button variant="ghost" onClick={() => setDraft({ ...f, content: h.default, note: "恢复内置手册" })}>
+                填入内置手册
+              </Button>
+            )}
+          </div>
+        )}
+      </Card>
+      {h.versions.length > 1 && (
+        <section className="grid gap-2" aria-labelledby="handbook-versions">
+          <h2 id="handbook-versions" className="pl-6 text-sm font-semibold text-ink-2 max-sm:pl-5">
+            历史版本
+          </h2>
+          <Card className="px-6 py-2 max-sm:px-5">
+            <ul className="divide-y divide-line">
+              {h.versions.map((v) => (
+                <li key={v.version} className="flex items-center gap-4 py-3 text-sm">
+                  <span className="num w-14 shrink-0 font-medium">v{v.version}</span>
+                  <span className="min-w-0 flex-1 truncate text-ink-2">
+                    {v.note ?? "—"}{" "}
+                    <span className="text-ink-3">
+                      · {v.created_at.slice(0, 10)} · 门槛 {Math.round(v.threshold * 100)}%
+                    </span>
+                  </span>
+                  {canEdit && v.version !== h.version && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      loading={restore.isPending && restore.variables?.version === v.version}
+                      onClick={async () => {
+                        try {
+                          await restore.mutateAsync({ version: v.version, expected_version: h.version });
+                          setDraft(null);
+                          toast({ tone: "ok", text: `已恢复版本 ${v.version}（存为新版本）` });
+                        } catch {
+                          /* inline */
+                        }
+                      }}
+                    >
+                      恢复
+                    </Button>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </Card>
+        </section>
+      )}
+    </div>
   );
 }

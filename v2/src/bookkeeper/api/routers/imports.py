@@ -443,6 +443,23 @@ def link(
     )
 
 
+@router.post("/source-records/{record_id}:save-rule")
+def save_rule_from_record(
+    book_id: str, record_id: str, request: Request, auth: AuthDep, db: DbDep, settings: SettingsDep
+) -> JSONResponse:
+    """存为规则: the record's classification becomes a rule for records like it; the rest of its import is
+    reclassified at once. Saving the same record text again updates that rule."""
+    return run_write(
+        request,
+        db,
+        auth.ctx,
+        settings,
+        "source_records.save_rule",
+        {"record_id": record_id},
+        lambda: rules.rule_from_record(db, auth.ctx, record_id),
+    )
+
+
 @router.get("/match-suggestions")
 def suggestions(
     book_id: str,

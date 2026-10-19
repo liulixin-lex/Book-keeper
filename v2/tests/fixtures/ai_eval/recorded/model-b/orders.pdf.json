@@ -1,0 +1,38 @@
+{
+  "page_type": "other",
+  "site": null,
+  "records": [
+    {
+      "occurred_at": "--10-05 12:00:00",
+      "amount": "8.00",
+      "currency": "CNY",
+      "order_no": "A1",
+      "status": null,
+      "description": null,
+      "direction": "out",
+      "counterparty": null,
+      "fee": null,
+      "quantity": null,
+      "face": null
+    },
+    {
+      "occurred_at": "--10-06 09:00:00",
+      "amount": "100.00",
+      "currency": "USD",
+      "order_no": "A2",
+      "status": null,
+      "description": null,
+      "direction": "out",
+      "counterparty": null,
+      "fee": null,
+      "quantity": null,
+      "face": "100"
+    }
+  ],
+  "totals": [],
+  "unreadable": [],
+  "_usage": {
+    "input_tokens": 900,
+    "output_tokens": 150
+  }
+}

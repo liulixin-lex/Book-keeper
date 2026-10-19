@@ -1,0 +1,20 @@
+{
+  "page_type": "order_list",
+  "records": [
+    {
+      "occurred_at": "2026-10-05 12:00",
+      "direction": "out",
+      "amount": "8.00",
+      "currency": "CNY",
+      "order_no": "A1"
+    },
+    {
+      "occurred_at": "2026-10-06 09:30",
+      "direction": "out",
+      "amount": "103.00",
+      "currency": "CNY",
+      "order_no": "A2",
+      "face": "100"
+    }
+  ]
+}

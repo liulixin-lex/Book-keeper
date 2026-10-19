@@ -12,6 +12,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from bookkeeper.api.deps import AuthDep, DbDep, SettingsDep, run_read, run_write
 from bookkeeper.domain.scopes import Scope
 from bookkeeper.services import ai_providers as service
+from bookkeeper.services import handbook
 
 router = APIRouter(prefix="/books/{book_id}/ai", tags=["ai"])
 
@@ -199,3 +200,80 @@ def usage(book_id: str, auth: AuthDep, db: DbDep, days: int = Query(default=30, 
     """Calls, tokens and estimated cost per provider, model and task."""
     auth.ctx.require(Scope.ADMIN_READ)
     return run_read(db, lambda: service.usage_summary(db, book_id, days), auth.ctx)
+
+
+# ------------------------------------------------------------------ 识别规则手册 (设置 → AI 规则)
+
+
+class HandbookIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    content: str = Field(min_length=1, max_length=handbook.MAX_CHARS)
+    threshold: float | None = Field(default=None, ge=0.5, le=1)
+    note: str | None = Field(default=None, max_length=200)
+    expected_version: int = Field(ge=0)
+
+
+class RestoreIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    version: int = Field(ge=1)
+    expected_version: int = Field(ge=0)
+
+
+@router.get("/handbook")
+def get_handbook(book_id: str, auth: AuthDep, db: DbDep) -> dict[str, Any]:
+    """The 识别规则手册 in force (the built-in default until the book saves its own) and its earlier versions."""
+
+    def load() -> dict[str, Any]:
+        versions = [
+            {
+                "version": h.version,
+                "note": h.note,
+                "threshold": float(h.threshold),
+                "created_at": h.created_at.isoformat(),
+            }
+            for h in handbook.history(db, book_id)
+        ]
+        return handbook.view(handbook.current(db, book_id)) | {"default": handbook.DEFAULT, "versions": versions}
+
+    return run_read(db, load, auth.ctx)
+
+
+@router.put("/handbook")
+def save_handbook(
+    book_id: str, body: HandbookIn, request: Request, auth: AuthDep, db: DbDep, settings: SettingsDep
+) -> JSONResponse:
+    """Save a new version; the next AI 识别 uses it. ``expected_version`` 0 replaces the built-in default."""
+    return run_write(
+        request,
+        db,
+        auth.ctx,
+        settings,
+        "ai.handbook.save",
+        body.model_dump(),
+        lambda: handbook.view(
+            handbook.save(
+                db,
+                auth.ctx,
+                content=body.content,
+                threshold=body.threshold,
+                expected_version=body.expected_version,
+                note=body.note,
+            )
+        ),
+    )
+
+
+@router.post("/handbook:restore")
+def restore_handbook(
+    book_id: str, body: RestoreIn, request: Request, auth: AuthDep, db: DbDep, settings: SettingsDep
+) -> JSONResponse:
+    """Bring an earlier version back as the newest one."""
+    return run_write(
+        request,
+        db,
+        auth.ctx,
+        settings,
+        "ai.handbook.restore",
+        body.model_dump(),
+        lambda: handbook.view(handbook.restore(db, auth.ctx, body.version, body.expected_version)),
+    )

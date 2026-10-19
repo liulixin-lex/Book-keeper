@@ -71,7 +71,7 @@ def test_initialize_and_tool_visibility(client, world) -> None:
     assert init["serverInfo"]["name"] == "bookkeeper" and "get_context" in init["instructions"]
     assert set(init["capabilities"]) >= {"tools", "resources", "prompts"}
     all_tools = admin.tools()
-    assert len(all_tools) == len(TOOLS) == 40
+    assert len(all_tools) == len(TOOLS) == 41
     assert {"create_transaction", "update_transaction", "delete_transaction", "undo_change_set"} <= set(all_tools)
     schema = next(t for t in admin.rpc("tools/list")["tools"] if t["name"] == "create_transaction")
     assert schema["inputSchema"]["additionalProperties"] is False

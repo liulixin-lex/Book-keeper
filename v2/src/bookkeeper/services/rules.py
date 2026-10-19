@@ -2,13 +2,16 @@
 
 from __future__ import annotations
 
+import hashlib
+import json
+import re
 from datetime import date
 from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from bookkeeper.db.models import ImportSource, Rule, SourceRecord
+from bookkeeper.db.models import ImportSource, Rule, SourceRecord, TransactionType
 from bookkeeper.domain import rules as engine
 from bookkeeper.domain.errors import DomainError, not_found
 from bookkeeper.domain.ids import new_id
@@ -183,3 +186,65 @@ def apply_rules(
     count = imports.reclassify(session, ctx, record_ids=record_ids, batch_id=batch_id)
     audit.record(session, ctx, "rules.apply", "rule", None, after={"records": count, "batch_id": batch_id})
     return {"reclassified": count}
+
+
+_BRACKETS = re.compile(r"【[^】]*】|\[[^\]]*\]|（[^）]*）|\([^)]*\)")
+_SYMBOLS = re.compile(r"[^\w\s.\-+/:@#]")
+
+
+def keyword(text: str) -> str:
+    """A product title's keyword (docs/14 §9.3): no bracketed parts, symbols or extra spaces, at most 20 chars."""
+    cleaned = _SYMBOLS.sub(" ", _BRACKETS.sub(" ", text))
+    return " ".join(cleaned.split())[:20].strip()
+
+
+def rule_from_record(session: Session, ctx: RequestContext, record_id: str) -> dict[str, Any]:
+    """存为规则: the record's corrected classification becomes a rule for records like it, applied at once to the
+    rest of its import. Same record text → the same rule (saved again, version + 1), never a pile of copies."""
+    ctx.require(Scope.RULES_WRITE)
+    book_id = ctx.require_book()
+    rec = session.get(SourceRecord, record_id)
+    if rec is None or rec.book_id != book_id:
+        raise not_found("记录", record_id)
+    c = rec.classification or {}
+    if not c.get("type"):
+        raise DomainError("INVALID_STATE", "先给这条记录选好交易类型，再存为规则。")
+    when: list[dict[str, Any]] = [{"field": "direction", "op": "eq", "value": rec.direction}]
+    subject = (rec.counterparty_text or "").strip()
+    if subject:
+        when.append({"field": "counterparty_text", "op": "eq", "value": subject})
+    elif rec.description and (subject := keyword(rec.description)):
+        when.append({"field": "description", "op": "contains", "value": subject})
+    else:
+        raise DomainError(
+            "VALIDATION_FAILED", "这条记录没有对方也没有摘要，没法生成规则；请在 设置 → 分类规则 手动写。"
+        )
+    inputs = c.get("inputs") or {}
+    actions: list[dict[str, Any]] = [{"type": "set_transaction_type", "value": c["type"]}]
+    if c.get("counterparty"):
+        actions.append({"type": "set_counterparty", "value": c["counterparty"]})
+    if inputs.get("category"):
+        actions.append({"type": "set_category", "value": inputs["category"]})
+    if inputs.get("channel"):
+        actions.append({"type": "set_channel", "value": inputs["channel"]})
+    condition = {"all": when}
+    digest = hashlib.sha256(json.dumps(condition, ensure_ascii=False, sort_keys=True).encode()).hexdigest()[:10]
+    label = (
+        session.execute(
+            select(TransactionType.name).where(TransactionType.book_id == book_id, TransactionType.code == c["type"])
+        ).scalar_one_or_none()
+        or c["type"]
+    )
+    rule = save_rule(
+        session,
+        ctx,
+        {
+            "code": f"from-record-{digest}",
+            "name": f"{subject[:40]} → {label}",
+            "condition": condition,
+            "actions": actions,
+            "note": f"由记录 {rec.id} 存为规则",
+        },
+    )
+    count = imports.reclassify(session, ctx, batch_id=rec.batch_id)
+    return {"rule": view(rule), "reclassified": count}

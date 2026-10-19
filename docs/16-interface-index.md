@@ -29,6 +29,9 @@
 
 | 方法 | 路径 | 权限 | 说明 |
 |---|---|---|---|
+| GET | `…/ai/handbook` | admin:read | The 识别规则手册 in force (the built-in default until the book saves its own) and its earlier versions. |
+| PUT | `…/ai/handbook` | rules:write | Save a new version; the next AI 识别 uses it. ``expected_version`` 0 replaces the built-in default. |
+| POST | `…/ai/handbook:restore` | rules:write | Bring an earlier version back as the newest one. |
 | GET | `…/ai/providers` | admin:read | Providers without keys (only the last 4 characters). |
 | POST | `…/ai/providers` | config:write，仅网页端 | Add a provider; the key is sealed with BK_MASTER_KEY. Web app only. |
 | DELETE | `…/ai/providers/{provider_id}` | config:write，仅网页端 | Remove a provider and drop it from task routing. Web app only. |
@@ -131,6 +134,7 @@
 | GET | `…/source-records` | ledger:read | Search Records |
 | PATCH | `…/source-records/{record_id}` | import:write | Classify |
 | POST | `…/source-records/{record_id}:link` | import:write | Link |
+| POST | `…/source-records/{record_id}:save-rule` | rules:write | 存为规则: the record's classification becomes a rule for records like it; the rest of its import is |
 | POST | `…/source-records:ignore` | import:write | Ignore |
 
 ### jobs
@@ -234,7 +238,7 @@
 | GET | `/api/v1/users` | — | List Users |
 | POST | `/api/v1/users` | — | Create User |
 
-共 129 个 REST 操作。
+共 133 个 REST 操作。
 
 ## MCP 工具
 
@@ -272,6 +276,7 @@
 | `revert_import` | 撤销导入 | 高影响 | import:write | imports.revert |
 | `run_checks` | 健康检查 | 只读 | ledger:read | checks_run |
 | `run_report` | 运行报表 | 只读 | ledger:read | reports_get |
+| `save_rule_from_record` | 存为规则 | 写 | rules:write | source_records_save_rule |
 | `search_accounts` | 查找科目 | 只读 | ledger:read | accounts_list |
 | `search_counterparties` | 查找往来方 | 只读 | ledger:read | counterparties_list |
 | `search_source_records` | 查找来源记录 | 只读 | ledger:read | source_records_list |
@@ -281,4 +286,4 @@
 | `upsert_reference` | 维护基础资料 | 写 | reference:write | counterparties_create |
 | `write_file` | 写工作区文件 | 写 | （任一：import:write、ledger:write） | — |
 
-共 40 个工具；写工具另有 `dry_run` 与 `idempotency_key` 参数。
+共 41 个工具；写工具另有 `dry_run` 与 `idempotency_key` 参数。

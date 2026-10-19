@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from datetime import UTC, date, datetime, timedelta
 from typing import Any
 from zoneinfo import ZoneInfo
@@ -15,6 +16,8 @@ from bookkeeper.fx_providers import frankfurter
 from bookkeeper.jobs.registry import task
 from bookkeeper.services import audit, checks, idempotency, identity, ratelimit, reference
 from bookkeeper.services.context import Actor, RequestContext
+
+log = logging.getLogger("bookkeeper.jobs")
 
 DEFAULT_SCHEDULES: tuple[tuple[str, str], ...] = (
     ("idempotency.cleanup", "every:3600"),
@@ -128,10 +131,10 @@ def ai_extract_batch(session_factory: Any, payload: dict[str, Any]) -> dict[str,
     """Read an AI 识别 batch's files with Claude and stage the records. The read happens between two short
     transactions; a failure marks the batch 识别失败 with the reason, and the owner can retry it."""
     from bookkeeper.config import get_settings
-    from bookkeeper.db.models import ImportBatch, ImportSource, StoredFile
+    from bookkeeper.db.models import Book, ImportBatch, ImportSource, StoredFile
     from bookkeeper.domain.errors import DomainError
     from bookkeeper.files.storage import ContentStore
-    from bookkeeper.services import ai_extract, ai_providers, imports, reference
+    from bookkeeper.services import ai_classify, ai_extract, ai_providers, handbook, imports, reference
 
     settings = get_settings()
     batch_id, attempt = str(payload["batch_id"]), payload.get("attempt")
@@ -152,6 +155,10 @@ def ai_extract_batch(session_factory: Any, payload: dict[str, Any]) -> dict[str,
         hint, commodity = str(src.config.get("hint") or ""), src.config.get("commodity")
         book_id = batch.book_id
         known = reference.site_hosts(session, book_id)
+        rules_text, _threshold, _version = handbook.text_and_threshold(session, book_id)
+        book = session.get(Book, book_id)
+        assert book is not None
+        uploaded = (batch.created_at or datetime.now(UTC)).astimezone(ZoneInfo(book.timezone)).date()
         try:
             targets = ai_providers.targets(session, book_id, "extract", settings)
         except DomainError as exc:  # e.g. BK_MASTER_KEY changed: say so on the batch instead of failing silently
@@ -174,6 +181,8 @@ def ai_extract_batch(session_factory: Any, payload: dict[str, Any]) -> dict[str,
             targets=targets,
             known_hosts=known,
             calls=calls,
+            handbook=rules_text,
+            today=uploaded,
         )
     except Exception as exc:  # the batch must not stay 识别中: record why and let the owner retry
         message = exc.detail if isinstance(exc, DomainError) else f"识别出错：{exc}"
@@ -183,9 +192,19 @@ def ai_extract_batch(session_factory: Any, payload: dict[str, Any]) -> dict[str,
         return {"failed": message}
     with session_factory() as session, session.begin():
         ctx = RequestContext(actor=Actor.system(), channel="worker", book_id=book_id)
-        imports.finish_extraction(session, ctx, batch_id, extracted, attempt)
+        landed = imports.finish_extraction(session, ctx, batch_id, extracted, attempt)
         record(session)
-    return {"records": len(extracted.records)}
+    if landed is None:
+        return {"records": len(extracted.records)}
+    calls.clear()  # steps 5–6: suggestions for what the rules left open; optional, so a failure only skips them
+    try:
+        suggested = ai_classify.suggest(session_factory, settings, batch_id, calls=calls)
+    except Exception:
+        log.exception("AI classification suggestions failed for %s", batch_id)
+        suggested = 0
+    with session_factory() as session, session.begin():
+        record(session)
+    return {"records": len(extracted.records), "suggested": suggested}
 
 
 @task("agent.run", own_session=True)

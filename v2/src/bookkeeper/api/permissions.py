@@ -105,6 +105,7 @@ ROUTES: dict[tuple[str, str], Need] = {
     ("PATCH", "/source-records/{record_id}"): IMPORT,
     ("POST", "/source-records/{record_id}:link"): IMPORT,
     ("POST", "/source-records:ignore"): IMPORT,
+    ("POST", "/source-records/{record_id}:save-rule"): RULES,
     ("GET", "/match-suggestions"): READ,
     ("POST", "/match-suggestions/{suggestion_id}:accept"): IMPORT,
     ("POST", "/match-suggestions/{suggestion_id}:reject"): IMPORT,
@@ -155,6 +156,9 @@ ROUTES: dict[tuple[str, str], Need] = {
     ("DELETE", "/ai/providers/{provider_id}"): AI_CONFIG,
     ("POST", "/ai/providers/{provider_id}:test"): AI_CONFIG,
     ("PUT", "/ai/routes"): AI_CONFIG,
+    ("GET", "/ai/handbook"): ADMIN_READ,
+    ("PUT", "/ai/handbook"): RULES,
+    ("POST", "/ai/handbook:restore"): RULES,
     # AI assistant: anyone in the book may ask (it works within their own permissions), from the web app only
     ("GET", "/agent/runs"): READ,
     ("GET", "/agent/runs/{run_id}"): READ,

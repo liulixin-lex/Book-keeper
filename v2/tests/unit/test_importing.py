@@ -305,7 +305,7 @@ def test_an_ai_read_page_without_a_site_takes_the_known_site_its_file_is_named_a
     row |= {"occurred_at": "2026-09-14 10:00:00", "direction": "in", "amount": "100"}
 
     def party(name: str, known: list[str], site: str | None = None) -> str | None:
-        return _records(name, {"site": site, "records": [row]}, "UCR", known)[0]["counterparty"]
+        return _records(name, {"site": site, "records": [row]}, "UCR", known).records[0]["counterparty"]
 
     assert (
         party("relay-b.exa（2）.pdf", ["relay-b.example", "relay-c.example"]) == "relay-b.example"

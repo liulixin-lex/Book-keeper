@@ -8,7 +8,7 @@ import { Link } from "react-router";
 import { clsx } from "clsx";
 import { CaretDown, LinkSimple, Prohibit } from "@phosphor-icons/react";
 import { api, ApiError } from "@/api/client";
-import { useBookMutation, useCategories, useChannels, useCounterparties, useTransactionTypes } from "@/api/queries";
+import { useBookMutation, useCan, useCategories, useChannels, useCounterparties, useTransactionTypes } from "@/api/queries";
 import type { RecordMatch, SourceRecord } from "@/api/types";
 import { useBookId } from "@/app/book";
 import { Button, Chip, Field, Input, Select } from "@/components/ui";
@@ -72,6 +72,12 @@ export function RecordRow({ record: r, editable, committed = false }: { record: 
               <span className="text-warn-text">未分类{r.description && r.counterparty_text ? <span className="text-ink-3"> · {r.description}</span> : null}</span>
             )}
           </p>
+          {cls?.ai && (cls.ai.used || cls.ai.ignore) && (
+            <p className={clsx("mt-0.5 truncate text-sm", cls.review?.includes("ai_low_confidence") ? "text-warn-text" : "text-ink-3")} title={cls.ai.reason}>
+              AI{cls.review?.includes("ai_low_confidence") ? " 拿不准，请确认" : " 建议"}（把握 {Math.round(cls.ai.confidence * 100)}%）
+              {cls.ai.ignore ? `：建议忽略，${cls.ai.ignore}` : cls.ai.reason ? `：${cls.ai.reason}` : ""}
+            </p>
+          )}
         </div>
         <span className={clsx("num shrink-0 font-semibold", r.direction === "in" ? "text-pos" : "text-ink")}>
           {r.direction === "in" ? "+" : r.direction === "out" ? "−" : ""}
@@ -166,7 +172,12 @@ function ClassifyEditor({ record: r, committed, onDone }: { record: SourceRecord
   const ignore = useBookMutation(async () => api.post(`/books/${bookId}/source-records:ignore`, { record_ids: [r.id], reason: "手动忽略" }));
   const link = useBookMutation(async () => api.post(`/books/${bookId}/source-records/${r.id}:link`, { transaction: txRef.trim() }));
   const createParty = useBookMutation(async () => api.post(`/books/${bookId}/counterparties`, { name: raw, category: type === "credit_purchase" ? "upstream_site" : "other" }));
-  const error = [classify.error, ignore.error, link.error, createParty.error].find((e) => e instanceof ApiError) as ApiError | undefined;
+  const canRule = useCan("rules:write");
+  const saveRule = useBookMutation(async () => {
+    await classify.mutateAsync();
+    return (await api.post<{ rule: { name: string }; reclassified: number }>(`/books/${bookId}/source-records/${r.id}:save-rule`, {})).data;
+  });
+  const error = [classify.error, ignore.error, link.error, createParty.error, saveRule.error].find((e) => e instanceof ApiError) as ApiError | undefined;
 
   async function run(fn: () => Promise<unknown>, text: string) {
     try {
@@ -258,11 +269,30 @@ function ClassifyEditor({ record: r, committed, onDone }: { record: SourceRecord
           <Button size="sm" variant="ghost" icon={<Prohibit size={14} />} loading={ignore.isPending} onClick={() => run(() => ignore.mutateAsync(), "已忽略这条记录")}>
             忽略
           </Button>
+          {canRule && (r.counterparty_text || r.description) && (
+            <Button
+              size="sm"
+              disabled={type === "expense" && !category}
+              loading={saveRule.isPending}
+              title="以后同一对方（或同一商品关键词）的记录自动这样分类，并马上重新分类这一批"
+              onClick={async () => {
+                try {
+                  const res = await saveRule.mutateAsync();
+                  toast({ tone: "ok", text: `已存为规则「${res.rule.name}」，这批重新分类了 ${res.reclassified} 条` });
+                  onDone();
+                } catch {
+                  /* shown inline */
+                }
+              }}
+            >
+              保存并存为规则
+            </Button>
+          )}
           <Button
             size="sm"
             variant="primary"
             disabled={type === "expense" && !category}
-            loading={classify.isPending}
+            loading={classify.isPending && !saveRule.isPending}
             onClick={() => run(() => classify.mutateAsync(), committed ? "已补全并入账" : "已补全，完成导入时入账")}
           >
             保存

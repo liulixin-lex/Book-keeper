@@ -1,0 +1,19 @@
+{
+  "page_type": "wallet_bill",
+  "records": [
+    {
+      "occurred_at": "2026-10-07 18:20",
+      "direction": "out",
+      "amount": "12.00",
+      "currency": "CNY",
+      "counterparty": "Example Cloud"
+    },
+    {
+      "occurred_at": "2026-10-08 08:00",
+      "direction": "in",
+      "amount": "50.00",
+      "currency": "CNY",
+      "counterparty": "Shop sale"
+    }
+  ]
+}

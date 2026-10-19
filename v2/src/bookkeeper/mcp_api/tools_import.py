@@ -424,3 +424,29 @@ tool(
         rest="pairing_rules_save",
     )
 )
+
+
+class SaveRuleArgs(Args):
+    record_id: str = Field(description="已改好分类的来源记录（src_…）")
+    dry_run: bool = False
+    idempotency_key: str | None = None
+
+
+def _save_rule(session: Session, ctx: RequestContext, args: SaveRuleArgs) -> Output:
+    out = rules.rule_from_record(session, ctx, args.record_id)
+    return Output(out, f"已存为规则「{out['rule']['name']}」，本批重新分类 {out['reclassified']} 条")
+
+
+tool(
+    Tool(
+        "save_rule_from_record",
+        "存为规则",
+        "把一条已改好分类的导入记录存成分类规则（按对方或商品关键词匹配），并立即重新分类同批的其他记录。"
+        "同样的记录文字再存一次会更新同一条规则。先用 classify_records 改好分类再调用。",
+        SaveRuleArgs,
+        "write",
+        (Scope.RULES_WRITE,),
+        _save_rule,
+        rest="source_records_save_rule",
+    )
+)

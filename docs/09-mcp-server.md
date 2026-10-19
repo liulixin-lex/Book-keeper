@@ -144,9 +144,9 @@ claude mcp add --transport http bookkeeper https://bill.example.com/mcp \
 | 档位 | 可见工具 |
 |---|---|
 | 用户只读 `user_read` | 只读 18 个（含 `list_files`、`read_file`；不含 `get_audit_trail`、`get_admin_info`） |
-| 用户读写 `user_write` | 只读 18 个 + 交易 6 个 + 导入（不含 `manage_rule`、`manage_pairing_rule`）+ `upsert_reference` + `undo_change_set` + 工作区 `write_file`、`patch_file` |
+| 用户读写 `user_write` | 只读 18 个 + 交易 6 个 + 导入（不含 `manage_rule`、`manage_pairing_rule`、`save_rule_from_record`）+ `upsert_reference` + `undo_change_set` + 工作区 `write_file`、`patch_file` |
 | 管理员只读 `admin_read` | 只读 18 个 + `get_audit_trail` + `get_admin_info`（成员、令牌、规则、配对规则、手续费规则、AI 提供商与任务分配、账套设置；不含任何密钥），没有写工具 |
-| 管理员读写 `admin_write` | 全部 40 个 |
+| 管理员读写 `admin_write` | 全部 41 个 |
 
 文件工具（`list_files`、`read_file`、`write_file`、`patch_file`）与站内 AI 助手共用，见 19 号 §3.3：原件只读并带 SHA-256，派生内容写进工作区。
 

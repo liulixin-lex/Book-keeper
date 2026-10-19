@@ -184,7 +184,8 @@ def test_recognition_uses_the_routed_providers_in_order_and_counts_usage(
     usage = api(client, "GET", f"/api/v1/books/{b}/ai/usage", None, 200)["data"]["items"]
     by_provider = {u["provider"]: u for u in usage}
     assert by_provider["备用"]["input_tokens"] == 1_000_000 and by_provider["备用"]["cost_usd"] == pytest.approx(4.5)
-    assert by_provider["备用前的主力"]["calls"] == 1 and by_provider["备用前的主力"]["cost_usd"] is None
+    # the failed read, then the classification step (this fake's first provider only fails on files)
+    assert by_provider["备用前的主力"]["calls"] == 2 and by_provider["备用前的主力"]["cost_usd"] is None
 
 
 def test_test_connection_lists_models_and_answers(client, world, master, monkeypatch) -> None:

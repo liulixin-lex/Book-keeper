@@ -1757,6 +1757,53 @@
     "title": "HTTPValidationError",
     "type": "object"
    },
+   "HandbookIn": {
+    "additionalProperties": false,
+    "properties": {
+     "content": {
+      "maxLength": 20000,
+      "minLength": 1,
+      "title": "Content",
+      "type": "string"
+     },
+     "expected_version": {
+      "minimum": 0.0,
+      "title": "Expected Version",
+      "type": "integer"
+     },
+     "note": {
+      "anyOf": [
+       {
+        "maxLength": 200,
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Note"
+     },
+     "threshold": {
+      "anyOf": [
+       {
+        "maximum": 1.0,
+        "minimum": 0.5,
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Threshold"
+     }
+    },
+    "required": [
+     "content",
+     "expected_version"
+    ],
+    "title": "HandbookIn",
+    "type": "object"
+   },
    "IgnoreIn": {
     "additionalProperties": false,
     "properties": {
@@ -2617,24 +2664,6 @@
      "reason"
     ],
     "title": "RepostIn",
-    "type": "object"
-   },
-   "RestoreIn": {
-    "additionalProperties": false,
-    "properties": {
-     "expected_version": {
-      "anyOf": [
-       {
-        "type": "integer"
-       },
-       {
-        "type": "null"
-       }
-      ],
-      "title": "Expected Version"
-     }
-    },
-    "title": "RestoreIn",
     "type": "object"
    },
    "Role": {
@@ -3552,6 +3581,45 @@
     ],
     "title": "ValidationError",
     "type": "object"
+   },
+   "bookkeeper__api__routers__ai__RestoreIn": {
+    "additionalProperties": false,
+    "properties": {
+     "expected_version": {
+      "minimum": 0.0,
+      "title": "Expected Version",
+      "type": "integer"
+     },
+     "version": {
+      "minimum": 1.0,
+      "title": "Version",
+      "type": "integer"
+     }
+    },
+    "required": [
+     "version",
+     "expected_version"
+    ],
+    "title": "RestoreIn",
+    "type": "object"
+   },
+   "bookkeeper__services__inputs__RestoreIn": {
+    "additionalProperties": false,
+    "properties": {
+     "expected_version": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Expected Version"
+     }
+    },
+    "title": "RestoreIn",
+    "type": "object"
    }
   }
  },
@@ -4411,6 +4479,151 @@
     "summary": "Cancel Run",
     "tags": [
      "agent"
+    ]
+   }
+  },
+  "/api/v1/books/{book_id}/ai/handbook": {
+   "get": {
+    "description": "The 识别规则手册 in force (the built-in default until the book saves its own) and its earlier versions.",
+    "operationId": "get_handbook_api_v1_books__book_id__ai_handbook_get",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "book_id",
+      "required": true,
+      "schema": {
+       "title": "Book Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "title": "Response Get Handbook Api V1 Books  Book Id  Ai Handbook Get",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Get Handbook",
+    "tags": [
+     "ai"
+    ]
+   },
+   "put": {
+    "description": "Save a new version; the next AI 识别 uses it. ``expected_version`` 0 replaces the built-in default.",
+    "operationId": "save_handbook_api_v1_books__book_id__ai_handbook_put",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "book_id",
+      "required": true,
+      "schema": {
+       "title": "Book Id",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/HandbookIn"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Save Handbook",
+    "tags": [
+     "ai"
+    ]
+   }
+  },
+  "/api/v1/books/{book_id}/ai/handbook:restore": {
+   "post": {
+    "description": "Bring an earlier version back as the newest one.",
+    "operationId": "restore_handbook_api_v1_books__book_id__ai_handbook_restore_post",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "book_id",
+      "required": true,
+      "schema": {
+       "title": "Book Id",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/bookkeeper__api__routers__ai__RestoreIn"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Restore Handbook",
+    "tags": [
+     "ai"
     ]
    }
   },
@@ -9966,6 +10179,56 @@
     ]
    }
   },
+  "/api/v1/books/{book_id}/source-records/{record_id}:save-rule": {
+   "post": {
+    "description": "存为规则: the record's classification becomes a rule for records like it; the rest of its import is\nreclassified at once. Saving the same record text again updates that rule.",
+    "operationId": "save_rule_from_record_api_v1_books__book_id__source_records__record_id__save_rule_post",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "book_id",
+      "required": true,
+      "schema": {
+       "title": "Book Id",
+       "type": "string"
+      }
+     },
+     {
+      "in": "path",
+      "name": "record_id",
+      "required": true,
+      "schema": {
+       "title": "Record Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Save Rule From Record",
+    "tags": [
+     "imports"
+    ]
+   }
+  },
   "/api/v1/books/{book_id}/source-records:ignore": {
    "post": {
     "operationId": "ignore_api_v1_books__book_id__source_records_ignore_post",
@@ -10934,7 +11197,7 @@
        "schema": {
         "anyOf": [
          {
-          "$ref": "#/components/schemas/RestoreIn"
+          "$ref": "#/components/schemas/bookkeeper__services__inputs__RestoreIn"
          },
          {
           "type": "null"
