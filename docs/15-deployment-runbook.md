@@ -58,7 +58,12 @@ docker compose run --rm -v /opt/bookkeeper/v1-final.db:/import/v1.db:ro \
 
 ## 3.1 AI 识别（可选）
 
-导入里的“截图（AI）”来源把截图和 PDF 交给 Claude 读成记录（06 号 §0.1）。不配置就不可用，其余功能不受影响。
+导入里的“截图（AI）”来源把截图和 PDF 交给 AI 读成记录（06 号 §0.1）。不配置就不可用，其余功能不受影响。
+
+有两种配置方式，可以并存：
+
+1. **网页配置（推荐）**：`.env` 设 `BK_MASTER_KEY`（`openssl rand -hex 32`，≥ 32 个字符，api 与 worker 都要读到），然后管理员在 设置 → AI 模型 添加提供商（Anthropic 或 OpenAI 兼容）、点“测试连接”、在“任务分配”里给识别选模型与备用。密钥加密保存，只显示末 4 位，令牌与 MCP 改不了（19 号文档）。**`BK_MASTER_KEY` 要和数据库备份分开保存**；丢了或更换后，已存的密钥都要重新填写。
+2. **环境变量**：下表的 `BK_AI_*`，作为没有分配提供商时的默认。
 
 | 配置（`.env`） | 默认 | 说明 |
 |---|---|---|
@@ -67,15 +72,18 @@ docker compose run --rm -v /opt/bookkeeper/v1-final.db:/import/v1.db:ro \
 | `BK_AI_EFFORT` | `medium` | 推理强度（`low` / `medium` / `high`），越高越慢越贵 |
 | `BK_AI_MAX_FILES` | `12` | 每次上传最多文件数 |
 | `BK_AI_DAILY_FILES` | `200` | 每个账套每天最多读多少个文件，`0` 不限；超出返回 429 |
+| `BK_MASTER_KEY` | 无 | 加密网页里保存的提供商密钥（≥ 32 个字符）；未设时网页不能保存密钥 |
 
-- **隐私**：截图与 PDF 由**服务器**发到 Anthropic API（`api.anthropic.com`），用于读取记录；启用前与用户确认，不要上传含完整卡密、密码的截图。服务器需能访问外网 HTTPS。
-- **后台执行**：识别在 worker 里进行（每个文件一次请求，单次超时 240 秒），上传接口立即返回“识别中”，所以 **worker 必须在运行**（`docker compose up -d api worker`）；worker 停着时，批次在 10 分钟后转为识别失败“识别超时”（打开导入页时判断），worker 恢复后点“再读一次”即可。
+- **隐私**：截图与 PDF 由**服务器**发到所分配的提供商（默认 Anthropic API `api.anthropic.com`），用于读取记录；启用前与用户确认，不要上传含完整卡密、密码的截图。服务器需能访问外网 HTTPS。
+- **后台执行**：识别在 worker 里进行（每个文件一次请求，超时用提供商设置的值，环境变量方式为 240 秒），上传接口立即返回“识别中”，所以 **worker 必须在运行**（`docker compose up -d api worker`）；worker 停着时，批次在 10 分钟后转为识别失败“识别超时”（打开导入页时判断），worker 恢复后点“再读一次”即可。
 - **超时**：nginx 的 `/api/` 设 `proxy_read_timeout 300s`，覆盖多文件上传与大文件解析；AI 识别本身不占这个请求。
 - **成本**：截图按原分辨率识别，只有长边超过 2576 px 才缩到 2576 px（缩小会让数字变糊；整批截图原分辨率约 1 美元，读错金额的代价更大）；同一来源同一组文件重传直接返回已有批次，不会再调用 AI；`BK_AI_DAILY_FILES` 可限制每天的文件数。
 
-## 3.2 数据库迁移 0012
+## 3.2 数据库迁移 0012–0013
 
 `0012_import_kinds`：导入来源类型增加 `redeem_page`、`ai_extract`，批次状态增加 `extracting`、`failed`（只改 CHECK 约束，不动数据）。随 `docker compose run --rm migrate` 执行，可回退（回退前须先撤销或删除用到这些值的来源与批次）。
+
+`0013_ai_providers`：新增 `ai_providers`（提供商，密钥为密文）与 `ai_usage`（每次调用的 token 与费用估算）两张表，不动已有数据，可回退。
 
 ## 4. 接入外部 AI
 

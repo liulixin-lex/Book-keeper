@@ -43,6 +43,8 @@ class Settings(BaseSettings):
     ai_effort: str = "medium"
     ai_max_files: int = 12  # per upload
     ai_daily_files: int = 200  # per book and day; 0 = no cap
+    # Encrypts secrets stored in the database (AI provider keys). Without it, keys cannot be saved in 设置 → AI.
+    master_key: SecretStr | None = None
 
     worker_poll_seconds: float = 2.0
     worker_heartbeat_seconds: float = 30.0
@@ -72,6 +74,8 @@ class Settings(BaseSettings):
             )
             if url and "change-me" in url
         ]
+        if self.master_key is not None and len(self.master_key.get_secret_value()) < 32:
+            problems.append("BK_MASTER_KEY 太短：至少 32 个字符（如 openssl rand -hex 32）")
         if not self.public_url.startswith("https://"):
             problems.append("BK_PUBLIC_URL 必须使用 https://（会话 Cookie 与 OAuth 都需要）")
         return problems

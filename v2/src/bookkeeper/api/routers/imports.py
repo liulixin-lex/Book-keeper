@@ -16,7 +16,7 @@ from bookkeeper.api.deps import AuthDep, DbDep, SettingsDep, run_operation, run_
 from bookkeeper.db.models import ImportBatch, ImportSource
 from bookkeeper.domain.errors import DomainError
 from bookkeeper.domain.scopes import Scope
-from bookkeeper.services import ai_extract, files, imports, matching, reference, rules
+from bookkeeper.services import ai_extract, ai_providers, files, imports, matching, reference, rules
 from bookkeeper.services.inputs import (
     ApplyRulesIn,
     BatchCreateIn,
@@ -205,11 +205,14 @@ async def upload_batch(
         earlier = imports.existing_upload(db, src, digest) if kind == imports.AI_KIND else None
         if earlier is not None:
             return JSONResponse(run_read_inline(db, auth, earlier.id), status_code=200)
+        configured = kind == imports.AI_KIND and ai_providers.available(db, book_id, "extract", settings)
     if len(uploads) > 1 and kind not in imports.MULTI_FILE_KINDS:
         raise DomainError("VALIDATION_FAILED", "这个来源一次只能传一个文件。")
     if kind == imports.AI_KIND:
         auth.ctx.require(Scope.IMPORT_WRITE)
-        ai_extract.check([(n, m.split(";")[0].strip().lower()) for n, _c, m in uploads], settings)
+        ai_extract.check(
+            [(n, m.split(";")[0].strip().lower()) for n, _c, m in uploads], settings, configured=configured
+        )
 
     def apply() -> dict[str, Any]:
         stored = [

@@ -467,3 +467,64 @@ export interface FxRate {
   rate_type: string;
   source: string;
 }
+
+/* ---------- 设置 → AI ---------- */
+
+export type AiKind = "anthropic" | "openai_compatible";
+
+export interface AiCapabilities {
+  images: boolean;
+  pdf: boolean;
+  structured: boolean;
+  tools: boolean;
+  fallback: boolean;
+}
+
+export interface AiProvider {
+  id: string;
+  name: string;
+  kind: AiKind;
+  base_url: string | null;
+  has_key: boolean;
+  key_hint: string | null;
+  models: string[];
+  default_model: string | null;
+  timeout_seconds: number;
+  enabled: boolean;
+  capabilities: AiCapabilities;
+  options: { effort?: string; max_tokens_param?: string };
+  prices: Record<string, { input: number; output: number }>;
+  version: number;
+}
+
+export interface AiRoute {
+  provider_id: string;
+  model: string;
+  provider_name?: string | null;
+}
+
+export type AiTask = "extract" | "agent";
+export type AiRoutes = Record<AiTask, AiRoute[]>;
+
+export interface AiProbe {
+  ok: boolean;
+  model: string;
+  reply?: string;
+  error?: string;
+  latency_ms: number;
+  models: string[] | null;
+  models_error?: string;
+  capabilities: AiCapabilities;
+}
+
+export interface AiUsageItem {
+  provider: string;
+  model: string;
+  task: string;
+  task_label: string;
+  calls: number;
+  input_tokens: number;
+  output_tokens: number;
+  cost_usd: number | null;
+  cost_complete: boolean;
+}

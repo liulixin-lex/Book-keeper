@@ -10,6 +10,7 @@ from typing import Any
 
 from fastapi.testclient import TestClient
 
+from tests.ai_fakes import FileBackend, install
 from tests.api.conftest import login, write_headers
 from tests.api.test_business import biz, counterparty, money, rule
 
@@ -563,7 +564,6 @@ def test_ai_source_reads_on_the_worker_once(client, world, app, monkeypatch) -> 
     from bookkeeper import config
     from bookkeeper.domain.errors import DomainError
     from bookkeeper.jobs.worker import Worker
-    from bookkeeper.services import ai_extract
 
     calls: list[str] = []
     broken = {"on": False}
@@ -580,7 +580,7 @@ def test_ai_source_reads_on_the_worker_once(client, world, app, monkeypatch) -> 
     }
     totals = {"1.png": ["共 2 条"], "2.png": ["合计 ¥40.00"], "3.png": []}
 
-    def fake_request(_client, _settings, name, _data, mime, hint):  # type: ignore[no-untyped-def]
+    def fake_request(name, mime, hint):  # type: ignore[no-untyped-def]
         assert mime == "image/png" and "链动" in hint
         calls.append(name)
         if broken["on"]:
@@ -610,7 +610,7 @@ def test_ai_source_reads_on_the_worker_once(client, world, app, monkeypatch) -> 
             "_model": "claude-opus-5-5",
         }
 
-    monkeypatch.setattr(ai_extract, "_request", fake_request)
+    install(monkeypatch, FileBackend(fake_request))
     monkeypatch.setattr(config, "get_settings", lambda: app.state.settings)
     monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
     worker = Worker(app.state.sessionmaker)
@@ -674,7 +674,7 @@ def test_a_read_with_no_progress_times_out(client, world, app, monkeypatch) -> N
     from bookkeeper import config
     from bookkeeper.db.models import ImportBatch
     from bookkeeper.jobs.worker import Worker
-    from bookkeeper.services import ai_extract, imports
+    from bookkeeper.services import imports
 
     b = world.book_id
     calls: list[str] = []
@@ -690,7 +690,7 @@ def test_a_read_with_no_progress_times_out(client, world, app, monkeypatch) -> N
         with app.state.sessionmaker() as session, session.begin():
             imports.expire_stalled(session, b)
 
-    def fake_request(_client, _settings, name, _data, _mime, _hint):  # type: ignore[no-untyped-def]
+    def fake_request(name, _mime, _hint):  # type: ignore[no-untyped-def]
         calls.append(name)
         if name in slow:
             stall(slow[name])
@@ -706,7 +706,7 @@ def test_a_read_with_no_progress_times_out(client, world, app, monkeypatch) -> N
             "_model": "claude-opus-5-5",
         }
 
-    monkeypatch.setattr(ai_extract, "_request", fake_request)
+    install(monkeypatch, FileBackend(fake_request))
     monkeypatch.setattr(config, "get_settings", lambda: app.state.settings)
     monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
     worker = Worker(app.state.sessionmaker)

@@ -208,6 +208,18 @@
 | POST | `/change-sets/{id}:undo` | write | ✅ 撤销（新记的删除、删除的恢复、修改与重算改回、导入撤销、手续费规则改动还原；其余列为 manual）；请求体可选 `{reason?}` |
 | GET | `/work-items` · `/work-items/summary` | read | ✅ 待处理：待补全的导入记录、待确认的匹配、未完成的导入、估算手续费、待核对款项、未通过的检查，每项附建议工具 |
 
+### 6.8.1 AI 提供商（设置 → AI 模型）
+
+| 方法 | 路径 | scope | 说明 |
+|---|---|---|---|
+| GET | `/ai/status` | 成员 | ✅ 识别、AI 助手是否可用 |
+| GET | `/ai/providers` · `/ai/routes` · `/ai/usage?days=` | admin:read | ✅ 提供商（不含密钥，只有末 4 位）、任务分配、近期用量与费用估算 |
+| POST · PATCH · DELETE | `/ai/providers` · `/ai/providers/{id}` | config:write，仅网页端 | ✅ 增删改；改 Base URL 必须同时填 `api_key` |
+| POST | `/ai/providers/{id}:test` | config:write，仅网页端 | ✅ 测试连接：模型列表、一次极小请求、能力 |
+| PUT | `/ai/routes` | config:write，仅网页端 | ✅ 识别 / AI 助手各自的提供商 + 模型与备用顺序 |
+
+“仅网页端”：API 令牌（含 MCP）即使有 `config:write` 也返回 403。细节见 19 号文档。
+
 ### 6.9 其他
 
 | 方法 | 路径 | scope | 说明 |

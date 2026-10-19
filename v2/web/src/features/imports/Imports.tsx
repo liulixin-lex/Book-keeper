@@ -7,7 +7,7 @@ import { Link, Route, Routes, useNavigate, useParams } from "react-router";
 import { clsx } from "clsx";
 import { ArrowLeft, CheckCircle, FileArrowUp, Lightning, Sparkle, Tray, WarningCircle, XCircle } from "@phosphor-icons/react";
 import { api, ApiError } from "@/api/client";
-import { changeSetOf, useBatchRecords, useBookMutation, useBookQuery, useCapabilities, useImportBacklog, useLabel } from "@/api/queries";
+import { changeSetOf, useBatchRecords, useBookMutation, useBookQuery, useImportBacklog, useLabel } from "@/api/queries";
 import type { Batch, ImportSource, SourceRecord } from "@/api/types";
 import { useBookId } from "@/app/book";
 import { Badge, Button, Card, CardHeader, Chip, Empty, ErrorNote, Input, PageHeader, Segmented, Skeleton } from "@/components/ui";
@@ -192,7 +192,7 @@ function Home() {
 function Upload({ sources, loading }: { sources: ImportSource[]; loading: boolean }) {
   const bookId = useBookId();
   const navigate = useNavigate();
-  const capabilities = useCapabilities();
+  const aiStatus = useBookQuery<{ extract: boolean; agent: boolean }>("/ai/status");
   const [source, setSource] = useState("");
   const [files, setFiles] = useState<File[]>([]);
   const [note, setNote] = useState("");
@@ -203,7 +203,7 @@ function Upload({ sources, loading }: { sources: ImportSource[]; loading: boolea
   const kind = active.find((s) => s.code === chosen)?.kind ?? "";
   const reads = KIND_FILES[kind] ?? TABLE_FILES;
   const ai = kind === "ai_extract";
-  const aiOff = ai && capabilities.data?.features.ai_extract === false;
+  const aiOff = ai && aiStatus.data?.data.extract === false;
 
   // One key per selection: pressing the button again after a lost answer is the same upload, answered once.
   const attempt = useMemo(() => crypto.randomUUID(), [files, chosen, note]);
@@ -322,7 +322,7 @@ function Upload({ sources, loading }: { sources: ImportSource[]; loading: boolea
           </Button>
           <p className="text-sm text-ink-3">
             {aiOff
-              ? "服务器还没配置 AI 密钥（BK_AI_API_KEY），AI 识别暂不可用。"
+              ? "AI 识别还没配置：管理员在 设置 → AI 模型 添加提供商（或在服务器上设置 BK_AI_API_KEY）后可用。"
               : ai
                 ? "截图会从服务器发给 AI（Anthropic 的 Claude）读取，在后台进行；读到的记录先留在这里，完成导入时才写入账本，看不清的行会单独列出。"
                 : "解析只读取文件，完成导入时才写入账本；同一行不会被导入两次，已经记过的会自动对上。"}

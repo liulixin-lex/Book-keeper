@@ -3,6 +3,7 @@
 //                                            bookkeeper_e2e, builds the app and serves it from its own API on :8011
 //                                            (the production path, CSP included), and drops the copy when it ends
 //   BK_WEB=http://… node scripts/e2e.mjs     runs against a server that is already up; its books get the test writes
+//                                            (that server needs BK_MASTER_KEY for the AI 模型 step)
 import { execFileSync, spawn } from "node:child_process";
 import { mkdtempSync, openSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -160,6 +161,33 @@ expect(pdfBatch.summary.records === 8 && pdfBatch.summary.by_status.duplicate ==
 await page.getByRole("radio", { name: /待补全/ }).waitFor();
 step("read 4 top-ups, 4 duplicates");
 
+step("设置 → AI 模型: add a provider, route 识别 to it, the key never comes back, delete it");
+await page.goto(`${base}/settings/ai-models`);
+await page.waitForLoadState("networkidle");
+await page.getByRole("button", { name: "添加", exact: true }).click();
+const form = page.locator("dialog[open]");
+const relay = `E2E 中转 ${stamp}`;
+await form.getByLabel(/^名称/).fill(relay);
+await form.getByLabel(/^Base URL/).fill("https://relay.example.com/v1");
+await form.getByLabel(/^API 密钥/).fill("sk-e2e-0000000000000000wxyz");
+await form.getByLabel(/^模型/).fill("model-a, model-b");
+await form.getByRole("button", { name: "添加", exact: true }).click();
+await toast(`已添加 ${relay}`);
+await page.getByLabel("给识别添加提供商").selectOption({ label: relay });
+await page.getByRole("button", { name: "保存分配" }).click();
+await toast("已保存任务分配");
+const listed = JSON.stringify(await api("/ai/providers"));
+expect(listed.includes("••••wxyz") && !listed.includes("sk-e2e"), "the provider list leaks the key or lacks its hint");
+expect(
+  (await api("/ai/routes")).extract.some((r) => r.provider_name === relay && r.model === "model-a"),
+  "识别 is not routed to the new provider",
+);
+await page.getByRole("button", { name: new RegExp(`^${relay}`) }).click();
+await page.locator("dialog[open]").getByRole("button", { name: "删除" }).click();
+await toast(`已删除 ${relay}`);
+expect(!(await api("/ai/routes")).extract.some((r) => r.provider_name === relay), "the deleted provider is still routed");
+step("added, routed and deleted a provider");
+
 if (errors.length) {
   console.error(errors.join("\n"));
   process.exitCode = 1;
@@ -191,7 +219,13 @@ async function sandbox() {
     cwd: v2,
     detached: true,
     stdio: ["ignore", log, log],
-    env: { ...process.env, BK_DATABASE_URL: `postgresql+psycopg://postgres@/${db}?host=${join(v2, ".local")}&port=55432`, BK_WEB_DIR: dist, BK_PUBLIC_URL: url },
+    env: {
+      ...process.env,
+      BK_DATABASE_URL: `postgresql+psycopg://postgres@/${db}?host=${join(v2, ".local")}&port=55432`,
+      BK_WEB_DIR: dist,
+      BK_PUBLIC_URL: url,
+      BK_MASTER_KEY: "e2e-master-key-not-a-secret-0000000000",
+    },
   });
   api.unref(); // the exit handler below stops it; a live child must not keep the run from ending
   process.on("SIGINT", () => process.exit(130));

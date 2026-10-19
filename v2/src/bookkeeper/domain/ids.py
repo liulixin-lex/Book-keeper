@@ -63,6 +63,13 @@ PREFIXES: frozenset[str] = frozenset(
         "mcp",
         "req",
         "chr",
+        "aip",  # AI provider
+        "aiu",  # AI usage row
+        "agr",  # agent run
+        "ags",  # agent step
+        "agf",  # agent workspace file
+        "hbk",  # recognition handbook version
+        "pbk",  # scenario playbook
     }
 )
 

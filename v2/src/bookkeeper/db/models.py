@@ -1136,3 +1136,52 @@ class TransactionTag(Base):
     created_by: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(TZ, server_default=func.now(), nullable=False)
     __table_args__ = (Index("ix_transaction_tags_tag", "tag_id"),)
+
+
+# ------------------------------------------------------------------ AI providers (设置 → AI)
+
+
+class AiProvider(Base, Timestamps, Versioned):
+    """A model endpoint the book may call: Anthropic, or any OpenAI-compatible relay or vendor. The key is sealed
+    with BK_MASTER_KEY and bound to the Base URL (ai/secrets.py); only its last 4 characters are ever shown."""
+
+    __tablename__ = "ai_providers"
+    id: Mapped[str] = mapped_column(Text, primary_key=True)
+    book_id: Mapped[str] = mapped_column(ForeignKey("books.id"), nullable=False)
+    name: Mapped[str] = mapped_column(Text, nullable=False)
+    kind: Mapped[str] = mapped_column(Text, nullable=False)
+    base_url: Mapped[str | None] = mapped_column(Text)
+    api_key_sealed: Mapped[str | None] = mapped_column(Text)
+    key_last4: Mapped[str | None] = mapped_column(Text)
+    models: Mapped[list[str]] = mapped_column(JSON, server_default=text("'[]'::jsonb"), nullable=False)
+    default_model: Mapped[str | None] = mapped_column(Text)
+    timeout_seconds: Mapped[int] = mapped_column(Integer, server_default="120", nullable=False)
+    enabled: Mapped[bool] = mapped_column(Boolean, server_default=text("true"), nullable=False)
+    capabilities: Mapped[dict[str, Any]] = mapped_column(JSON, server_default=text("'{}'::jsonb"), nullable=False)
+    options: Mapped[dict[str, Any]] = mapped_column(JSON, server_default=text("'{}'::jsonb"), nullable=False)
+    prices: Mapped[dict[str, Any]] = mapped_column(JSON, server_default=text("'{}'::jsonb"), nullable=False)
+    created_by: Mapped[str | None] = mapped_column(Text)
+    __table_args__ = (
+        UniqueConstraint("book_id", "name"),
+        CheckConstraint("kind IN ('anthropic','openai_compatible')", name="kind"),
+        CheckConstraint("timeout_seconds BETWEEN 5 AND 600", name="timeout"),
+    )
+
+
+class AiUsage(Base):
+    """One model call's tokens and estimated cost, for 用量 by provider, model and task."""
+
+    __tablename__ = "ai_usage"
+    id: Mapped[str] = mapped_column(Text, primary_key=True)
+    book_id: Mapped[str] = mapped_column(ForeignKey("books.id"), nullable=False)
+    provider_id: Mapped[str | None] = mapped_column(ForeignKey("ai_providers.id", ondelete="SET NULL"))
+    provider_name: Mapped[str] = mapped_column(Text, nullable=False)
+    model: Mapped[str] = mapped_column(Text, nullable=False)
+    task: Mapped[str] = mapped_column(Text, nullable=False)
+    input_tokens: Mapped[int] = mapped_column(Integer, server_default="0", nullable=False)
+    output_tokens: Mapped[int] = mapped_column(Integer, server_default="0", nullable=False)
+    cost: Mapped[Decimal | None] = mapped_column(Numeric(14, 6))
+    ok: Mapped[bool] = mapped_column(Boolean, server_default=text("true"), nullable=False)
+    ref: Mapped[str | None] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(TZ, server_default=func.now(), nullable=False)
+    __table_args__ = (Index("ix_ai_usage_book_created", "book_id", "created_at"),)

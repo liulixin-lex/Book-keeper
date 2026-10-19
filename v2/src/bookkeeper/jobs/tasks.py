@@ -131,7 +131,7 @@ def ai_extract_batch(session_factory: Any, payload: dict[str, Any]) -> dict[str,
     from bookkeeper.db.models import ImportBatch, ImportSource, StoredFile
     from bookkeeper.domain.errors import DomainError
     from bookkeeper.files.storage import ContentStore
-    from bookkeeper.services import ai_extract, imports, reference
+    from bookkeeper.services import ai_extract, ai_providers, imports, reference
 
     settings = get_settings()
     batch_id, attempt = str(payload["batch_id"]), payload.get("attempt")
@@ -152,16 +152,37 @@ def ai_extract_batch(session_factory: Any, payload: dict[str, Any]) -> dict[str,
         hint, commodity = str(src.config.get("hint") or ""), src.config.get("commodity")
         book_id = batch.book_id
         known = reference.site_hosts(session, book_id)
+        try:
+            targets = ai_providers.targets(session, book_id, "extract", settings)
+        except DomainError as exc:  # e.g. BK_MASTER_KEY changed: say so on the batch instead of failing silently
+            imports.fail_extraction(session, batch_id, exc.detail, attempt)
+            return {"failed": exc.detail}
+    calls: list[dict[str, Any]] = []
+
+    def record(session: Any) -> None:
+        for call in calls:
+            ai_providers.record_usage(
+                session, book_id, call["target"], "extract", call["usage"], ok=call["ok"], ref=batch_id
+            )
+
     try:
         extracted = ai_extract.extract(
-            files, hint=hint, commodity=str(commodity) if commodity else None, settings=settings, known_hosts=known
+            files,
+            hint=hint,
+            commodity=str(commodity) if commodity else None,
+            settings=settings,
+            targets=targets,
+            known_hosts=known,
+            calls=calls,
         )
     except Exception as exc:  # the batch must not stay 识别中: record why and let the owner retry
         message = exc.detail if isinstance(exc, DomainError) else f"识别出错：{exc}"
         with session_factory() as session, session.begin():
             imports.fail_extraction(session, batch_id, message, attempt)
+            record(session)
         return {"failed": message}
     with session_factory() as session, session.begin():
         ctx = RequestContext(actor=Actor.system(), channel="worker", book_id=book_id)
         imports.finish_extraction(session, ctx, batch_id, extracted, attempt)
+        record(session)
     return {"records": len(extracted.records)}

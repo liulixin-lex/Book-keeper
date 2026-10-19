@@ -786,6 +786,69 @@
     "title": "BookUpdate",
     "type": "object"
    },
+   "Caps": {
+    "additionalProperties": false,
+    "properties": {
+     "fallback": {
+      "anyOf": [
+       {
+        "type": "boolean"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "description": "服务端回退（仅 Anthropic 官方，开启后发送 beta 请求头）",
+      "title": "Fallback"
+     },
+     "images": {
+      "anyOf": [
+       {
+        "type": "boolean"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Images"
+     },
+     "pdf": {
+      "anyOf": [
+       {
+        "type": "boolean"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Pdf"
+     },
+     "structured": {
+      "anyOf": [
+       {
+        "type": "boolean"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Structured"
+     },
+     "tools": {
+      "anyOf": [
+       {
+        "type": "boolean"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Tools"
+     }
+    },
+    "title": "Caps",
+    "type": "object"
+   },
    "ChecksIn": {
     "additionalProperties": false,
     "properties": {
@@ -1896,6 +1959,46 @@
     "title": "MoneyIn",
     "type": "object"
    },
+   "Options": {
+    "additionalProperties": false,
+    "properties": {
+     "effort": {
+      "anyOf": [
+       {
+        "enum": [
+         "low",
+         "medium",
+         "high",
+         "xhigh",
+         "max"
+        ],
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Effort"
+     },
+     "max_tokens_param": {
+      "anyOf": [
+       {
+        "enum": [
+         "max_tokens",
+         "max_completion_tokens"
+        ],
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Max Tokens Param"
+     }
+    },
+    "title": "Options",
+    "type": "object"
+   },
    "PairingRuleIn": {
     "additionalProperties": false,
     "properties": {
@@ -1966,6 +2069,29 @@
     "title": "Preset",
     "type": "string"
    },
+   "Price": {
+    "additionalProperties": false,
+    "properties": {
+     "input": {
+      "description": "美元 / 百万输入 token",
+      "minimum": 0.0,
+      "title": "Input",
+      "type": "number"
+     },
+     "output": {
+      "description": "美元 / 百万输出 token",
+      "minimum": 0.0,
+      "title": "Output",
+      "type": "number"
+     }
+    },
+    "required": [
+     "input",
+     "output"
+    ],
+    "title": "Price",
+    "type": "object"
+   },
    "PriceRuleIn": {
     "additionalProperties": false,
     "properties": {
@@ -2027,6 +2153,228 @@
      "valid_from"
     ],
     "title": "PriceRuleIn",
+    "type": "object"
+   },
+   "ProviderIn": {
+    "additionalProperties": false,
+    "properties": {
+     "api_key": {
+      "description": "只写：保存后只显示末 4 位",
+      "maxLength": 500,
+      "minLength": 1,
+      "title": "Api Key",
+      "type": "string"
+     },
+     "base_url": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "description": "OpenAI 兼容必填，如 https://relay.example.com/v1",
+      "title": "Base Url"
+     },
+     "capabilities": {
+      "$ref": "#/components/schemas/Caps"
+     },
+     "default_model": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Default Model"
+     },
+     "enabled": {
+      "default": true,
+      "title": "Enabled",
+      "type": "boolean"
+     },
+     "kind": {
+      "enum": [
+       "anthropic",
+       "openai_compatible"
+      ],
+      "title": "Kind",
+      "type": "string"
+     },
+     "models": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Models",
+      "type": "array"
+     },
+     "name": {
+      "maxLength": 60,
+      "minLength": 1,
+      "title": "Name",
+      "type": "string"
+     },
+     "options": {
+      "$ref": "#/components/schemas/Options"
+     },
+     "prices": {
+      "additionalProperties": {
+       "$ref": "#/components/schemas/Price"
+      },
+      "title": "Prices",
+      "type": "object"
+     },
+     "timeout_seconds": {
+      "default": 120,
+      "maximum": 600.0,
+      "minimum": 5.0,
+      "title": "Timeout Seconds",
+      "type": "integer"
+     }
+    },
+    "required": [
+     "name",
+     "kind",
+     "api_key"
+    ],
+    "title": "ProviderIn",
+    "type": "object"
+   },
+   "ProviderPatch": {
+    "additionalProperties": false,
+    "properties": {
+     "api_key": {
+      "anyOf": [
+       {
+        "maxLength": 500,
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "description": "改了 Base URL 时必填",
+      "title": "Api Key"
+     },
+     "base_url": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Base Url"
+     },
+     "capabilities": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/Caps"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "default_model": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Default Model"
+     },
+     "enabled": {
+      "anyOf": [
+       {
+        "type": "boolean"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Enabled"
+     },
+     "expected_version": {
+      "title": "Expected Version",
+      "type": "integer"
+     },
+     "models": {
+      "anyOf": [
+       {
+        "items": {
+         "type": "string"
+        },
+        "type": "array"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Models"
+     },
+     "name": {
+      "anyOf": [
+       {
+        "maxLength": 60,
+        "minLength": 1,
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Name"
+     },
+     "options": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/Options"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "prices": {
+      "anyOf": [
+       {
+        "additionalProperties": {
+         "$ref": "#/components/schemas/Price"
+        },
+        "type": "object"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Prices"
+     },
+     "timeout_seconds": {
+      "anyOf": [
+       {
+        "maximum": 600.0,
+        "minimum": 5.0,
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Timeout Seconds"
+     }
+    },
+    "required": [
+     "expected_version"
+    ],
+    "title": "ProviderPatch",
     "type": "object"
    },
    "ReasonIn": {
@@ -2292,6 +2640,54 @@
     ],
     "title": "Role",
     "type": "string"
+   },
+   "RouteItem": {
+    "additionalProperties": false,
+    "properties": {
+     "model": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Model"
+     },
+     "provider_id": {
+      "title": "Provider Id",
+      "type": "string"
+     }
+    },
+    "required": [
+     "provider_id"
+    ],
+    "title": "RouteItem",
+    "type": "object"
+   },
+   "RoutesIn": {
+    "additionalProperties": false,
+    "properties": {
+     "agent": {
+      "description": "AI 助手：第一个优先，后面的依次备用",
+      "items": {
+       "$ref": "#/components/schemas/RouteItem"
+      },
+      "title": "Agent",
+      "type": "array"
+     },
+     "extract": {
+      "description": "识别：第一个优先，后面的依次备用",
+      "items": {
+       "$ref": "#/components/schemas/RouteItem"
+      },
+      "title": "Extract",
+      "type": "array"
+     }
+    },
+    "title": "RoutesIn",
+    "type": "object"
    },
    "RuleIn": {
     "additionalProperties": false,
@@ -3702,6 +4098,454 @@
     "summary": "Apply Template",
     "tags": [
      "accounts"
+    ]
+   }
+  },
+  "/api/v1/books/{book_id}/ai/providers": {
+   "get": {
+    "description": "Providers without keys (only the last 4 characters).",
+    "operationId": "list_providers_api_v1_books__book_id__ai_providers_get",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "book_id",
+      "required": true,
+      "schema": {
+       "title": "Book Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "title": "Response List Providers Api V1 Books  Book Id  Ai Providers Get",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "List Providers",
+    "tags": [
+     "ai"
+    ]
+   },
+   "post": {
+    "description": "Add a provider; the key is sealed with BK_MASTER_KEY. Web app only.",
+    "operationId": "create_provider_api_v1_books__book_id__ai_providers_post",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "book_id",
+      "required": true,
+      "schema": {
+       "title": "Book Id",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/ProviderIn"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "201": {
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Create Provider",
+    "tags": [
+     "ai"
+    ]
+   }
+  },
+  "/api/v1/books/{book_id}/ai/providers/{provider_id}": {
+   "delete": {
+    "description": "Remove a provider and drop it from task routing. Web app only.",
+    "operationId": "delete_provider_api_v1_books__book_id__ai_providers__provider_id__delete",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "book_id",
+      "required": true,
+      "schema": {
+       "title": "Book Id",
+       "type": "string"
+      }
+     },
+     {
+      "in": "path",
+      "name": "provider_id",
+      "required": true,
+      "schema": {
+       "title": "Provider Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Delete Provider",
+    "tags": [
+     "ai"
+    ]
+   },
+   "patch": {
+    "description": "Change a provider; a new Base URL needs the key again. Web app only.",
+    "operationId": "update_provider_api_v1_books__book_id__ai_providers__provider_id__patch",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "book_id",
+      "required": true,
+      "schema": {
+       "title": "Book Id",
+       "type": "string"
+      }
+     },
+     {
+      "in": "path",
+      "name": "provider_id",
+      "required": true,
+      "schema": {
+       "title": "Provider Id",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/ProviderPatch"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Update Provider",
+    "tags": [
+     "ai"
+    ]
+   }
+  },
+  "/api/v1/books/{book_id}/ai/providers/{provider_id}:test": {
+   "post": {
+    "description": "A tiny request to the provider: does it answer, which models does it list.",
+    "operationId": "test_provider_api_v1_books__book_id__ai_providers__provider_id__test_post",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "book_id",
+      "required": true,
+      "schema": {
+       "title": "Book Id",
+       "type": "string"
+      }
+     },
+     {
+      "in": "path",
+      "name": "provider_id",
+      "required": true,
+      "schema": {
+       "title": "Provider Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Test Provider",
+    "tags": [
+     "ai"
+    ]
+   }
+  },
+  "/api/v1/books/{book_id}/ai/routes": {
+   "get": {
+    "description": "Provider + model per task (识别, AI 助手), in fallback order.",
+    "operationId": "get_routes_api_v1_books__book_id__ai_routes_get",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "book_id",
+      "required": true,
+      "schema": {
+       "title": "Book Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "title": "Response Get Routes Api V1 Books  Book Id  Ai Routes Get",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Get Routes",
+    "tags": [
+     "ai"
+    ]
+   },
+   "put": {
+    "description": "Set the provider + model order per task. Web app only.",
+    "operationId": "set_routes_api_v1_books__book_id__ai_routes_put",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "book_id",
+      "required": true,
+      "schema": {
+       "title": "Book Id",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/RoutesIn"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Set Routes",
+    "tags": [
+     "ai"
+    ]
+   }
+  },
+  "/api/v1/books/{book_id}/ai/status": {
+   "get": {
+    "description": "Whether each AI task can run (a provider is routed, or BK_AI_* is set). No configuration details.",
+    "operationId": "status_api_v1_books__book_id__ai_status_get",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "book_id",
+      "required": true,
+      "schema": {
+       "title": "Book Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "title": "Response Status Api V1 Books  Book Id  Ai Status Get",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Status",
+    "tags": [
+     "ai"
+    ]
+   }
+  },
+  "/api/v1/books/{book_id}/ai/usage": {
+   "get": {
+    "description": "Calls, tokens and estimated cost per provider, model and task.",
+    "operationId": "usage_api_v1_books__book_id__ai_usage_get",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "book_id",
+      "required": true,
+      "schema": {
+       "title": "Book Id",
+       "type": "string"
+      }
+     },
+     {
+      "in": "query",
+      "name": "days",
+      "required": false,
+      "schema": {
+       "default": 30,
+       "maximum": 366,
+       "minimum": 1,
+       "title": "Days",
+       "type": "integer"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "title": "Response Usage Api V1 Books  Book Id  Ai Usage Get",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Usage",
+    "tags": [
+     "ai"
     ]
    }
   },

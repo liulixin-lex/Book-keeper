@@ -15,6 +15,20 @@
 | PATCH | `…/accounts/{account_ref}` | Update Account |
 | POST | `…/accounts:apply-template` | Apply Template |
 
+### ai
+
+| 方法 | 路径 | 说明 |
+|---|---|---|
+| GET | `…/ai/providers` | Providers without keys (only the last 4 characters). |
+| POST | `…/ai/providers` | Add a provider; the key is sealed with BK_MASTER_KEY. Web app only. |
+| DELETE | `…/ai/providers/{provider_id}` | Remove a provider and drop it from task routing. Web app only. |
+| PATCH | `…/ai/providers/{provider_id}` | Change a provider; a new Base URL needs the key again. Web app only. |
+| POST | `…/ai/providers/{provider_id}:test` | A tiny request to the provider: does it answer, which models does it list. |
+| GET | `…/ai/routes` | Provider + model per task (识别, AI 助手), in fallback order. |
+| PUT | `…/ai/routes` | Set the provider + model order per task. Web app only. |
+| GET | `…/ai/status` | Whether each AI task can run (a provider is routed, or BK_AI_* is set). No configuration details. |
+| GET | `…/ai/usage` | Calls, tokens and estimated cost per provider, model and task. |
+
 ### audit
 
 | 方法 | 路径 | 说明 |
@@ -210,7 +224,7 @@
 | GET | `/api/v1/users` | List Users |
 | POST | `/api/v1/users` | Create User |
 
-共 115 个 REST 操作。
+共 124 个 REST 操作。
 
 ## MCP 工具
 

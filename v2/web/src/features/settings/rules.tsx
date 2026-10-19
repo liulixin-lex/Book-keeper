@@ -3,7 +3,7 @@ import { useState } from "react";
 import { clsx } from "clsx";
 import { Plus, Trash } from "@phosphor-icons/react";
 import { api, ApiError } from "@/api/client";
-import { changeSetOf, useBookMutation, useBookQuery, useCapabilities, useCategories, useChannels, useNames, useTransactionTypes } from "@/api/queries";
+import { changeSetOf, useBookMutation, useBookQuery, useCategories, useChannels, useNames, useTransactionTypes } from "@/api/queries";
 import type { FeeRule, ImportSource, Rule, RuleAction, RuleCondition } from "@/api/types";
 import { Badge, Button, Card, Chip, DateInput, Empty, ErrorNote, Field, Input, Select, Sheet, Skeleton, Switch, Textarea } from "@/components/ui";
 import { useToast, useUndoToast } from "@/components/toast";
@@ -590,7 +590,7 @@ function SourceForm({ source, onDone }: { source: ImportSource | null; onDone: (
     const { defaults: _defaults, ...rest } = source?.config ?? {};
     return rest;
   });
-  const capabilities = useCapabilities();
+  const aiStatus = useBookQuery<{ extract: boolean; agent: boolean }>("/ai/status");
   const config = () => {
     const clean = (d: DirectionDefault) => Object.fromEntries(Object.entries(d).filter(([, v]) => v));
     return { ...extra, defaults: { ...defaults, in: clean(dirs.in), out: clean(dirs.out) } };
@@ -683,7 +683,7 @@ function SourceForm({ source, onDone }: { source: ImportSource | null; onDone: (
             {Object.entries(KIND_NAMES).map(([k, v]) => (
               <option key={k} value={k}>
                 {v}
-                {k === "ai_extract" && capabilities.data?.features.ai_extract === false ? "（服务器未配置密钥）" : ""}
+                {k === "ai_extract" && aiStatus.data?.data.extract === false ? "（还没配置 AI 模型）" : ""}
               </option>
             ))}
           </Select>

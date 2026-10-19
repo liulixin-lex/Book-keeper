@@ -4,11 +4,14 @@
  */
 import { Navigate, NavLink, useParams } from "react-router";
 import { clsx } from "clsx";
-import { ArrowLeft, CaretRight, ClockCounterClockwise, CurrencyCircleDollar, Funnel, Percent, Plug, Storefront, Tag, Tray, UserCircle, UsersThree, type Icon } from "@phosphor-icons/react";
+import { ArrowLeft, CaretRight, ClockCounterClockwise, CurrencyCircleDollar, Funnel, Percent, Plug, Sparkle, Storefront, Tag, Tray, UserCircle, UsersThree, type Icon } from "@phosphor-icons/react";
+import { useBook } from "@/api/queries";
+import type { BookRef } from "@/api/types";
 import { Card } from "@/components/ui";
 import { Categories, Channels, Counterparties, Currencies } from "./business";
 import { FeeRules, Rules, Sources } from "./rules";
 import { Account, Activity, AiAccess } from "./access";
+import { AiModels } from "./ai";
 
 interface Section {
   key: string;
@@ -16,6 +19,8 @@ interface Section {
   hint: string;
   icon: Icon;
   render: () => React.ReactNode;
+  /** Who sees it; everyone when absent. */
+  roles?: BookRef["role"][];
 }
 
 const GROUPS: { title: string; sections: Section[] }[] = [
@@ -35,16 +40,21 @@ const GROUPS: { title: string; sections: Section[] }[] = [
     title: "接入与账户",
     sections: [
       { key: "ai", label: "AI 接入", hint: "MCP 地址与 API 令牌", icon: Plug, render: () => <AiAccess /> },
+      { key: "ai-models", label: "AI 模型", hint: "提供商、任务分配与用量", icon: Sparkle, render: () => <AiModels />, roles: ["owner", "admin", "accountant"] },
       { key: "activity", label: "操作记录", hint: "每次写入，可整次撤销", icon: ClockCounterClockwise, render: () => <Activity /> },
       { key: "data", label: "账户与数据", hint: "外观、导出、数据检查、密码", icon: UserCircle, render: () => <Account /> },
     ],
   },
 ];
 
-const ALL = GROUPS.flatMap((g) => g.sections);
-
 export default function Settings() {
   const { section } = useParams();
+  const book = useBook();
+  const role = book.data?.role;
+  // Sections depend on the role, so wait for it: a deep link to /settings/ai-models must not bounce to the first section.
+  if (book.isPending) return null;
+  const groups = GROUPS.map((g) => ({ ...g, sections: g.sections.filter((s) => !s.roles || (role && s.roles.includes(role))) }));
+  const ALL = groups.flatMap((g) => g.sections);
   const current = ALL.find((s) => s.key === section);
   // Desktop shows list and content side by side, so it always opens on a section; phones start from the list.
   if (!current && window.matchMedia("(min-width: 1024px)").matches) return <Navigate to={`/settings/${ALL[0]!.key}`} replace />;
@@ -54,7 +64,7 @@ export default function Settings() {
       <nav aria-label="设置" className={clsx("lg:sticky lg:top-5 lg:self-start", current && "max-lg:hidden")}>
         <h1 className="mb-6 flex min-h-10 items-center text-xl font-semibold tracking-[-0.02em] max-lg:mb-5">设置</h1>
         <div className="grid gap-6">
-          {GROUPS.map((g) => (
+          {groups.map((g) => (
             <div key={g.title}>
               <h2 className="mb-2 px-3 text-sm font-medium text-ink-3">{g.title}</h2>
               <Card as="div" className="p-1.5 lg:bg-transparent lg:p-0 lg:shadow-none">

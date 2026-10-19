@@ -15,6 +15,7 @@ class Scope(StrEnum):
     REFERENCE_WRITE = "reference:write"
     CONFIG_WRITE = "config:write"
     ADMIN = "admin"
+    ADMIN_READ = "admin:read"  # read management info: members, tokens, audit, rules, AI config (never secrets)
 
 
 class Role(StrEnum):
@@ -32,7 +33,13 @@ class Preset(StrEnum):
 
 
 _VIEWER = frozenset({Scope.LEDGER_READ, Scope.FILES_READ})
-_ACCOUNTANT = _VIEWER | {Scope.LEDGER_WRITE, Scope.IMPORT_WRITE, Scope.RULES_WRITE, Scope.REFERENCE_WRITE}
+_ACCOUNTANT = _VIEWER | {
+    Scope.LEDGER_WRITE,
+    Scope.IMPORT_WRITE,
+    Scope.RULES_WRITE,
+    Scope.REFERENCE_WRITE,
+    Scope.ADMIN_READ,
+}
 _ADMIN = _ACCOUNTANT | {Scope.CONFIG_WRITE, Scope.ADMIN}
 
 ROLE_CAPS: dict[Role, frozenset[Scope]] = {

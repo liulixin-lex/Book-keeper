@@ -1,4 +1,4 @@
-"""AI 识别: screenshots and PDFs → structured records through Claude.
+"""AI 识别: screenshots and PDFs → structured records through the provider routed for 识别 (设置 → AI).
 
 Transcription only. One request per file (files run in parallel), a JSON schema for the answer, and nothing
 touches the database here: the caller stages the records as an import batch, where they are deduplicated,
@@ -8,8 +8,6 @@ guessed.
 
 from __future__ import annotations
 
-import base64
-import json
 import re
 from collections.abc import Collection, Sequence
 from concurrent.futures import ThreadPoolExecutor
@@ -17,15 +15,12 @@ from dataclasses import dataclass, field
 from decimal import Decimal, InvalidOperation
 from typing import Any
 
+from bookkeeper.ai import adapters
+from bookkeeper.ai.adapters import Target
 from bookkeeper.config import Settings
 from bookkeeper.domain.errors import DomainError
 from bookkeeper.importers.redeem import filename_host
 
-IMAGE_TYPES = {"image/png", "image/jpeg", "image/webp", "image/gif"}
-PDF_TYPE = "application/pdf"
-# Models that accept the server-side refusal fallback (`fallbacks: "default"`); others run without it.
-FALLBACK_MODELS = {"claude-opus-5-5", "claude-opus-5", "claude-fable-5-1", "claude-sonnet-5-5"}
-FALLBACK_BETA = "server-side-fallback-2026-07-01"
 MAX_TOKENS = 32_000
 
 _TEXT = {"anyOf": [{"type": "string"}, {"type": "null"}]}
@@ -106,65 +101,49 @@ class Extracted:
     usage: dict[str, int] = field(default_factory=lambda: {"input_tokens": 0, "output_tokens": 0})
     model: str = ""
     checks: list[dict[str, Any]] = field(default_factory=list)
+    calls: list[dict[str, Any]] = field(default_factory=list)  # per provider call: target, usage, ok — for 用量
 
 
-def available(settings: Settings) -> bool:
-    return bool(settings.ai_key)
-
-
-def _block(name: str, data: bytes, mime: str) -> dict[str, Any]:
-    encoded = base64.standard_b64encode(data).decode()
-    if mime == PDF_TYPE:
-        return {"type": "document", "source": {"type": "base64", "media_type": PDF_TYPE, "data": encoded}}
-    if mime in IMAGE_TYPES:
-        return {"type": "image", "source": {"type": "base64", "media_type": mime, "data": encoded}}
-    raise DomainError("UNSUPPORTED_MEDIA_TYPE", f"{name}：AI 识别只读截图（PNG / JPEG / WebP）和 PDF。")
-
-
-def _request(client: Any, settings: Settings, name: str, data: bytes, mime: str, hint: str) -> dict[str, Any]:
-    import anthropic
+def _read(
+    targets: list[Target],
+    name: str,
+    data: bytes,
+    mime: str,
+    hint: str,
+    backend: adapters.Backend | None,
+    calls: list[dict[str, Any]],
+) -> dict[str, Any]:
+    """One file → the model's transcription, from the first provider that answers."""
+    from bookkeeper.services import ai_providers
 
     note = f"About this source: {hint.strip()}\n\n" if hint.strip() else ""
-    params: dict[str, Any] = {
-        "model": settings.ai_model,
-        "max_tokens": MAX_TOKENS,
-        "system": SYSTEM,
-        "output_config": {"effort": settings.ai_effort, "format": {"type": "json_schema", "schema": SCHEMA}},
-        "messages": [
-            {
-                "role": "user",
-                "content": [
-                    _block(name, data, mime),
-                    {"type": "text", "text": f"{note}File: {name}. Transcribe its money rows."},
+    request = adapters.Request(
+        system=SYSTEM,
+        messages=[
+            adapters.Message(
+                "user",
+                [
+                    adapters.Part.of_file(name, data, mime),
+                    adapters.Part.of_text(f"{note}File: {name}. Transcribe its money rows."),
                 ],
-            }
+            )
         ],
-    }
-    if settings.ai_model in FALLBACK_MODELS:
-        params |= {"betas": [FALLBACK_BETA], "fallbacks": "default"}
+        schema=SCHEMA,
+        max_tokens=MAX_TOKENS,
+    )
     try:
-        with client.beta.messages.stream(**params) as stream:
-            message = stream.get_final_message()
-    except anthropic.AuthenticationError as exc:
-        raise DomainError("AI_UNAVAILABLE", "AI 识别的 API 密钥无效，请检查 BK_AI_API_KEY。") from exc
-    except anthropic.RateLimitError as exc:
-        raise DomainError("AI_UNAVAILABLE", "AI 服务正忙（请求过多），请稍后再试。") from exc
-    except anthropic.BadRequestError as exc:
-        raise DomainError("INPUT_INVALID", f"{name}：AI 无法读取这个文件（{exc.message}）。") from exc
-    except (anthropic.APIConnectionError, anthropic.APIStatusError) as exc:
-        raise DomainError("AI_UNAVAILABLE", "AI 服务暂时连不上，请稍后再试。") from exc
-    if message.stop_reason == "refusal":
+        target, response = ai_providers.call(targets, request, backend=backend, attempts=calls)
+    except DomainError as exc:
+        if exc.code == "INPUT_INVALID":
+            raise DomainError("INPUT_INVALID", f"{name}：{exc.detail}") from exc
+        raise
+    if response.stop == "refusal":
         raise DomainError("INPUT_INVALID", f"{name}：AI 拒绝处理这个文件。")
-    if message.stop_reason == "max_tokens":
+    if response.stop == "max_tokens":
         raise DomainError("INPUT_INVALID", f"{name}：内容太多，一次读不完。请分成几张截图或几页再传。")
-    text = next((b.text for b in message.content if b.type == "text"), "")
-    try:
-        answer: dict[str, Any] = dict(json.loads(text))
-    except (json.JSONDecodeError, TypeError, ValueError) as exc:
-        raise DomainError("AI_UNAVAILABLE", f"{name}：AI 返回的结果无法读取，请重试。") from exc
-    usage = message.usage
-    answer["_usage"] = {"input_tokens": usage.input_tokens or 0, "output_tokens": usage.output_tokens or 0}
-    answer["_model"] = message.model
+    answer: dict[str, Any] = dict(response.data or {})
+    answer["_usage"] = {"input_tokens": response.usage.input_tokens, "output_tokens": response.usage.output_tokens}
+    answer["_model"] = response.model or target.model
     return answer
 
 
@@ -214,16 +193,18 @@ def _records(
     return out
 
 
-def check(files: Sequence[tuple[str, str]], settings: Settings) -> None:
-    """Refuse an upload before anything is stored or spent: no key, too many files, a type the model can't read."""
-    if not available(settings):
-        raise DomainError("AI_UNAVAILABLE", "AI 识别还没配置：在服务器上设置 BK_AI_API_KEY 后可用。")
+def check(files: Sequence[tuple[str, str]], settings: Settings, *, configured: bool) -> None:
+    """Refuse an upload before anything is stored or spent: no provider, too many files, a type AI can't read."""
+    if not configured:
+        raise DomainError(
+            "AI_UNAVAILABLE", "AI 识别还没配置：在 设置 → AI 添加提供商，或在服务器上设置 BK_AI_API_KEY 后可用。"
+        )
     if not files:
         raise DomainError("VALIDATION_FAILED", "请至少选择一个文件。")
     if len(files) > settings.ai_max_files:
         raise DomainError("VALIDATION_FAILED", f"一次最多 {settings.ai_max_files} 个文件，请分批上传。")
     for name, mime in files:
-        _block(name, b"", mime)
+        adapters.Part.of_file(name, b"", mime)
 
 
 COUNT_RE = re.compile(r"共\s*(\d+)\s*(?:条|笔|单|项|个)")
@@ -271,18 +252,18 @@ def extract(
     hint: str = "",
     commodity: str | None = None,
     settings: Settings,
-    client: Any = None,
+    targets: list[Target],
+    backend: adapters.Backend | None = None,
     known_hosts: Collection[str] = (),
+    calls: list[dict[str, Any]] | None = None,
 ) -> Extracted:
-    """Read each (name, bytes, mime) file. Rows seen in several files (overlapping screenshots) are kept once."""
-    check([(name, mime) for name, _data, mime in files], settings)
-    if client is None:
-        import anthropic
-
-        client = anthropic.Anthropic(api_key=settings.ai_key, timeout=240.0, max_retries=2)
+    """Read each (name, bytes, mime) file. Rows seen in several files (overlapping screenshots) are kept once.
+    ``calls`` collects each provider call (target, usage, ok), also when a read fails, for 用量."""
+    check([(name, mime) for name, _data, mime in files], settings, configured=bool(targets))
+    calls = calls if calls is not None else []
     with ThreadPoolExecutor(max_workers=min(4, len(files))) as pool:
-        answers = list(pool.map(lambda f: _request(client, settings, f[0], f[1], f[2], hint), files))
-    result = Extracted(model=settings.ai_model)
+        answers = list(pool.map(lambda f: _read(targets, f[0], f[1], f[2], hint, backend, calls), files))
+    result = Extracted(model=targets[0].model, calls=calls)
     seen: dict[tuple[Any, ...], str] = {}
     for (name, _data, _mime), answer in zip(files, answers, strict=True):
         result.model = answer.get("_model") or result.model
