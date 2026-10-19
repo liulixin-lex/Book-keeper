@@ -1,7 +1,7 @@
 # 16 接口索引（由代码生成）
 
 > 由 `v2/scripts/contracts.py` 根据 OpenAPI 与 MCP 工具注册表生成，请勿手工修改。
-> 版本 2.0.0；REST 账套接口前缀 `/api/v1/books/{book_id}`（表中以 `…` 表示）。设计说明见 08（REST）与 09（MCP）号文档。
+> 版本 2.1.0；REST 账套接口前缀 `/api/v1/books/{book_id}`（表中以 `…` 表示）。设计说明见 08（REST）与 09（MCP）号文档。
 
 ## REST
 

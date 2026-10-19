@@ -71,7 +71,7 @@ services:
     healthcheck: { test: ["CMD", "pg_isready", "-U", "bk_owner"], interval: 10s }
     restart: unless-stopped
   api:
-    image: ghcr.io/liulixin-lex/book-keeper:2.0.0
+    image: ghcr.io/liulixin-lex/book-keeper:2.1.0
     command: ["bookkeeper", "serve", "--host", "0.0.0.0", "--port", "8000"]
     env_file: .env
     volumes: [data:/data]
@@ -80,7 +80,7 @@ services:
     healthcheck: { test: ["CMD", "bookkeeper", "healthcheck"], interval: 15s }
     restart: unless-stopped
   worker:
-    image: ghcr.io/liulixin-lex/book-keeper:2.0.0
+    image: ghcr.io/liulixin-lex/book-keeper:2.1.0
     command: ["bookkeeper", "worker"]
     env_file: .env
     volumes: [data:/data]
@@ -92,8 +92,9 @@ volumes: { pgdata: {}, data: {} }
 生产覆盖文件中端口列表使用 `!override`（Compose 会合并多个文件中的端口列表）。容器以非 root 用户运行，根文件系统只读（`/data` 与 `/tmp` 除外）。
 
 ### 2.3 发布流程
+0. 版本号：`pyproject.toml`、`src/bookkeeper/__init__.py`、`web/package.json` 同步修改，`scripts/contracts.py` 更新快照，全部检查通过后提交，在 `v2` 上打标签 `vX.Y.Z` 并发布 GitHub Release；
 1. 构建镜像（带版本号与 git 提交）：服务器本地 `docker build`，或 CI 构建后推送镜像仓库（推送前需经用户同意）；
-2. 服务器：`deploy/scripts/backup.sh` → 更新 `.env` 中 `BK_IMAGE` → `docker compose run --rm migrate`（迁移账号）→ `docker compose up -d api worker` → `/readyz` 与冒烟测试（登录、读取余额、MCP 列工具）；
+2. 服务器：`deploy/scripts/backup.sh` → 更新 `.env` 中 `BK_IMAGE` → `docker compose run --rm migrate`（迁移账号）→ `docker compose up -d api worker` → `/readyz` 与冒烟测试（登录、读取余额、MCP 列工具；临时令牌用完即吊销，REST 写入要带 `Idempotency-Key`）；发布前的 `.env`、compose 文件、代码包与数据库备份放在 `backups/pre-deploy-<时间>/`，附回滚步骤；
 3. 失败回滚：`BK_IMAGE` 切回上一镜像；若迁移已执行且不可逆，用发布前备份恢复。
 
 首次部署与 v1 → v2 切换见 15 号文档。

@@ -16,7 +16,7 @@
 ```bash
 # 服务器上；代码从本地仓库 scp v2/ 目录（或获准后从 GitHub 拉取）
 cd /opt/bookkeeper                              # = v2 目录
-docker build -t book-keeper:2.0.0 .
+docker build -t book-keeper:2.1.0 .
 cp .env.example .env && chmod 600 .env          # 填写两个数据库密码（openssl rand -hex 24）、BK_PUBLIC_URL
 # .env 中 COMPOSE_FILE 已合并 production 覆盖；BK_HOST_PORT=8010（v1 占用 8000）
 docker compose up -d db && docker compose run --rm migrate

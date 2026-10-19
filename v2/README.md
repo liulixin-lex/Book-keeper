@@ -2,15 +2,16 @@
 
 复式记账后端：REST API + MCP（外部 AI 接入）。设计文档见 [`../docs/00-README.md`](../docs/00-README.md)。
 
-版本 2.0.0：后端 + Web 前端（`web/`）。
+版本 2.1.0：后端 + Web 前端（`web/`）+ AI 能力（自定义提供商、站内 AI 助手、识别规则与场景，[`../docs/19-ai-providers-and-agent.md`](../docs/19-ai-providers-and-agent.md)）。
 
 2026-10-19 精简：自用的中转站经营账，记账即入账，交易可直接修改、删除、恢复，账本只追加、随时可撤回；草稿 / 过账 / 复核 / 预览 / 结账 / 对账等已去掉（[`../docs/17-lean-ledger.md`](../docs/17-lean-ledger.md)）。
 
 - **账本核心**：复式分录（多商品、本位币冻结、兑换腿与尾差）、凭证号与分录哈希链、只追加分录（修改与删除都是冲销 + 重记）、数据库层不变量（13 个触发器）、双时间查询（`as_known_at`）。
 - **业务类型**：销售、销售退款、额度采购、费用支出、采购退款、资金划转、手工凭证、期初余额；版本化手续费规则；修改、删除、恢复、按新规则重算、解释链、撤销变更集。
-- **导入**：微信、支付宝、Stripe、卡网订单、上游兑换记录、兑换码页面 PDF、通用表格与结构化记录，以及截图 / PDF 的 AI 识别（可选，后台由 Claude 读取，需 `BK_AI_API_KEY`）；去重、分类规则、对上已记过的交易（含当天合计）、最优配对、完成 / 撤销。
+- **导入**：微信、支付宝、Stripe、卡网订单、上游兑换记录、兑换码页面 PDF、通用表格与结构化记录，以及截图 / PDF 的 AI 识别（可选，在 设置 → AI 模型 添加提供商；先按页面类型抽取，规则优先、AI 建议补缺，低把握的待确认）；去重、分类规则、对上已记过的交易（含当天合计）、最优配对、完成 / 撤销。
 - **统计与导出**：概览、利润表、经营日报、销售 / 手续费 / 额度采购分析、试算平衡、通用汇总（每行可反查明细）；CSV / XLSX / Beancount / JSON 导出与月度归档；11 项健康检查。
-- **外部 AI**：`/mcp`（Streamable HTTP）35 个工具、资源与提示词；`dry_run`、`idempotency_key`、写入即生效可撤回、限流与调用日志；令牌或 OAuth 2.1（claude.ai、ChatGPT 等远程连接器）。
+- **站内 AI 助手**：一句指令完成查询、记账、导入与规则维护；步骤时间线，需要时提问；一次运行一个变更集，可整次撤销。
+- **外部 AI**：`/mcp`（Streamable HTTP）41 个工具（分组、示例与下一步）、资源（识别规则手册、规则快照、场景）与 9 个场景提示词；令牌分用户只读 / 用户读写 / 管理员只读 / 管理员读写四档；`dry_run`、`idempotency_key`、写入即生效可撤回、限流与调用日志；令牌或 OAuth 2.1（claude.ai、ChatGPT 等远程连接器）。
 - **运维**：Compose 部署、生产配置自检、备份与恢复演练脚本、v1 数据迁移（真实数据全部迁移并通过核对）、接口契约快照（`contracts/`，测试保证与代码一致）。
 
 接口清单见 [`../docs/16-interface-index.md`](../docs/16-interface-index.md)（由 `scripts/contracts.py` 生成）。
@@ -37,7 +38,7 @@ export BK_DATABASE_URL=postgresql+psycopg://postgres@localhost/bookkeeper_dev
 uv run bookkeeper migrate
 BK_NEW_PASSWORD='至少十二位的密码' uv run bookkeeper create-user --email you@example.com --name 你 --superadmin
 uv run bookkeeper create-book --name 主账套 --owner-email you@example.com
-uv run bookkeeper create-token --book bk_… --user-email you@example.com --name 本地 --preset reader
+uv run bookkeeper create-token --book bk_… --user-email you@example.com --name 本地 --tier user_read
 uv run bookkeeper serve --port 8000      # API：http://127.0.0.1:8000/api/v1/docs
 uv run bookkeeper worker                 # 后台任务
 ```
@@ -57,7 +58,7 @@ node scripts/e2e.mjs         # 端到端冒烟：把开发库复制成临时库 
 node scripts/a11y.mjs dark   # axe 无障碍扫描（light / dark）
 ```
 
-五个模块：
+六个模块：
 
 | 模块 | 内容 |
 |---|---|
@@ -65,7 +66,8 @@ node scripts/a11y.mjs dark   # axe 无障碍扫描（light / dark）
 | 交易 | 搜索与筛选、按日分组；详情里直接修改、删除（带撤销）、恢复，以及修改历史 |
 | 统计 | 趋势、渠道、上游、支出构成、手续费；每一行都能下钻到对应交易 |
 | 导入 | 选来源 → 上传账单 → 补全规则没认出的记录 → 完成导入（可整批撤销） |
-| 设置 | 往来方、渠道、收支分类、手续费规则、分类规则、导入来源、币种与汇率、AI 接入、操作记录、账户与数据 |
+| AI 助手 | 一句指令（可附截图 / 账单、选场景与权限档位），步骤时间线，需要时提问；整次撤销 |
+| 设置 | 往来方、渠道、收支分类、手续费规则、分类规则、导入来源、币种与汇率、AI 接入、AI 模型、AI 规则（识别规则手册、把握门槛与场景）、操作记录、账户与数据 |
 
 记一笔：侧栏按钮、快捷键 N 或手机底栏的 ＋。所有写入立即生效，提示条上可撤销；没有确认对话框。
 

@@ -20,7 +20,7 @@ services:
     restart: unless-stopped
 
   migrate:
-    image: ${BK_IMAGE:-ghcr.io/liulixin-lex/book-keeper:2.0.0}
+    image: ${BK_IMAGE:-ghcr.io/liulixin-lex/book-keeper:2.1.0}
     command: ["bookkeeper", "migrate"]
     env_file: .env
     environment:
@@ -31,7 +31,7 @@ services:
     restart: "no"
 
   api:
-    image: ${BK_IMAGE:-ghcr.io/liulixin-lex/book-keeper:2.0.0}
+    image: ${BK_IMAGE:-ghcr.io/liulixin-lex/book-keeper:2.1.0}
     # Requests reach the container from the Docker bridge, not 127.0.0.1; the port is published on the
     # host loopback only (nginx is the sole client), so its X-Forwarded-For can be trusted for client IPs.
     command: ["bookkeeper", "serve", "--host", "0.0.0.0", "--port", "8000", "--forwarded-allow-ips", "*"]
@@ -48,7 +48,7 @@ services:
     restart: unless-stopped
 
   worker:
-    image: ${BK_IMAGE:-ghcr.io/liulixin-lex/book-keeper:2.0.0}
+    image: ${BK_IMAGE:-ghcr.io/liulixin-lex/book-keeper:2.1.0}
     command: ["bookkeeper", "worker"]
     healthcheck:
       test: ["CMD", "bookkeeper", "healthcheck", "--worker"]
