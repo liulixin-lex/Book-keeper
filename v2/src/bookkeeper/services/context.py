@@ -10,7 +10,7 @@ from bookkeeper.domain.ids import new_id
 from bookkeeper.domain.scopes import Role, Scope
 
 ActorType = Literal["user", "token", "system", "migration"]
-Channel = Literal["ui", "api", "mcp", "import", "worker", "cli", "migration", "system"]
+Channel = Literal["ui", "api", "mcp", "agent", "import", "worker", "cli", "migration", "system"]
 
 
 @dataclass(frozen=True)

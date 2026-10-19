@@ -289,6 +289,8 @@ const OPS: Record<string, string> = {
   "fee_rules.create": "保存手续费规则",
   "fee_rules.retire": "停用手续费规则",
   "checks.run": "数据检查",
+  "agent.run": "AI 助手",
+  "workspace.write": "写工作区文件",
 };
 
 const ENTITY: Record<string, string> = {
@@ -300,6 +302,7 @@ const ENTITY: Record<string, string> = {
   rule: "分类规则",
   token: "令牌",
   file: "文件",
+  agent_file: "工作区文件",
 };
 
 function opName(op: string): string {

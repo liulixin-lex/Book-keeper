@@ -5,6 +5,7 @@
   earlier lines are posted again (copied, not rebuilt, so later fee rule changes do not leak in);
 - import batch committed here → reverted;
 - fee rule version created → retired, the previous version's end date restored; retired → reactivated;
+- AI workspace file written → its earlier text restored, or removed if this change set created it;
 - anything else is listed under ``manual`` (not changed automatically).
 """
 
@@ -19,7 +20,7 @@ from sqlalchemy.orm import Session
 from bookkeeper.db.models import AuditEvent, Book, ChangeSet, FeeRuleRow, JournalEntry, SourceRecord, Transaction
 from bookkeeper.domain.errors import DomainError, not_found
 from bookkeeper.domain.scopes import Scope
-from bookkeeper.services import audit, imports, ledger, tags, transactions
+from bookkeeper.services import audit, imports, ledger, tags, transactions, workspace
 from bookkeeper.services.context import RequestContext
 
 HANDLED = {
@@ -34,6 +35,7 @@ HANDLED = {
     "fee_rule.create",
     "fee_rule.close",
     "fee_rule.retire",
+    "agent_file.write",
 }
 
 
@@ -77,6 +79,7 @@ def undo(session: Session, ctx: RequestContext, change_set_id: str, reason: str 
     befores: dict[str, dict[str, Any]] = {}
     manual: list[dict[str, Any]] = []
     fee_events: list[AuditEvent] = []
+    file_events: list[AuditEvent] = []
     for event in events:
         if event.entity_type == "transaction" and event.entity_id:
             if event.entity_id not in touched:
@@ -87,6 +90,8 @@ def undo(session: Session, ctx: RequestContext, change_set_id: str, reason: str 
                 befores[event.entity_id] = event.before or {}
         elif event.action.startswith("fee_rule."):
             fee_events.append(event)
+        elif event.action == "agent_file.write":
+            file_events.append(event)
         elif event.action not in HANDLED:
             manual.append({"action": event.action, "entity_type": event.entity_type, "entity_id": event.entity_id})
     import_batches = [e.entity_id for e in events if e.action == "import_batch.commit" and e.entity_id]
@@ -109,6 +114,11 @@ def undo(session: Session, ctx: RequestContext, change_set_id: str, reason: str 
         done.extend(_undo_transaction(session, ctx, txn_id, touched[txn_id], befores.get(txn_id), note))
     for event in reversed(fee_events):
         done.extend(_undo_fee_event(session, ctx, event))
+    for event in reversed(file_events):
+        assert event.entity_id is not None
+        restored = workspace.undo_write(session, event.entity_id, event.before)
+        audit.record(session, ctx, "agent_file.restore", "agent_file", event.entity_id, after=restored)
+        done.append(restored)
     new_set = session.get(ChangeSet, ctx.change_set_id)
     assert new_set is not None
     new_set.reverts_change_set_id = original_set.id

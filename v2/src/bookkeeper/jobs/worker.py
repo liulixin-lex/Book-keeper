@@ -74,8 +74,8 @@ class Worker:
         try:
             if handler is None:
                 raise RuntimeError(f"no handler for job kind {kind}")
-            if registry.owns_session(kind):
-                result = handler(self.session_factory, payload)
+            if registry.owns_session(kind):  # long tasks: they get the job id to keep it alive (queue.touch)
+                result = handler(self.session_factory, payload | {"_job_id": job_id})
             else:
                 with self.session_factory() as session, session.begin():
                     result = handler(session, payload)

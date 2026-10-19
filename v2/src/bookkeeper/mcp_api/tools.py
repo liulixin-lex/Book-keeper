@@ -1087,3 +1087,7 @@ for _t in [t for t in TOOLS.values() if t.kind != "read" and t.operation is None
         _t.handler,
         rest=_t.rest,
     )
+
+# ------------------------------------------------------------------ file tools
+
+from bookkeeper.mcp_api import tools_files  # noqa: E402,F401  (registers its tools)

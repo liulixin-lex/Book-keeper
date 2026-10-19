@@ -79,9 +79,11 @@ docker compose run --rm -v /opt/bookkeeper/v1-final.db:/import/v1.db:ro \
 - **超时**：nginx 的 `/api/` 设 `proxy_read_timeout 300s`，覆盖多文件上传与大文件解析；AI 识别本身不占这个请求。
 - **成本**：截图按原分辨率识别，只有长边超过 2576 px 才缩到 2576 px（缩小会让数字变糊；整批截图原分辨率约 1 美元，读错金额的代价更大）；同一来源同一组文件重传直接返回已有批次，不会再调用 AI；`BK_AI_DAILY_FILES` 可限制每天的文件数。
 
-## 3.2 数据库迁移 0012–0014
+## 3.2 数据库迁移 0012–0015
 
 `0012_import_kinds`：导入来源类型增加 `redeem_page`、`ai_extract`，批次状态增加 `extracting`、`failed`（只改 CHECK 约束，不动数据）。随 `docker compose run --rm migrate` 执行，可回退（回退前须先撤销或删除用到这些值的来源与批次）。
+
+`0015_agent`：站内 AI 助手的 `agent_runs`、`agent_steps`、`agent_files` 三张表；审计与交易的渠道约束增加 `agent`。可回退（删掉三张表，渠道约束保持放宽）。AI 助手与识别共用 设置 → AI 模型 的配置，上限见 19 号 §3.1（`BK_AGENT_*`）。
 
 `0014_token_tiers`：令牌改为四个档位（08 号 §3.3）。reader → 用户只读，bookkeeper → 用户读写，admin → 管理员读写；自定义令牌映射到其作用域覆盖的最高一档，没有 `ledger:read` 的直接吊销。迁移在输出里打印各档数量与每个自定义令牌的去向，**生产迁移时保存这段输出**。OAuth 授权码与刷新令牌一起换算。可回退（管理员只读回退为自定义）。
 

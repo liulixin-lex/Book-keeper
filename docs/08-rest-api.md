@@ -231,6 +231,16 @@
 
 “仅网页端”：API 令牌（含 MCP）即使有 `config:write` 也返回 403。细节见 19 号文档。
 
+### 6.8.2 AI 助手
+
+| 方法 | 路径 | scope | 说明 |
+|---|---|---|---|
+| GET | `/agent/runs` · `/agent/runs/{id}` | ledger:read | ✅ 最近的运行（自己的，管理员只读可看全部）；单个运行含步骤与变更集状态 |
+| POST | `/agent/runs` | ledger:read，仅网页端 | ✅ 开始：`{instruction, tier?, file_ids?, playbook?}`；实际权限 = 你的权限 ∩ 档位；带文件只读取与暂存；超出每日次数 429，未配置 503 `AI_UNAVAILABLE` |
+| POST | `/agent/runs/{id}:answer` · `:cancel` | ledger:read，仅网页端 | ✅ 回答提问 / 停止 |
+
+一次运行的写入在同一个变更集里，用 `POST /change-sets/{id}:undo` 整次撤销。细节见 19 号 §3。
+
 ### 6.9 其他
 
 | 方法 | 路径 | scope | 说明 |

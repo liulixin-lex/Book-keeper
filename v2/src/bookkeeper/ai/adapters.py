@@ -322,7 +322,7 @@ class AnthropicBackend:
             "model": target.model,
             "max_tokens": request.max_tokens,
             "system": system,
-            "messages": [self._message(m) for m in request.messages],
+            "messages": _merge_turns([self._message(m) for m in request.messages]),
         }
         if tools:
             params["tools"] = tools
@@ -379,6 +379,17 @@ class AnthropicBackend:
                     {"type": "document", "source": {"type": "base64", "media_type": PDF, "data": _b64(p.data)}}
                 )
         return {"role": "user", "content": content}
+
+
+def _merge_turns(messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """One user turn after a tool-using assistant turn: all tool results first, then anything attached."""
+    out: list[dict[str, Any]] = []
+    for m in messages:
+        if out and out[-1]["role"] == m["role"] == "user":
+            out[-1] = {"role": "user", "content": [*out[-1]["content"], *m["content"]]}
+        else:
+            out.append(m)
+    return out
 
 
 def _anthropic_error(exc: Exception) -> DomainError:

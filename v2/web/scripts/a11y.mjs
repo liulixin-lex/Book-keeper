@@ -15,6 +15,7 @@ const paths = [
   "/stats?tab=channels",
   "/stats?tab=sites",
   "/imports",
+  "/ai",
   "/settings/counterparties",
   "/settings/fee-rules",
   "/settings/rules",
@@ -27,7 +28,8 @@ const paths = [
   ...process.argv.slice(3),
 ];
 const browser = await chromium.launch({ channel: "chrome", headless: true });
-const page = await (await browser.newContext({ viewport: { width: 1440, height: 900 }, locale: "zh-CN", reducedMotion: "reduce" })).newPage();
+// bypassCSP: axe is injected inline, which the production build's CSP (rightly) refuses
+const page = await (await browser.newContext({ viewport: { width: 1440, height: 900 }, locale: "zh-CN", reducedMotion: "reduce", bypassCSP: true })).newPage();
 await page.goto(`${base}/login`);
 await page.evaluate((t) => localStorage.setItem("bk.theme", t), theme);
 const loginIssues = await (async () => {

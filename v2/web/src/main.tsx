@@ -19,6 +19,7 @@ const Stats = lazy(() => import("@/features/stats/Stats"));
 const Imports = lazy(() => import("@/features/imports/Imports"));
 const Settings = lazy(() => import("@/features/settings/Settings"));
 const More = lazy(() => import("@/features/more/More"));
+const Assistant = lazy(() => import("@/features/ai/Assistant"));
 
 function Page({ children }: { children: ReactNode }) {
   return (
@@ -100,6 +101,14 @@ function Authed() {
               element={
                 <Page>
                   <Imports />
+                </Page>
+              }
+            />
+            <Route
+              path="/ai"
+              element={
+                <Page>
+                  <Assistant />
                 </Page>
               }
             />

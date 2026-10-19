@@ -537,3 +537,50 @@ export interface AiUsageItem {
   cost_usd: number | null;
   cost_complete: boolean;
 }
+
+/* ---------- AI 助手 ---------- */
+
+export type AgentStatus = "queued" | "running" | "waiting" | "done" | "failed" | "cancelled";
+
+export interface AgentRun {
+  id: string;
+  status: AgentStatus;
+  stage: "general" | "recognition";
+  tier: TokenTier;
+  tier_label: string;
+  instruction: string;
+  playbook: string | null;
+  file_ids: string[];
+  question: string | null;
+  result: string | null;
+  error: string | null;
+  change_set_id: string | null;
+  turns: number;
+  input_tokens: number;
+  output_tokens: number;
+  cost_usd: number | null;
+  model: string | null;
+  user_id: string;
+  created_at: string;
+  finished_at: string | null;
+  version: number;
+}
+
+export interface AgentStep {
+  seq: number;
+  kind: "instruction" | "assistant" | "tool" | "answer" | "note";
+  at: string;
+  text?: string;
+  calls?: { tool: string; title: string; arguments: Record<string, unknown> }[];
+  tool?: string;
+  title?: string;
+  arguments?: Record<string, unknown>;
+  ok?: boolean;
+  code?: string;
+  message?: string;
+}
+
+export interface AgentRunDetail extends AgentRun {
+  change_set_status: "applied" | "reverted" | "partially_reverted" | null;
+  steps: AgentStep[];
+}

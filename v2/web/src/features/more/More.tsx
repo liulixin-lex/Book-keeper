@@ -1,6 +1,6 @@
 /** Phone “更多”: the modules that do not fit the tab bar, appearance and sign-out. */
 import { Link, useNavigate } from "react-router";
-import { CaretRight, GearSix, SignOut, Tray, type Icon } from "@phosphor-icons/react";
+import { CaretRight, GearSix, SignOut, Sparkle, Tray, type Icon } from "@phosphor-icons/react";
 import { useImportBacklog, useMe } from "@/api/queries";
 import { signOut, ThemeSwitch } from "@/app/Shell";
 import { Card, PageHeader } from "@/components/ui";
@@ -11,6 +11,7 @@ export default function More() {
   const backlog = useImportBacklog().count;
   const items: { to: string; label: string; hint: string; icon: Icon; badge?: number }[] = [
     { to: "/imports", label: "导入", hint: backlog ? `${backlog} 条记录待入账` : "上传账单，补全后入账", icon: Tray, badge: backlog },
+    { to: "/ai", label: "AI 助手", hint: "一句话让 AI 查账、记账、整理导入", icon: Sparkle },
     { to: "/settings", label: "设置", hint: "往来方、渠道、手续费规则、AI 接入", icon: GearSix },
   ];
   return (

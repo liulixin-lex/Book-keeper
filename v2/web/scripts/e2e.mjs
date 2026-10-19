@@ -219,6 +219,13 @@ const revoked = await page.evaluate(async (id) => {
 expect(revoked === 200, `revoking gave ${revoked}`);
 step("made, checked and revoked an admin_read token");
 
+step("AI 助手: the page opens and says whether it is set up");
+await page.goto(`${base}/ai`);
+await page.waitForLoadState("networkidle");
+const agentReady = (await api("/ai/status")).agent;
+await (agentReady ? page.getByLabel("要做什么") : page.getByText("AI 助手还没配置")).waitFor();
+step(agentReady ? "composer shown" : "not set up yet, pointing to 设置 → AI 模型");
+
 if (errors.length) {
   console.error(errors.join("\n"));
   process.exitCode = 1;

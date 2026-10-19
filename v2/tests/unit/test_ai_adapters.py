@@ -217,3 +217,28 @@ def test_cost_needs_a_price_for_the_model() -> None:
     priced = target(prices={"m-1": {"input": 3, "output": 15}})
     assert adapters.cost(priced, Usage(1_000_000, 1_000_000)) == pytest.approx(18.0)
     assert adapters.cost(target(), Usage(10, 10)) is None
+
+
+def test_anthropic_tool_results_and_attachments_share_one_user_turn(monkeypatch) -> None:
+    sent: dict[str, Any] = {}
+
+    def stream(**params: Any) -> FakeStream:
+        sent.update(params)
+        return FakeStream(anthropic_message())
+
+    client = SimpleNamespace(messages=SimpleNamespace(stream=stream))
+    backend = adapters.AnthropicBackend()
+    monkeypatch.setattr(backend, "client", lambda t: client)
+    from bookkeeper.ai.adapters import ToolCall
+
+    messages = [
+        Message("user", [Part.of_text("go")]),
+        Message("assistant", [], [ToolCall("t1", "read_file", {}), ToolCall("t2", "list_files", {})]),
+        Message("tool", [Part.of_text("a")], tool_call_id="t1"),
+        Message("tool", [Part.of_text("b")], tool_call_id="t2"),
+        Message("user", [Part("image", data=b"PNG", mime="image/png", name="a.png")]),
+    ]
+    adapters.complete(target(), Request("s", messages), backend)
+    roles = [m["role"] for m in sent["messages"]]
+    assert roles == ["user", "assistant", "user"]
+    assert [b["type"] for b in sent["messages"][2]["content"]] == ["tool_result", "tool_result", "image"]

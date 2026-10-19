@@ -191,7 +191,7 @@ class AuditEvent(Base):
         Index("ix_audit_events_book_occurred", "book_id", "occurred_at"),
         CheckConstraint("actor_type IN ('user','token','system','migration')", name="actor_type"),
         CheckConstraint(
-            "channel IN ('ui','api','mcp','import','worker','cli','migration','system')",
+            "channel IN ('ui','api','mcp','agent','import','worker','cli','migration','system')",
             name="channel",
         ),
     )
@@ -564,7 +564,7 @@ class Transaction(Base, Timestamps, Versioned):
         CheckConstraint("status IN ('posted','reversed')", name="status"),
         CheckConstraint("date_precision IN ('timestamp','day','month')", name="date_precision"),
         CheckConstraint(
-            "created_channel IN ('ui','api','mcp','import','system','migration','cli')",
+            "created_channel IN ('ui','api','mcp','agent','import','system','migration','cli')",
             name="created_channel",
         ),
     )
@@ -1187,3 +1187,79 @@ class AiUsage(Base):
     ref: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(TZ, server_default=func.now(), nullable=False)
     __table_args__ = (Index("ix_ai_usage_book_created", "book_id", "created_at"),)
+
+
+# ------------------------------------------------------------------ in-app AI assistant (docs/19 §3)
+
+
+class AgentRun(Base, Timestamps, Versioned):
+    """One instruction to the AI assistant: who asked, with which tier, and where it stands. Its writes share
+    one change set, so the whole run can be undone at once."""
+
+    __tablename__ = "agent_runs"
+    id: Mapped[str] = mapped_column(Text, primary_key=True)
+    book_id: Mapped[str] = mapped_column(ForeignKey("books.id"), nullable=False)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), nullable=False)
+    tier: Mapped[str] = mapped_column(Text, nullable=False)
+    stage: Mapped[str] = mapped_column(Text, server_default="general", nullable=False)
+    status: Mapped[str] = mapped_column(Text, server_default="queued", nullable=False)
+    instruction: Mapped[str] = mapped_column(Text, nullable=False)
+    playbook: Mapped[str | None] = mapped_column(Text)
+    file_ids: Mapped[list[str]] = mapped_column(ARRAY(Text), server_default=text("'{}'::text[]"), nullable=False)
+    change_set_id: Mapped[str | None] = mapped_column(ForeignKey("change_sets.id"))
+    question: Mapped[str | None] = mapped_column(Text)
+    result: Mapped[str | None] = mapped_column(Text)
+    error: Mapped[str | None] = mapped_column(Text)
+    turns: Mapped[int] = mapped_column(Integer, server_default="0", nullable=False)
+    input_tokens: Mapped[int] = mapped_column(BigInteger, server_default="0", nullable=False)
+    output_tokens: Mapped[int] = mapped_column(BigInteger, server_default="0", nullable=False)
+    cost: Mapped[Decimal | None] = mapped_column(Numeric(14, 6))
+    model: Mapped[str | None] = mapped_column(Text)
+    finished_at: Mapped[datetime | None] = mapped_column(TZ)
+    __table_args__ = (
+        CheckConstraint(TIER_CHECK, name="tier"),
+        CheckConstraint("stage IN ('general','recognition')", name="stage"),
+        CheckConstraint("status IN ('queued','running','waiting','done','failed','cancelled')", name="status"),
+        Index("ix_agent_runs_book_created", "book_id", "created_at"),
+    )
+
+
+class AgentStep(Base):
+    """The run's transcript, one row per message: the instruction, each model turn, each tool call with its result,
+    a question to the user and the answer. Rebuilt into model messages on every turn, so a run can resume."""
+
+    __tablename__ = "agent_steps"
+    id: Mapped[str] = mapped_column(Text, primary_key=True)
+    run_id: Mapped[str] = mapped_column(ForeignKey("agent_runs.id", ondelete="CASCADE"), nullable=False)
+    seq: Mapped[int] = mapped_column(Integer, nullable=False)
+    kind: Mapped[str] = mapped_column(Text, nullable=False)
+    text: Mapped[str | None] = mapped_column(Text)
+    tool: Mapped[str | None] = mapped_column(Text)
+    call_id: Mapped[str | None] = mapped_column(Text)
+    arguments: Mapped[Any] = mapped_column(JSON)
+    result: Mapped[Any] = mapped_column(JSON)
+    ok: Mapped[bool | None] = mapped_column(Boolean)
+    native: Mapped[Any] = mapped_column(JSON)
+    native_kind: Mapped[str | None] = mapped_column(Text)
+    input_tokens: Mapped[int] = mapped_column(Integer, server_default="0", nullable=False)
+    output_tokens: Mapped[int] = mapped_column(Integer, server_default="0", nullable=False)
+    created_at: Mapped[datetime] = mapped_column(TZ, server_default=func.now(), nullable=False)
+    __table_args__ = (
+        UniqueConstraint("run_id", "seq"),
+        CheckConstraint("kind IN ('instruction','assistant','tool','answer','note')", name="kind"),
+    )
+
+
+class AgentFile(Base, Timestamps, Versioned):
+    """A text file in the book's AI workspace (notes, derived CSV, drafts). Uploaded evidence is never here and is
+    never overwritten: the assistant reads it and writes what it derives as a workspace file."""
+
+    __tablename__ = "agent_files"
+    id: Mapped[str] = mapped_column(Text, primary_key=True)
+    book_id: Mapped[str] = mapped_column(ForeignKey("books.id"), nullable=False)
+    path: Mapped[str] = mapped_column(Text, nullable=False)
+    content: Mapped[str] = mapped_column(Text, nullable=False)
+    sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    run_id: Mapped[str | None] = mapped_column(ForeignKey("agent_runs.id", ondelete="SET NULL"))
+    created_by: Mapped[str | None] = mapped_column(ForeignKey("users.id"))
+    __table_args__ = (UniqueConstraint("book_id", "path"),)

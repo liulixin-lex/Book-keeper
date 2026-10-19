@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router";
 import { clsx } from "clsx";
-import { ChartBar, DotsThreeCircle, GearSix, House, Monitor, Moon, Plus, Receipt, SignOut, Sun, Tray, type Icon } from "@phosphor-icons/react";
+import { ChartBar, DotsThreeCircle, GearSix, House, Monitor, Moon, Plus, Receipt, SignOut, Sparkle, Sun, Tray, type Icon } from "@phosphor-icons/react";
 import { api } from "@/api/client";
 import { queryClient, useImportBacklog, useMe } from "@/api/queries";
 import { BlurEdge, IconButton } from "@/components/ui";
@@ -14,6 +14,7 @@ const NAV: { to: string; label: string; icon: Icon }[] = [
   { to: "/transactions", label: "交易", icon: Receipt },
   { to: "/stats", label: "统计", icon: ChartBar },
   { to: "/imports", label: "导入", icon: Tray },
+  { to: "/ai", label: "AI 助手", icon: Sparkle },
   { to: "/settings", label: "设置", icon: GearSix },
 ];
 

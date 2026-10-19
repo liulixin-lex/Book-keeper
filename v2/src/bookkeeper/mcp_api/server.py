@@ -24,12 +24,13 @@ from starlette.types import ASGIApp, Receive, Scope, Send
 from bookkeeper import __version__
 from bookkeeper.config import Settings
 from bookkeeper.db.models import McpCall
+from bookkeeper.domain import scopes as perms
 from bookkeeper.domain.errors import DomainError, FieldError
 from bookkeeper.domain.ids import new_id
 from bookkeeper.mcp_api import content
 from bookkeeper.mcp_api.tools import TOOLS, Output, Tool
 from bookkeeper.services import idempotency, identity, operations, ratelimit
-from bookkeeper.services.context import Actor, RequestContext
+from bookkeeper.services.context import Actor, Channel, RequestContext
 
 log = logging.getLogger("bookkeeper.mcp")
 MAX_LOGGED_ARGS = 20_000
@@ -123,12 +124,38 @@ class AuthMiddleware:
 # ------------------------------------------------------------------ tool execution
 
 
+def permitted(tool: Tool, scopes: frozenset[perms.Scope]) -> bool:
+    """The caller's scopes cover the tool (the one rule for MCP and the in-app assistant)."""
+    if tool.any_of and not set(tool.any_of) & scopes:
+        return False
+    return all(scope in scopes for scope in tool.scopes)
+
+
 def visible(tool: Tool, actor: Actor, settings: Settings) -> bool:
     if tool.kind != "read" and not settings.mcp_write_enabled:
         return False
-    if tool.any_of and not set(tool.any_of) & actor.scopes:
-        return False
-    return all(scope in actor.scopes for scope in tool.scopes)
+    return permitted(tool, actor.scopes)
+
+
+@dataclass(frozen=True)
+class Caller:
+    """Who runs a tool: an MCP token, or the in-app assistant on behalf of the member who asked.
+
+    ``allowed`` narrows the tools further (the assistant's stage); the scopes still decide first."""
+
+    actor: Actor
+    book_id: str
+    channel: Channel
+    ip: str | None = None
+    user_agent: str | None = None
+    allowed: frozenset[str] | None = None
+
+    def may_use(self, tool: Tool, settings: Settings) -> bool:
+        if self.allowed is not None and tool.name not in self.allowed:
+            return False
+        if self.channel == "mcp":
+            return visible(tool, self.actor, settings)
+        return permitted(tool, self.actor.scopes)
 
 
 def tool_schema(tool: Tool) -> types.Tool:
@@ -202,48 +229,57 @@ class Executor:
         self.settings = settings
         self.store = store
 
-    def context(self, auth: McpAuth, idempotency_key: str | None = None) -> RequestContext:
-        return RequestContext(
-            actor=auth.actor,
-            channel="mcp",
-            book_id=auth.book_id,
-            ip=auth.ip,
-            user_agent=auth.user_agent,
-            idempotency_key=idempotency_key,
-            content_store=self.store,
-        )
-
     def call(self, auth: McpAuth, name: str, arguments: dict[str, Any]) -> tuple[dict[str, Any], bool]:
         started = time.monotonic()
-        ctx = self.context(auth, arguments.get("idempotency_key") if isinstance(arguments, dict) else None)
+        caller = Caller(auth.actor, auth.book_id, "mcp", auth.ip, auth.user_agent)
+        key = arguments.get("idempotency_key") if isinstance(arguments, dict) else None
+        body, ctx = self.execute(caller, name, arguments, idempotency_key=key)
+        self._log(auth, ctx, "tools/call", name, arguments, body, body["ok"], started)
+        return body, not body["ok"]
+
+    def execute(
+        self,
+        caller: Caller,
+        name: str,
+        arguments: Any,
+        *,
+        idempotency_key: str | None = None,
+        change_set_id: str | None = None,
+    ) -> tuple[dict[str, Any], RequestContext]:
+        """Validate and run one tool call; failures come back as an error envelope, never as an exception."""
+        ctx = RequestContext(
+            actor=caller.actor,
+            channel=caller.channel,
+            book_id=caller.book_id,
+            ip=caller.ip,
+            user_agent=caller.user_agent,
+            idempotency_key=idempotency_key,
+            content_store=self.store,
+            change_set_id=change_set_id,
+        )
         try:
             tool = TOOLS.get(name)
-            if tool is None or not visible(tool, auth.actor, self.settings):
+            if tool is None or not caller.may_use(tool, self.settings):
+                usable = sorted(t.name for t in TOOLS.values() if caller.may_use(t, self.settings))
                 raise DomainError(
                     "NOT_FOUND" if tool is None else "FORBIDDEN_SCOPE",
-                    f"工具 {name} 不存在。" if tool is None else f"当前令牌不能使用工具 {name}。",
-                    extra={
-                        "available": sorted(t.name for t in TOOLS.values() if visible(t, auth.actor, self.settings))
-                    },
+                    f"工具 {name} 不存在。" if tool is None else f"当前权限不能使用工具 {name}。",
+                    extra={"available": usable},
                 )
-            if tool.kind != "read":
+            if tool.kind != "read" and caller.actor.token_id:
                 with self.factory() as session, session.begin():
-                    ratelimit.hit(session, f"w:{auth.actor.token_id}", ratelimit.WRITE_LIMIT_PER_MIN)
+                    ratelimit.hit(session, f"w:{caller.actor.token_id}", ratelimit.WRITE_LIMIT_PER_MIN)
             try:
                 args = tool.model.model_validate(arguments)
             except ValidationError as exc:
                 raise _validation_error(exc) from exc
             body = self._dispatch(tool, args, ctx)
-            ok = True
         except DomainError as exc:
             body = _envelope(False, exc.code, exc.detail, ctx, warnings=None, next_action=exc.next_action, error=exc)
-            ok = False
         except Exception:
-            log.exception("mcp tool %s failed", name)
+            log.exception("tool %s failed", name)
             body = _envelope(False, "INTERNAL", "服务器内部错误，已记录。请稍后重试或联系管理员。", ctx)
-            ok = False
-        self._log(auth, ctx, "tools/call", name, arguments, body, ok, started)
-        return body, not ok
+        return body, ctx
 
     def _dispatch(self, tool: Tool, args: Any, ctx: RequestContext) -> dict[str, Any]:
         if tool.operation:

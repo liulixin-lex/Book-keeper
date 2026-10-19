@@ -15,6 +15,16 @@
 | PATCH | `…/accounts/{account_ref}` | config:write | Update Account |
 | POST | `…/accounts:apply-template` | config:write | Apply Template |
 
+### agent
+
+| 方法 | 路径 | 权限 | 说明 |
+|---|---|---|---|
+| GET | `…/agent/runs` | ledger:read | Recent runs: your own; with admin:read, everyone's. |
+| POST | `…/agent/runs` | ledger:read，仅网页端 | Start a run. It works with your permissions ∩ the chosen tier; with files attached it only reads and stages. |
+| GET | `…/agent/runs/{run_id}` | ledger:read | The run and its steps: instruction, model turns, tool calls with results, questions and answers. |
+| POST | `…/agent/runs/{run_id}:answer` | ledger:read，仅网页端 | Answer the run's question; it continues from where it stopped. |
+| POST | `…/agent/runs/{run_id}:cancel` | ledger:read，仅网页端 | Stop a run. Writes it already made stay, and undo together through its change set. |
+
 ### ai
 
 | 方法 | 路径 | 权限 | 说明 |
@@ -224,7 +234,7 @@
 | GET | `/api/v1/users` | — | List Users |
 | POST | `/api/v1/users` | — | Create User |
 
-共 124 个 REST 操作。
+共 129 个 REST 操作。
 
 ## MCP 工具
 
@@ -247,12 +257,15 @@
 | `get_reference` | 基础资料 | 只读 | ledger:read | transaction_types_list |
 | `get_transaction` | 交易详情 | 只读 | ledger:read | transactions_get |
 | `import_records` | 导入账单 | 写 | import:write | import_batches_create |
+| `list_files` | 文件列表 | 只读 | files:read | files_get |
 | `list_pending_work` | 待处理事项 | 只读 | ledger:read | work_items_list |
 | `manage_fee_rule` | 手续费规则 | 高影响 | config:write | fee_rules_save |
 | `manage_import_source` | 导入来源 | 写 | import:write | import_sources_create |
 | `manage_pairing_rule` | 配对规则 | 写 | rules:write | pairing_rules_save |
 | `manage_rule` | 分类规则 | 写 | rules:write | rules_save |
+| `patch_file` | 修改工作区文件 | 写 | （任一：import:write、ledger:write） | — |
 | `query_ledger` | 自定义汇总 | 只读 | ledger:read | reports_query |
+| `read_file` | 读取文件 | 只读 | files:read | files_content |
 | `repost_transactions` | 按新规则重算 | 高影响 | ledger:write | transactions.repost |
 | `resolve_match` | 处理匹配 | 写 | import:write | match_suggestions_accept |
 | `restore_transaction` | 恢复交易 | 写 | ledger:write | transactions.restore |
@@ -266,5 +279,6 @@
 | `undo_change_set` | 撤销变更集 | 高影响 | ledger:write | change_sets.undo |
 | `update_transaction` | 修改交易 | 写 | ledger:write | transactions.edit |
 | `upsert_reference` | 维护基础资料 | 写 | reference:write | counterparties_create |
+| `write_file` | 写工作区文件 | 写 | （任一：import:write、ledger:write） | — |
 
-共 36 个工具；写工具另有 `dry_run` 与 `idempotency_key` 参数。
+共 40 个工具；写工具另有 `dry_run` 与 `idempotency_key` 参数。

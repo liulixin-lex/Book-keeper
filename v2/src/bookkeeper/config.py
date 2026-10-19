@@ -43,6 +43,12 @@ class Settings(BaseSettings):
     ai_effort: str = "medium"
     ai_max_files: int = 12  # per upload
     ai_daily_files: int = 200  # per book and day; 0 = no cap
+    # AI 助手 limits: model turns and tokens per run, an optional dollar budget per run (needs model prices),
+    # and runs per book and day (0 = no cap)
+    agent_max_turns: int = 24
+    agent_max_tokens: int = 400_000
+    agent_run_budget_usd: float = 2.0
+    agent_daily_runs: int = 100
     # Encrypts secrets stored in the database (AI provider keys). Without it, keys cannot be saved in 设置 → AI.
     master_key: SecretStr | None = None
 

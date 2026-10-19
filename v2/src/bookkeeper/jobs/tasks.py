@@ -186,3 +186,12 @@ def ai_extract_batch(session_factory: Any, payload: dict[str, Any]) -> dict[str,
         imports.finish_extraction(session, ctx, batch_id, extracted, attempt)
         record(session)
     return {"records": len(extracted.records)}
+
+
+@task("agent.run", own_session=True)
+def agent_run(session_factory: Any, payload: dict[str, Any]) -> dict[str, Any]:
+    """One AI 助手 run, turn by turn; model calls happen outside database transactions (docs/19 §3)."""
+    from bookkeeper.ai import agent
+    from bookkeeper.config import get_settings
+
+    return agent.execute(session_factory, get_settings(), str(payload["run_id"]), job_id=payload.get("_job_id"))

@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
-from sqlalchemy import select, update
+from sqlalchemy import func, select, update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
@@ -89,6 +89,12 @@ def fail(session: Session, job_id: str, error: str) -> None:
         job.status = "queued"
         job.run_after = datetime.now(UTC) + backoff(job.attempts)
         job.locked_by = None
+
+
+def touch(session: Session, job_id: str | None) -> None:
+    """A long-running job says it is still alive, so no other worker takes it over as stale."""
+    if job_id:
+        session.execute(update(Job).where(Job.id == job_id, Job.status == "running").values(heartbeat_at=func.now()))
 
 
 def recover_stale(session: Session) -> int:

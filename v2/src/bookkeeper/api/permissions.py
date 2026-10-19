@@ -40,6 +40,7 @@ REFERENCE = need(Scope.REFERENCE_WRITE)
 RULES = need(Scope.RULES_WRITE)
 CONFIG = need(Scope.CONFIG_WRITE)
 ADMIN = need(Scope.ADMIN)
+AGENT = need(Scope.LEDGER_READ, web_only="AI 助手在网页端使用；令牌与 MCP 客户端请直接调用工具。")
 TOKENS = need(Scope.LEDGER_READ, as_token=(Scope.ADMIN,))  # members manage their own; a token needs admin_write
 AI_CONFIG = need(Scope.CONFIG_WRITE, web_only="AI 提供商与密钥只能在网页端（设置 → AI 模型）修改，令牌与 MCP 不能改。")
 
@@ -154,6 +155,12 @@ ROUTES: dict[tuple[str, str], Need] = {
     ("DELETE", "/ai/providers/{provider_id}"): AI_CONFIG,
     ("POST", "/ai/providers/{provider_id}:test"): AI_CONFIG,
     ("PUT", "/ai/routes"): AI_CONFIG,
+    # AI assistant: anyone in the book may ask (it works within their own permissions), from the web app only
+    ("GET", "/agent/runs"): READ,
+    ("GET", "/agent/runs/{run_id}"): READ,
+    ("POST", "/agent/runs"): AGENT,
+    ("POST", "/agent/runs/{run_id}:answer"): AGENT,
+    ("POST", "/agent/runs/{run_id}:cancel"): AGENT,
     # access and audit
     ("GET", "/members"): ADMIN_READ,
     ("PUT", "/members/{user_id}"): ADMIN,

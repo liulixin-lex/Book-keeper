@@ -1898,6 +1898,55 @@
   "input_schema": {
    "additionalProperties": false,
    "properties": {
+    "kind": {
+     "default": "all",
+     "description": "evidence 上传与导出的原件（只读）；workspace AI 工作区的文本文件",
+     "enum": [
+      "all",
+      "evidence",
+      "workspace"
+     ],
+     "title": "Kind",
+     "type": "string"
+    },
+    "limit": {
+     "default": 30,
+     "maximum": 100,
+     "minimum": 1,
+     "title": "Limit",
+     "type": "integer"
+    },
+    "q": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "description": "文件名 / 路径包含",
+     "title": "Q"
+    }
+   },
+   "title": "ListFilesArgs",
+   "type": "object"
+  },
+  "kind": "read",
+  "name": "list_files",
+  "operation": null,
+  "rest": "files_get",
+  "scopes": [
+   "files:read"
+  ],
+  "title": "文件列表"
+ },
+ {
+  "any_of": [],
+  "input_schema": {
+   "additionalProperties": false,
+   "properties": {
     "kinds": {
      "description": "空 = 全部：unprocessed_records、pending_matches、uncommitted_batches、estimated、suspense、failed_checks",
      "items": {
@@ -2624,6 +2673,73 @@
   "title": "分类规则"
  },
  {
+  "any_of": [
+   "import:write",
+   "ledger:write"
+  ],
+  "input_schema": {
+   "additionalProperties": false,
+   "properties": {
+    "dry_run": {
+     "default": false,
+     "title": "Dry Run",
+     "type": "boolean"
+    },
+    "expected_version": {
+     "anyOf": [
+      {
+       "type": "integer"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Expected Version"
+    },
+    "idempotency_key": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Idempotency Key"
+    },
+    "new": {
+     "description": "替换成",
+     "title": "New",
+     "type": "string"
+    },
+    "old": {
+     "description": "要替换的原文，须在文件中恰好出现一次",
+     "title": "Old",
+     "type": "string"
+    },
+    "path": {
+     "title": "Path",
+     "type": "string"
+    }
+   },
+   "required": [
+    "path",
+    "old",
+    "new"
+   ],
+   "title": "PatchFileArgs",
+   "type": "object"
+  },
+  "kind": "write",
+  "name": "patch_file",
+  "operation": null,
+  "rest": "—",
+  "scopes": [],
+  "title": "修改工作区文件"
+ },
+ {
   "any_of": [],
   "input_schema": {
    "additionalProperties": false,
@@ -2737,6 +2853,57 @@
    "ledger:read"
   ],
   "title": "自定义汇总"
+ },
+ {
+  "any_of": [],
+  "input_schema": {
+   "additionalProperties": false,
+   "properties": {
+    "file_id": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "description": "原件 ID（fil_…），来自 list_files 或导入批次",
+     "title": "File Id"
+    },
+    "max_chars": {
+     "default": 20000,
+     "maximum": 100000,
+     "minimum": 100,
+     "title": "Max Chars",
+     "type": "integer"
+    },
+    "path": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "description": "工作区路径，如 notes/10月对账.md",
+     "title": "Path"
+    }
+   },
+   "title": "ReadFileArgs",
+   "type": "object"
+  },
+  "kind": "read",
+  "name": "read_file",
+  "operation": null,
+  "rest": "files_content",
+  "scopes": [
+   "files:read"
+  ],
+  "title": "读取文件"
  },
  {
   "any_of": [],
@@ -4159,5 +4326,68 @@
    "reference:write"
   ],
   "title": "维护基础资料"
+ },
+ {
+  "any_of": [
+   "import:write",
+   "ledger:write"
+  ],
+  "input_schema": {
+   "additionalProperties": false,
+   "properties": {
+    "content": {
+     "description": "完整文本内容",
+     "title": "Content",
+     "type": "string"
+    },
+    "dry_run": {
+     "default": false,
+     "title": "Dry Run",
+     "type": "boolean"
+    },
+    "expected_version": {
+     "anyOf": [
+      {
+       "type": "integer"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "description": "覆盖已有文件时必填：当前版本",
+     "title": "Expected Version"
+    },
+    "idempotency_key": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Idempotency Key"
+    },
+    "path": {
+     "description": "工作区路径，如 notes/10月对账.md、derived/云猫订单.csv",
+     "title": "Path",
+     "type": "string"
+    }
+   },
+   "required": [
+    "path",
+    "content"
+   ],
+   "title": "WriteFileArgs",
+   "type": "object"
+  },
+  "kind": "write",
+  "name": "write_file",
+  "operation": null,
+  "rest": "—",
+  "scopes": [],
+  "title": "写工作区文件"
  }
 ]

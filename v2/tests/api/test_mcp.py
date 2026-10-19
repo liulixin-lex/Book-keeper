@@ -71,14 +71,14 @@ def test_initialize_and_tool_visibility(client, world) -> None:
     assert init["serverInfo"]["name"] == "bookkeeper" and "get_context" in init["instructions"]
     assert set(init["capabilities"]) >= {"tools", "resources", "prompts"}
     all_tools = admin.tools()
-    assert len(all_tools) == len(TOOLS) == 36
+    assert len(all_tools) == len(TOOLS) == 40
     assert {"create_transaction", "update_transaction", "delete_transaction", "undo_change_set"} <= set(all_tools)
     schema = next(t for t in admin.rpc("tools/list")["tools"] if t["name"] == "create_transaction")
     assert schema["inputSchema"]["additionalProperties"] is False
     assert schema["annotations"]["readOnlyHint"] is False and schema["annotations"]["destructiveHint"] is False
 
     reader = mcp_for(client, world, csrf, tier="user_read")
-    assert len(reader.tools()) == 16 and "create_transaction" not in reader.tools()
+    assert len(reader.tools()) == 18 and "create_transaction" not in reader.tools()
     assert not {"get_audit_trail", "get_admin_info"} & set(reader.tools())
     overseer = set(mcp_for(client, world, csrf, tier="admin_read").tools())
     assert overseer == set(reader.tools()) | {"get_audit_trail", "get_admin_info"}

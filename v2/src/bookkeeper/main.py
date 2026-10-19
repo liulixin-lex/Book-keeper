@@ -14,6 +14,7 @@ from bookkeeper.api import errors
 from bookkeeper.api.middleware import RequestContextMiddleware
 from bookkeeper.api.routers import (
     accounts,
+    agent,
     ai,
     analytics,
     audit,
@@ -91,6 +92,7 @@ def create_app(settings: Settings | None = None, *, configure_logs: bool = True)
         imports.router,
         exports.router,
         ai.router,
+        agent.router,
     ):
         api.include_router(router)
     app.include_router(api)
